@@ -1,5 +1,6 @@
 package it.cnit.gaia.rulesengine.model;
 
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import it.cnit.gaia.rulesengine.configuration.ContextProvider;
 import it.cnit.gaia.rulesengine.measurements.MeasurementRepository;
 import it.cnit.gaia.rulesengine.notification.WebSocketController;
@@ -16,14 +17,16 @@ public abstract class GaiaRule implements Fireable {
 	public String name;
 	public String suggestion;
 	public String description;
+	public String rid;
 
 	protected DB embeddedDB = ContextProvider.getBean(DB.class);
 	//protected SenderService amqpSenderService = ContextProvider.getBean(SenderService.class);
 	protected WebSocketController websocket = ContextProvider.getBean(WebSocketController.class);
 	//protected EventLogger eventLogger = ContextProvider.getBean(EventLogger.class);
 	protected MeasurementRepository measurements = ContextProvider.getBean(MeasurementRepository.class);
+	protected OrientGraphFactory factory = ContextProvider.getBean(OrientGraphFactory.class);
 
-	public  abstract boolean condition();
+	public abstract boolean condition();
 	public abstract void action();
 	public void fire(){
 		if(condition())

@@ -1,6 +1,6 @@
 package it.cnit.gaia.rulesengine.configuration;
 
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 public class OrientConfiguration {
 	//TODO Externalize configuration
 	@Bean
-	public OrientGraph orientdb(){
-		return new OrientGraph("remote:localhost/Prova","root","e4aa120");
+	public OrientGraphFactory orientdb(){
+		return new OrientGraphFactory("remote:localhost/Prova","root","e4aa120").setupPool(1,10);
 	}
 }

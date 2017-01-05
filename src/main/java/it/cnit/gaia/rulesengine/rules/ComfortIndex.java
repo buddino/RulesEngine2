@@ -74,4 +74,6 @@ public class ComfortIndex extends GaiaRule {
 		this.humidity_uri = humidUri;
 		return this;
 	}
+
+
 }

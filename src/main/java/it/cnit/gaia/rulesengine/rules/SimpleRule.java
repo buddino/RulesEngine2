@@ -12,12 +12,12 @@ public class SimpleRule extends GaiaRule{
 
 	@Override
 	public boolean condition() {
-		return true;
+		return Math.random() < threshold;
 	}
 
 	@Override
 	public void action() {
-		System.out.println("Simple Rule triggered");
+		System.out.println("Rule "+rid+" triggered!");
 	}
 
 	@Override

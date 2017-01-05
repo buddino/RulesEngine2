@@ -21,13 +21,13 @@ public class WebSocketController {
     }
 
     public void pushNotification(String message) {
-        this.template.convertAndSend("/topic/greetings", message);
+        this.template.convertAndSend("/recommendation", message);
     }
     public void pushNotification(GAIANotification notification) {
         try {
             String message = mapper.writeValueAsString(notification);
             LOGGER.info("SEND: "+message);
-            this.template.convertAndSend("/topic/greetings", message);
+            this.template.convertAndSend("/recommendation", message);
 
         } catch (JsonProcessingException e) {
             e.printStackTrace();

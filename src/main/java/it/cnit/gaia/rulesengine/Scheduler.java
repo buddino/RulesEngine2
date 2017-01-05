@@ -6,7 +6,6 @@ import it.cnit.gaia.rulesengine.measurements.MeasurementRepository;
 import it.cnit.gaia.rulesengine.model.Fireable;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -22,17 +21,22 @@ public class Scheduler {
 
     @PostConstruct
 	public void init(){
-    	measurements.updateLatest();
-		Fireable f = rulesLoader.createRulesTree("#25:1");
+		LOGGER.info("Running Recommendation Engine");
+		//measurements.updateLatest();
+		Fireable f = rulesLoader.getRuleTree("#27:0");
 		f.fire();
 	}
 
-    @Scheduled(fixedDelay = 9000000)
+    //@Scheduled(fixedDelay = 60000)
     public void scheduledMethod() throws ApiException {
-		System.out.println("Scheduled event");
-		//measurements.updateLatest();
-		//ComfortIndex rule = new ComfortIndex().setHumidUri("0013a2004091d30c/0xd17/hih4030").setTempUri("0013a2004091d30c/0xd17/lm35");
-		//rule.fire();
+		LOGGER.info("Running Recommendation Engine");
+		measurements.updateLatest();
+		Fireable f = rulesLoader.getRuleTree("#27:0");
+		f.fire();
     }
+    //@Scheduled(fixedDelay = 1000)
+    public void repeatingrule(){
+
+	}
 
 }
