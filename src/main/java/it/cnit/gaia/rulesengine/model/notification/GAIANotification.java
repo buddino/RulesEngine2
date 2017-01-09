@@ -10,8 +10,8 @@ public class GAIANotification implements Serializable {
     private String rule;
     private Map values;
     private String description;
-    private String suggestion;
-    private NotificationType type = NotificationType.info;
+    private String name;
+    private String suggestion;    private NotificationType type = NotificationType.info;
 
 
 
@@ -102,5 +102,14 @@ public class GAIANotification implements Serializable {
                 ", suggestion='" + suggestion + '\'' +
                 ", type=" + type +
                 '}';
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public GAIANotification setName(String name) {
+        this.name = name;
+        return this;
     }
 }

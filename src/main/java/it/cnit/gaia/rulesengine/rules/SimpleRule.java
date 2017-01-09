@@ -1,12 +1,13 @@
 package it.cnit.gaia.rulesengine.rules;
 
-import it.cnit.gaia.rulesengine.model.FromConfiguration;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
+import it.cnit.gaia.rulesengine.model.annotation.FromConfiguration;
 
 public class SimpleRule extends GaiaRule{
 
 	@FromConfiguration
 	public Double threshold;
+
 	@FromConfiguration
 	public String uri;
 
@@ -23,7 +24,7 @@ public class SimpleRule extends GaiaRule{
 	@Override
 	public String toString() {
 		return "SimpleRule:\t{" +
-				"threshold:" + threshold +
+				"pwf_threshold:" + threshold +
 				", uri:'" + uri + '\'' +
 				'}';
 	}

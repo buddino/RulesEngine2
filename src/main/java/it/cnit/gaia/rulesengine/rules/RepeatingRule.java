@@ -2,7 +2,9 @@ package it.cnit.gaia.rulesengine.rules;
 
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
+import it.cnit.gaia.rulesengine.model.annotation.CompositeRule;
 
+@CompositeRule
 public class RepeatingRule extends GaiaRule{
 	public long counter;
 	//@FromConfiuration

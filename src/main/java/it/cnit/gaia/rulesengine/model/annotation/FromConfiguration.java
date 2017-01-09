@@ -1,4 +1,4 @@
-package it.cnit.gaia.rulesengine.model;
+package it.cnit.gaia.rulesengine.model.annotation;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

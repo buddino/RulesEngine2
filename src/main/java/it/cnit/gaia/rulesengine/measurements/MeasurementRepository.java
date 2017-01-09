@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.util.*;
 
 @Repository
-public class MeasurementRepository {
+public class MeasurementRepository  {
     //TODO update before giving date in lastUpdate is null
     Logger LOGGER = Logger.getLogger(this.getClass());
     @Autowired

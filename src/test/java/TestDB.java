@@ -1,8 +1,8 @@
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import it.cnit.gaia.rulesengine.configuration.OrientConfiguration;
-import it.cnit.gaia.rulesengine.loader.RulesLoader;
+import org.joda.time.DateTime;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,28 +10,39 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {OrientConfiguration.class, RulesLoader.class})
+@ContextConfiguration(classes = {OrientConfiguration.class})
 public class TestDB {
-	@Autowired
-	OrientGraph orientdb;
+
 
 	@Autowired
-	RulesLoader rulesLoader;
+	OPartitionedDatabasePool eventDbPool;
 
 	@Test
-	public void test(){
-		OrientVertex vertex = orientdb.getVertex("#21:0");
-		Object description = vertex.getProperty("description");
+	public void testEventLog(){
+		ODatabaseDocumentTx db = eventDbPool.acquire();
+		DateTime date = new DateTime();
+		for( int i = 0; i < 1000000; i++){
+			if(i%1000==0)
+				System.out.println(i);
+			date = date.minusHours(1);
+			ODocument event = new ODocument("GaiaEvent");
+			event.field("name","Prova").field("timestamp", date.toDate()).field("value",Math.random()).field("class",this.getClass().getName());
+			event.save();
+		}
+		db.close();
 	}
 
 	@Test
-	public void test2(){
-		Iterable<Vertex> vertices = orientdb.getVerticesOfClass("GaiaRuleSet");
-		vertices.forEach( v -> System.out.println(v));
-	}
+	public void testRead(){
 
+	}
 	@Test
-	public void testLoader(){
-
+	public void testDateDatime(){
+		DateTime date = new DateTime();
+		System.err.println(date.getMillis());
+		System.err.println(date.minusHours(1).getMillis());
+		System.err.println(date.getMillis());
 	}
+
 }
+

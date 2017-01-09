@@ -90,13 +90,13 @@
     <orderEntry type="library" name="Maven: commons-codec:commons-codec:1.10" level="project" />
     <orderEntry type="library" name="Maven: com.rabbitmq:amqp-client:3.6.5" level="project" />
     <orderEntry type="library" name="Maven: com.esotericsoftware.yamlbeans:yamlbeans:1.09" level="project" />
-    <orderEntry type="library" name="Maven: com.orientechnologies:orientdb-graphdb:2.2.14" level="project" />
-    <orderEntry type="library" name="Maven: com.orientechnologies:orientdb-server:2.2.14" level="project" />
-    <orderEntry type="library" name="Maven: com.orientechnologies:orientdb-client:2.2.14" level="project" />
+    <orderEntry type="library" name="Maven: com.orientechnologies:orientdb-graphdb:2.2.13" level="project" />
+    <orderEntry type="library" name="Maven: com.orientechnologies:orientdb-server:2.2.13" level="project" />
+    <orderEntry type="library" name="Maven: com.orientechnologies:orientdb-client:2.2.13" level="project" />
     <orderEntry type="library" name="Maven: javax.mail:mail:1.4.7" level="project" />
     <orderEntry type="library" name="Maven: javax.activation:activation:1.1" level="project" />
-    <orderEntry type="library" name="Maven: com.orientechnologies:orientdb-tools:2.2.14" level="project" />
-    <orderEntry type="library" name="Maven: com.orientechnologies:orientdb-core:2.2.14" level="project" />
+    <orderEntry type="library" name="Maven: com.orientechnologies:orientdb-tools:2.2.13" level="project" />
+    <orderEntry type="library" name="Maven: com.orientechnologies:orientdb-core:2.2.13" level="project" />
     <orderEntry type="library" name="Maven: org.xerial.snappy:snappy-java:1.1.0.1" level="project" />
     <orderEntry type="library" name="Maven: com.googlecode.concurrentlinkedhashmap:concurrentlinkedhashmap-lru:1.4.1" level="project" />
     <orderEntry type="library" name="Maven: commons-collections:commons-collections:3.2.2" level="project" />

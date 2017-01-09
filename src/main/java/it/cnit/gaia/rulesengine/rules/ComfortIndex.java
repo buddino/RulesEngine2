@@ -1,8 +1,8 @@
 package it.cnit.gaia.rulesengine.rules;
 
-import it.cnit.gaia.rulesengine.model.FromConfiguration;
+import it.cnit.gaia.rulesengine.model.annotation.FromConfiguration;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
-import it.cnit.gaia.rulesengine.model.ToBeLogged;
+import it.cnit.gaia.rulesengine.model.annotation.ToBeLogged;
 import it.cnit.gaia.rulesengine.model.notification.GAIANotification;
 import it.cnit.gaia.rulesengine.model.notification.NotificationType;
 
@@ -39,13 +39,7 @@ public class ComfortIndex extends GaiaRule {
 
 	@Override
 	public void action() {
-		GAIANotification notification = new GAIANotification();
-		notification.setRule(this.getClass().getSimpleName())
-				.setType(NotificationType.warning)
-				.setDescription(description)
-				.setSuggestion(suggestion)
-				.setValues(getFieldMap());
-		System.out.println(notification.toString());
+		GAIANotification notification = getBaseNotification().setType(NotificationType.error);
 	}
 
 	public Double getThreshold() {

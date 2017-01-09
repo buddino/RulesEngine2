@@ -1,8 +1,12 @@
 package it.cnit.gaia.rulesengine.model;
 
+import com.sun.istack.internal.logging.Logger;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import it.cnit.gaia.rulesengine.configuration.ContextProvider;
 import it.cnit.gaia.rulesengine.measurements.MeasurementRepository;
+import it.cnit.gaia.rulesengine.model.annotation.ToBeLogged;
+import it.cnit.gaia.rulesengine.model.notification.GAIANotification;
+import it.cnit.gaia.rulesengine.model.notification.NotificationType;
 import it.cnit.gaia.rulesengine.notification.WebSocketController;
 import org.mapdb.DB;
 
@@ -11,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class GaiaRule implements Fireable {
-	//TODO Move something here?
+	protected Logger LOGGER = Logger.getLogger(this.getClass());
 
 	@ToBeLogged
 	public String name;
@@ -27,10 +31,25 @@ public abstract class GaiaRule implements Fireable {
 	protected OrientGraphFactory factory = ContextProvider.getBean(OrientGraphFactory.class);
 
 	public abstract boolean condition();
-	public abstract void action();
+	public void action(){
+		GAIANotification notification = getBaseNotification();
+		//TODO Send to WS or AQMP
+		System.out.println(notification.toString());
+	}
 	public void fire(){
 		if(condition())
 			action();
+	}
+
+	protected GAIANotification getBaseNotification(){
+		GAIANotification notification = new GAIANotification();
+		notification.setRule(this.getClass().getSimpleName())
+				.setName(name)
+				.setType(NotificationType.info)
+				.setDescription(description)
+				.setSuggestion(suggestion)
+				.setValues(getFieldMap());
+		return notification;
 	}
 
 	protected Map<String,Object> getFieldMap(){
@@ -78,4 +97,8 @@ public abstract class GaiaRule implements Fireable {
 		this.description = description;
 		return this;
 	}
+
+	// TODO Update method for resources URIs injection
+	// ${name}_uri or annotation
+
 }

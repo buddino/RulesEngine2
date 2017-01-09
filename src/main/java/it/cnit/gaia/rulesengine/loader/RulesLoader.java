@@ -6,8 +6,9 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import it.cnit.gaia.rulesengine.model.Fireable;
-import it.cnit.gaia.rulesengine.model.FromConfiguration;
 import it.cnit.gaia.rulesengine.model.GaiaRuleSet;
+import it.cnit.gaia.rulesengine.model.annotation.CompositeRule;
+import it.cnit.gaia.rulesengine.model.annotation.FromConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -104,8 +105,8 @@ public class RulesLoader {
 					}
 				}
 			}
-			//IF REPEATING RULE
-			if(classname.equals("RepeatingRule")){
+			//IF COMPOSITE RULE
+			if(ruleClass.isAnnotationPresent(CompositeRule.class)){
 				Vertex relatedRule = v.getVertices(Direction.OUT).iterator().next();
 				Fireable f = traverse(relatedRule);
 				try {
