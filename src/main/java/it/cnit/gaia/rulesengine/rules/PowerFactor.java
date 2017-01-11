@@ -35,7 +35,7 @@ public class PowerFactor extends GaiaRule{
 			return pwf_value[0] < pwf_threshold || pwf_value[1] < pwf_threshold || pwf_value[2] < pwf_threshold;
 		}
 		else {
-			LOGGER.warning("Illegal number of phases");
+			LOGGER.warn("Illegal number of phases");
 			return false;
 		}
 	}

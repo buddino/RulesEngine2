@@ -12,8 +12,12 @@ import java.util.*;
 public class MeasurementRepository  {
     //TODO update before giving date in lastUpdate is null
     Logger LOGGER = Logger.getLogger(this.getClass());
+
+    Set<String> uriSet = new HashSet<>();
+
     @Autowired
     SwaggerClient sparks;
+
     Date lastupdate = null;
     Map<String, ResourceDataDTO> latestReadings = new HashMap<String, ResourceDataDTO>();
     Map<String, List<ResourceDataDTO>> lastHourRedings = new HashMap<String, List<ResourceDataDTO>>();
@@ -64,5 +68,9 @@ public class MeasurementRepository  {
             return lastHourRedings.get(uri);
         LOGGER.error(uri + " not found in map");
         return null;
+    }
+
+    public boolean addUri(String uri){
+        return uriSet.add(uri);
     }
 }

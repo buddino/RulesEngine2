@@ -28,4 +28,9 @@ public class SimpleRule extends GaiaRule{
 				", uri:'" + uri + '\'' +
 				'}';
 	}
+
+	@Override
+	public boolean init(){
+		return threshold!=null && uri!=null && !uri.equals("");
+	}
 }

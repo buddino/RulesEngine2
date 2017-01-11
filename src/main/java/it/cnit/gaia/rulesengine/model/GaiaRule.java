@@ -1,34 +1,30 @@
 package it.cnit.gaia.rulesengine.model;
 
-import com.sun.istack.internal.logging.Logger;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import it.cnit.gaia.rulesengine.configuration.ContextProvider;
 import it.cnit.gaia.rulesengine.measurements.MeasurementRepository;
 import it.cnit.gaia.rulesengine.model.annotation.ToBeLogged;
 import it.cnit.gaia.rulesengine.model.notification.GAIANotification;
 import it.cnit.gaia.rulesengine.model.notification.NotificationType;
-import it.cnit.gaia.rulesengine.notification.WebSocketController;
-import org.mapdb.DB;
+import org.apache.log4j.Logger;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
 public abstract class GaiaRule implements Fireable {
-	protected Logger LOGGER = Logger.getLogger(this.getClass());
-
 	@ToBeLogged
 	public String name;
 	public String suggestion;
 	public String description;
 	public String rid;
-
-	protected DB embeddedDB = ContextProvider.getBean(DB.class);
+	protected Logger LOGGER = Logger.getLogger(this.getClass());
+	//protected DB embeddedDB = ContextProvider.getBean(DB.class);
 	//protected SenderService amqpSenderService = ContextProvider.getBean(SenderService.class);
-	protected WebSocketController websocket = ContextProvider.getBean(WebSocketController.class);
+	//protected WebSocketController websocket = ContextProvider.getBean(WebSocketController.class);
 	//protected EventLogger eventLogger = ContextProvider.getBean(EventLogger.class);
 	protected MeasurementRepository measurements = ContextProvider.getBean(MeasurementRepository.class);
-	protected OrientGraphFactory factory = ContextProvider.getBean(OrientGraphFactory.class);
+	protected OrientGraphFactory graphFactory = ContextProvider.getBean(OrientGraphFactory.class);
 
 	public abstract boolean condition();
 	public void action(){
@@ -39,6 +35,11 @@ public abstract class GaiaRule implements Fireable {
 	public void fire(){
 		if(condition())
 			action();
+	}
+
+	//TODO Remove when implemented by rules
+	public boolean init(){
+		return true;
 	}
 
 	protected GAIANotification getBaseNotification(){

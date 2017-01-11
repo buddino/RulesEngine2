@@ -10,6 +10,12 @@ public class GaiaRuleSet implements Fireable {
 	Set<Fireable> ruleSet = new HashSet<>();
 	//public void fire(){ ruleSet.parallelStream().forEach(f-> f.fire());}
 	public void fire(){ ruleSet.forEach(f-> f.fire());}
+
+	@Override
+	public boolean init() {
+		return true;
+	}
+
 	public boolean add(Fireable f){ return ruleSet.add(f);}
 	public boolean remove(Fireable f){ return ruleSet.remove(f);}
 

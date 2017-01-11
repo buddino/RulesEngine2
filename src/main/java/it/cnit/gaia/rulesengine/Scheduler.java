@@ -6,9 +6,8 @@ import it.cnit.gaia.rulesengine.measurements.MeasurementRepository;
 import it.cnit.gaia.rulesengine.model.Fireable;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.PostConstruct;
 
 @Service
 public class Scheduler {
@@ -19,7 +18,7 @@ public class Scheduler {
     @Autowired
 	RulesLoader rulesLoader;
 
-    @PostConstruct
+    //@PostConstruct
 	public void init(){
 		LOGGER.info("Running Recommendation Engine");
 		//measurements.updateLatest();
@@ -27,10 +26,10 @@ public class Scheduler {
 		f.fire();
 	}
 
-    //@Scheduled(fixedDelay = 60000)
+    @Scheduled(fixedDelay = 5000)
     public void scheduledMethod() throws ApiException {
 		LOGGER.info("Running Recommendation Engine");
-		measurements.updateLatest();
+		//measurements.updateLatest();
 		Fireable f = rulesLoader.getRuleTree("#27:0");
 		f.fire();
     }
