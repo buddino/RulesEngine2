@@ -5,9 +5,11 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import it.cnit.gaia.rulesengine.measurements.MeasurementRepository;
 import it.cnit.gaia.rulesengine.model.Fireable;
 import it.cnit.gaia.rulesengine.model.GaiaRuleSet;
 import it.cnit.gaia.rulesengine.model.annotation.FromConfiguration;
+import it.cnit.gaia.rulesengine.model.annotation.URI;
 import it.cnit.gaia.rulesengine.rules.CompositeRule;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,15 +24,23 @@ import java.util.Set;
 public class RulesLoader {
 	private final String rulesPackage = "it.cnit.gaia.rulesengine.rules";
 	private final String ruleContainerName = "GaiaRuleSet";
+
 	@Autowired
 	OrientGraphFactory graphFactory;
+
+	@Autowired
+	MeasurementRepository measurementRepository;
+
 	private Logger LOGGER = Logger.getLogger(this.getClass());
 	private Fireable root = null;
+	private String rootId = null;
+
 
 	public Fireable getRuleTree(String rootId) {
 		OrientGraph orientdb = graphFactory.getTx();
-		if (root == null) {
+		if (root == null || !this.rootId.equals(rootId)) {
 			OrientVertex v = orientdb.getVertex(rootId);
+			this.rootId = rootId;
 			root = traverse(v);
 			return root;
 		} else {
@@ -38,11 +48,17 @@ public class RulesLoader {
 		}
 	}
 
+	public Fireable getRoot() {
+		return root;
+	}
+
 	//TODO Check if this can create problem if the root object is being used
 	public void updateRuleTree(String rootId) {
-		OrientGraph orientdb = graphFactory.getTx();
-		OrientVertex v = orientdb.getVertex(rootId);
-		root = traverse(v);
+		forceUpdate();
+	}
+
+	private void forceUpdate(){
+		root = null;
 	}
 
 	private Fireable traverse(Vertex v) {
@@ -71,7 +87,9 @@ public class RulesLoader {
 			try {
 				ruleClass = Class.forName(rulesPackage + "." + classname);        //Get correspondant class
 			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
+				LOGGER.error("Failed initializing "+classname);
+				LOGGER.error(e.toString());
+				return null;
 			}
 			Field[] fields = ruleClass.getFields();                //Get fields of the class
 			Object rule = null;
@@ -94,11 +112,16 @@ public class RulesLoader {
 					if (property != null && !property.equals("")) {
 						try {
 							f.set(rule, property);
+							//Populate the uri set
+							if(f.isAnnotationPresent(URI.class)){
+								measurementRepository.addUri((String) property);
+							}
+							///
 						} catch (IllegalAccessException e) {
 							e.printStackTrace();
 						}
 					} else {
-						LOGGER.error("Field " + f.getName() + " not found in the database");
+						LOGGER.error("Field " + f.getName() + " not found in the database ["+classname+"]");
 					}
 				}
 			}

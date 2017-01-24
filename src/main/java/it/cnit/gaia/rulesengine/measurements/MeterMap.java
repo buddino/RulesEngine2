@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Deprecated
 @Repository
 public class MeterMap {
 
@@ -20,7 +21,6 @@ public class MeterMap {
     SwaggerClient sparks;
 
     Map<String, Long> metermap = new HashMap<>();
-    boolean isConfigured = false;
 
     @PostConstruct
     public void init() {
@@ -52,7 +52,6 @@ public class MeterMap {
                 */
                 metermap.put(resourceUri, resourceId);
             }
-            isConfigured = true;
             LOGGER.info(String.format("Mapped %d resources", metermap.keySet().size()));
 
         } catch (Exception e) {
@@ -67,11 +66,10 @@ public class MeterMap {
         return metermap.get(uri);
     }
 
-    public boolean isConfigured() {
-        return isConfigured;
-    }
-
     public List<Long> getIDs() {
         return new ArrayList(metermap.values());
     }
+
+
+
 }

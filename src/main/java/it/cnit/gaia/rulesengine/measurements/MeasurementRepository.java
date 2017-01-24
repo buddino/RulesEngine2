@@ -10,9 +10,9 @@ import java.util.*;
 
 @Repository
 public class MeasurementRepository  {
-    //TODO update before giving date in lastUpdate is null
-    Logger LOGGER = Logger.getLogger(this.getClass());
+    //TODO Resourcesummary instead of the LatestMeasurement
 
+    Logger LOGGER = Logger.getLogger(this.getClass());
     Set<String> uriSet = new HashSet<>();
 
     @Autowired
@@ -73,4 +73,7 @@ public class MeasurementRepository  {
     public boolean addUri(String uri){
         return uriSet.add(uri);
     }
+    public Set<String> getUriSet(){ return uriSet; }
+
+    //TODO Add a method to start/update the mapping URI-->ResourceID
 }

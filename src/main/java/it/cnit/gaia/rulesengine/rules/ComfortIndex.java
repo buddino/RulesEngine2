@@ -1,21 +1,19 @@
 package it.cnit.gaia.rulesengine.rules;
 
-import it.cnit.gaia.rulesengine.model.annotation.FromConfiguration;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
+import it.cnit.gaia.rulesengine.model.annotation.FromConfiguration;
 import it.cnit.gaia.rulesengine.model.annotation.ToBeLogged;
+import it.cnit.gaia.rulesengine.model.annotation.URI;
 import it.cnit.gaia.rulesengine.model.notification.GAIANotification;
 import it.cnit.gaia.rulesengine.model.notification.NotificationType;
 
 public class ComfortIndex extends GaiaRule {
 
-	@ToBeLogged
-	@FromConfiguration
+	@ToBeLogged	@FromConfiguration
 	public Double threshold = 10.0;
-	@ToBeLogged
-	@FromConfiguration
+	@ToBeLogged	@FromConfiguration	@URI
 	public String temperature_uri;
-	@ToBeLogged
-	@FromConfiguration
+	@ToBeLogged	@FromConfiguration	@URI
 	public String humidity_uri;
 	@ToBeLogged
 	public Double index;
@@ -68,6 +66,5 @@ public class ComfortIndex extends GaiaRule {
 		this.humidity_uri = humidUri;
 		return this;
 	}
-
 
 }

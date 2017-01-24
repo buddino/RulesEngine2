@@ -3,20 +3,18 @@ package it.cnit.gaia.rulesengine.rules;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.annotation.FromConfiguration;
 import it.cnit.gaia.rulesengine.model.annotation.ToBeLogged;
+import it.cnit.gaia.rulesengine.model.annotation.URI;
 
 import java.util.Arrays;
 import java.util.List;
 
 public class SimpleThresholdRule extends GaiaRule{
 
-	@ToBeLogged
-	@FromConfiguration
+	@ToBeLogged	@FromConfiguration @URI
 	public String uri;
-	@ToBeLogged
-	@FromConfiguration
+	@ToBeLogged	@FromConfiguration
 	public Double threshold;
-	@ToBeLogged
-	@FromConfiguration
+	@ToBeLogged	@FromConfiguration
 	public String operator;
 	@ToBeLogged
 	public Double value;

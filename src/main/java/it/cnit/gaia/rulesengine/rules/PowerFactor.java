@@ -3,11 +3,11 @@ package it.cnit.gaia.rulesengine.rules;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.annotation.FromConfiguration;
 import it.cnit.gaia.rulesengine.model.annotation.ToBeLogged;
+import it.cnit.gaia.rulesengine.model.annotation.URI;
 
 public class PowerFactor extends GaiaRule{
 
-	@ToBeLogged
-	@FromConfiguration
+	@ToBeLogged	@FromConfiguration @URI
 	public String meter_uri;	//If 3-Phase this is the base uri, /1 /2 /3 will be added automatically
 
 	@FromConfiguration

@@ -2,23 +2,19 @@ package it.cnit.gaia.rulesengine.rules;
 
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.annotation.FromConfiguration;
+import it.cnit.gaia.rulesengine.model.annotation.URI;
 
 public class SimpleRule extends GaiaRule{
 
 	@FromConfiguration
 	public Double threshold;
 
-	@FromConfiguration
+	@FromConfiguration @URI
 	public String uri;
 
 	@Override
 	public boolean condition() {
 		return Math.random() < threshold;
-	}
-
-	@Override
-	public void action() {
-		System.out.println("Rule "+rid+" triggered!");
 	}
 
 	@Override
