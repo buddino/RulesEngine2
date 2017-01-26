@@ -27,7 +27,7 @@ public class WebsocketService {
         try {
             String message = mapper.writeValueAsString(notification);
             this.template.convertAndSend("/topic/recommendations", message);
-            LOGGER.debug("\u001B[36mWS NOTIFICATION\u001B[0m\t" + notification.toString());
+            LOGGER.debug("\u001B[36mWS NOTIFICATION\u001B[0m\t");
 
 
         } catch (JsonProcessingException e) {

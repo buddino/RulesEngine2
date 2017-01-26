@@ -11,4 +11,5 @@ public interface Fireable {
 	 * @return true if the rule has been initialized succesfully
 	 */
 	boolean init();
+	//Riguarda Initialization and validation inside the constructor and null check during class loading
 }

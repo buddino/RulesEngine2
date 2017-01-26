@@ -27,4 +27,5 @@ public class OrientConfiguration {
 		return new OrientGraphFactory("remote:" + url + "/" + dbname, user, password).setupPool(1, 10);
 	}
 
+
 }

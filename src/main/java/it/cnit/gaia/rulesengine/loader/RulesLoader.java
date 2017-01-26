@@ -8,6 +8,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import it.cnit.gaia.rulesengine.measurements.MeasurementRepository;
 import it.cnit.gaia.rulesengine.model.Fireable;
 import it.cnit.gaia.rulesengine.model.GaiaRuleSet;
+import it.cnit.gaia.rulesengine.model.School;
 import it.cnit.gaia.rulesengine.model.annotation.FromConfiguration;
 import it.cnit.gaia.rulesengine.model.annotation.URI;
 import it.cnit.gaia.rulesengine.rules.CompositeRule;
@@ -35,6 +36,23 @@ public class RulesLoader {
 	private Fireable root = null;
 	private String rootId = null;
 
+	public Set<School> getSchools(){
+		Set<School> schools = new HashSet<>();
+		OrientGraph tx = graphFactory.getTx();
+		Iterable<Vertex> school = tx.getVerticesOfClass("School");
+		for(Vertex v : school){
+			OrientVertex ov = (OrientVertex) v;
+			School s = new School();
+			s.setName(ov.getProperty("name"));
+			LOGGER.info("Loading tree for school: " + s.getName());
+			OrientVertex rootVertex = (OrientVertex) v.getVertices(Direction.OUT).iterator().next(); //Exeption
+			Fireable rootFireable = getRuleTree(rootVertex);
+			s.setRoot(rootFireable);
+			schools.add(s);
+		}
+		return schools;
+	}
+
 
 	public Fireable getRuleTree(String rootId) {
 		OrientGraph orientdb = graphFactory.getTx();
@@ -48,6 +66,15 @@ public class RulesLoader {
 		} else {
 			return root;
 		}
+	}
+
+	public Fireable getRuleTree(OrientVertex v) {
+		OrientGraph orientdb = graphFactory.getTx();
+		this.rootId = v.getIdentity().toString();
+		LOGGER.info("Loading tree for root: " + rootId);
+		root = traverse(v);
+		measurementRepository.updateMeterMap(); //Update the meter map, i.e. retrieve resource IDs
+		return root;
 	}
 
 	public Fireable getRoot() {

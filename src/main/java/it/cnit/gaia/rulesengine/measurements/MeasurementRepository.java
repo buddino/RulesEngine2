@@ -60,7 +60,9 @@ public class MeasurementRepository  {
         if (latestReadings.containsKey(uri))
             return latestReadings.get(uri);
         LOGGER.error(uri + " not found in map");
-        return null;
+		LOGGER.info("Trying updating resources"); //FIXME
+		updateLatest();
+		return latestReadings.get(uri);
     }
 
     public List<ResourceDataDTO> getLatestHourFor(String uri) {
