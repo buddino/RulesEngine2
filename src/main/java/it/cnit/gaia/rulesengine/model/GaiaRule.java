@@ -2,12 +2,14 @@ package it.cnit.gaia.rulesengine.model;
 
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import it.cnit.gaia.rulesengine.configuration.ContextProvider;
+import it.cnit.gaia.rulesengine.event.EventService;
 import it.cnit.gaia.rulesengine.measurements.MeasurementRepository;
+import it.cnit.gaia.rulesengine.model.annotation.FromConfiguration;
 import it.cnit.gaia.rulesengine.model.annotation.ToBeLogged;
 import it.cnit.gaia.rulesengine.model.annotation.URI;
 import it.cnit.gaia.rulesengine.model.notification.GAIANotification;
 import it.cnit.gaia.rulesengine.model.notification.NotificationType;
-import it.cnit.gaia.rulesengine.notification.WebSocketController;
+import it.cnit.gaia.rulesengine.notification.WebsocketService;
 import org.apache.log4j.Logger;
 
 import java.lang.reflect.Field;
@@ -18,15 +20,16 @@ import java.util.Set;
 
 public abstract class GaiaRule implements Fireable {
 	@ToBeLogged
+	@FromConfiguration
 	public String name;
 	public String suggestion;
 	public String description;
 	public String rid;
-	protected Logger LOGGER = Logger.getLogger(this.getClass());
+	protected Logger LOGGER = Logger.getLogger(this.getClass().getSimpleName());
 	//protected DB embeddedDB = ContextProvider.getBean(DB.class);
 	//protected SenderService amqpSenderService = ContextProvider.getBean(SenderService.class);
-	protected WebSocketController websocket = ContextProvider.getBean(WebSocketController.class);
-	//protected EventLogger eventLogger = ContextProvider.getBean(EventLogger.class);
+	protected WebsocketService websocket = ContextProvider.getBean(WebsocketService.class);
+	protected EventService eventService = ContextProvider.getBean(EventService.class);
 	protected MeasurementRepository measurements = ContextProvider.getBean(MeasurementRepository.class);
 	protected OrientGraphFactory graphFactory = ContextProvider.getBean(OrientGraphFactory.class);
 
@@ -34,16 +37,32 @@ public abstract class GaiaRule implements Fireable {
 	public void action(){
 		GAIANotification notification = getBaseNotification();
 		websocket.pushNotification(notification);
-		System.out.println("\u001B[36mNOTIFICATION\u001B[0m\t"+notification.toString());
+		eventService.addEvent(notification);
+
 	}
 	public void fire(){
 		if(condition())
 			action();
 	}
 
-	//TODO Remove when implemented by rules
-	public boolean init(){
+	public boolean validateFields() {
+		Field[] fields = this.getClass().getFields();
+		for (Field f : fields) {
+			if (f.isAnnotationPresent(FromConfiguration.class)) {
+				try {
+					if (f.get(this) == null || f.get(this).equals("")) {
+						return false;
+					}
+				} catch (IllegalAccessException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 		return true;
+	}
+
+	public boolean init() {
+		return validateFields();
 	}
 
 	protected Set<String> getURIs(){
@@ -67,11 +86,13 @@ public abstract class GaiaRule implements Fireable {
 		notification.setRule(this.getClass().getSimpleName())
 				.setName(name)
 				.setType(NotificationType.info)
+				.setRule(rid)
 				.setDescription(description)
 				.setSuggestion(suggestion)
 				.setValues(getToBeLoggedMap());
 		return notification;
 	}
+
 
 	protected Map<String,Object> getToBeLoggedMap(){
 		Field[] fields = this.getClass().getFields();
@@ -121,7 +142,5 @@ public abstract class GaiaRule implements Fireable {
 	public String getRid() {
 		return rid;
 	}
-	// TODO Update method for resources URIs injection
-	// ${name}_uri or annotation
 
 }

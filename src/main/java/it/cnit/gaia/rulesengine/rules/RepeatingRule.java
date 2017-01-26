@@ -19,7 +19,6 @@ public class RepeatingRule extends CompositeRule{
 
 	@Override
 	public void action() {
-		System.out.println(rid+" triggered");
 		resetCounter();
 	}
 

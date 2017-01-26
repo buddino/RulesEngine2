@@ -6,13 +6,15 @@ import it.cnit.gaia.rulesengine.measurements.MeasurementRepository;
 import it.cnit.gaia.rulesengine.model.Fireable;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 
 @Service
 public class Scheduler {
-    private final Logger LOGGER = Logger.getRootLogger();
+	private final Logger LOGGER = Logger.getLogger(Scheduler.class.getSimpleName());
+
 
     @Autowired
     MeasurementRepository measurements;
@@ -20,17 +22,17 @@ public class Scheduler {
 	RulesLoader rulesLoader;
 
     @PostConstruct
-	public void init(){
+	public void init() throws ApiException {
+		LOGGER.info("RulesEngine Initialization");
+		//Fireable f = rulesLoader.getRuleTree("#25:0");
 		LOGGER.info("Running Recommendation Engine");
-		Fireable f = rulesLoader.getRuleTree("#25:1");
-		measurements.getUriSet().forEach(s -> LOGGER.info(s));
 	}
 
-    //@Scheduled(fixedDelay = 60000)
-    public void scheduledMethod() throws ApiException {
-		LOGGER.info("Running Recommendation Engine");
+	@Scheduled(fixedDelay = 60000)
+	public void scheduledMethod() throws ApiException {
+		LOGGER.info("Running iteration");
+		Fireable f = rulesLoader.getRuleTree("#25:0");
 		measurements.updateLatest();
-		Fireable f = rulesLoader.getRuleTree("#25:1");
 		f.fire();
     }
     //@Scheduled(fixedDelay = 1000)

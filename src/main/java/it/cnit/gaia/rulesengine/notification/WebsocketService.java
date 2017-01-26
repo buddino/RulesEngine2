@@ -9,14 +9,14 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 @Controller
-public class WebSocketController {
-    Logger LOGGER = Logger.getLogger(this.getClass());
+public class WebsocketService {
+    Logger LOGGER = Logger.getLogger(this.getClass().getSimpleName());
     @Autowired
     private ObjectMapper mapper;
     private SimpMessagingTemplate template;
 
     @Autowired
-    public WebSocketController(SimpMessagingTemplate template) {
+    public WebsocketService(SimpMessagingTemplate template) {
         this.template = template;
     }
 
@@ -26,8 +26,9 @@ public class WebSocketController {
     public void pushNotification(GAIANotification notification) {
         try {
             String message = mapper.writeValueAsString(notification);
-            LOGGER.info("SENDING: "+message);
             this.template.convertAndSend("/topic/recommendations", message);
+            LOGGER.debug("\u001B[36mWS NOTIFICATION\u001B[0m\t" + notification.toString());
+
 
         } catch (JsonProcessingException e) {
             e.printStackTrace();

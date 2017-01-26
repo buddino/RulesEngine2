@@ -4,7 +4,7 @@ import com.google.gson.JsonObject;
 import it.cnit.gaia.rulesengine.configuration.OrientConfiguration;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
 import it.cnit.gaia.rulesengine.measurements.MeasurementRepository;
-import it.cnit.gaia.rulesengine.measurements.SwaggerClient;
+import it.cnit.gaia.rulesengine.measurements.SparksService;
 import it.cnit.gaia.rulesengine.model.Fireable;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.GaiaRuleSet;
@@ -17,7 +17,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import java.util.Set;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {RulesLoader.class, OrientConfiguration.class, MeasurementRepository.class, SwaggerClient.class})
+@ContextConfiguration(classes = {RulesLoader.class, OrientConfiguration.class, MeasurementRepository.class, SparksService.class})
 public class LoaderTest {
 
 	@Autowired

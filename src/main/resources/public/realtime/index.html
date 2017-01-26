@@ -28,7 +28,7 @@
                             var msg = time + notification.description;
                             Lobibox.notify(notification.type,
                                     {
-                                        title: notification.rule,
+                                        title: notification.ruleId,
                                         msg: time + '<br>' + notification.description,
                                         delay: 15000,
                                         delayIndicator: false,
@@ -69,7 +69,7 @@
                             var notification = data[i];
                             var timestamp = new Date(notification.timestamp);
                             var string = '<li class="list-group-item">' +
-                                    notification.rule+'<br>'+
+                                notification.ruleId + '<br>' +
                                     timestamp.toTimeString()+'<br>'+
                                     notification.description+'</li>';
                             $("#list").append(string);

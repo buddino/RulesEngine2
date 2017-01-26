@@ -2,14 +2,16 @@ package it.cnit.gaia.rulesengine.rules;
 
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.annotation.FromConfiguration;
-import it.cnit.gaia.rulesengine.model.annotation.URI;
+import it.cnit.gaia.rulesengine.model.annotation.ToBeLogged;
 
-public class SimpleRule extends GaiaRule{
+public class DummyRule extends GaiaRule {
 
 	@FromConfiguration
+	@ToBeLogged
 	public Double threshold;
 
-	@FromConfiguration @URI
+	@FromConfiguration
+	@ToBeLogged
 	public String uri;
 
 	@Override
@@ -19,14 +21,11 @@ public class SimpleRule extends GaiaRule{
 
 	@Override
 	public String toString() {
-		return "SimpleRule:\t{" +
+		return "DummyRule:\t{" +
 				"pwf_threshold:" + threshold +
 				", uri:'" + uri + '\'' +
 				'}';
 	}
 
-	@Override
-	public boolean init(){
-		return threshold!=null && uri!=null && !uri.equals("");
-	}
+
 }

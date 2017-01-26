@@ -36,8 +36,8 @@ public class RESTController {
 
 	@RequestMapping("/rules/update")
 	public void updateRules() {
-		LOGGER.info("Updateing rules...");
-		rulesLoader.updateRuleTree("#25:1");
+		LOGGER.info("Updateing rules tree in next iteration");
+		rulesLoader.updateRuleTree();
 	}
 
 	@RequestMapping("/rules/{rid}")
@@ -56,6 +56,13 @@ public class RESTController {
 		JsonElement j = traverse(f);
 		return j.toString();
 	}
+
+	@RequestMapping("/urimapping")
+	public String getUriMapping() {
+		return g.toJson(measurementRepository.getMeterMap());
+	}
+
+
 
 	public JsonElement traverse(Fireable root) {
 		//Riguarda composite e ruleset forse ne basta uno solo

@@ -26,12 +26,12 @@ public class RulesLoader {
 	private final String ruleContainerName = "GaiaRuleSet";
 
 	@Autowired
-	OrientGraphFactory graphFactory;
+	private OrientGraphFactory graphFactory;
 
 	@Autowired
-	MeasurementRepository measurementRepository;
+	private MeasurementRepository measurementRepository;
 
-	private Logger LOGGER = Logger.getLogger(this.getClass());
+	private Logger LOGGER = Logger.getLogger("RulesLoader");
 	private Fireable root = null;
 	private String rootId = null;
 
@@ -39,9 +39,11 @@ public class RulesLoader {
 	public Fireable getRuleTree(String rootId) {
 		OrientGraph orientdb = graphFactory.getTx();
 		if (root == null || !this.rootId.equals(rootId)) {
+			LOGGER.info("Loading tree for root: " + rootId);
 			OrientVertex v = orientdb.getVertex(rootId);
 			this.rootId = rootId;
 			root = traverse(v);
+			measurementRepository.updateMeterMap(); //Update the meter map, i.e. retrieve resource IDs
 			return root;
 		} else {
 			return root;
@@ -52,14 +54,10 @@ public class RulesLoader {
 		return root;
 	}
 
-	//TODO Check if this can create problem if the root object is being used
-	public void updateRuleTree(String rootId) {
-		forceUpdate();
+	public void updateRuleTree() {
+		this.root = null;
 	}
 
-	private void forceUpdate(){
-		root = null;
-	}
 
 	private Fireable traverse(Vertex v) {
 		//If it is a GaiaRuleSet
@@ -87,7 +85,7 @@ public class RulesLoader {
 			try {
 				ruleClass = Class.forName(rulesPackage + "." + classname);        //Get correspondant class
 			} catch (ClassNotFoundException e) {
-				LOGGER.error("Failed initializing "+classname);
+				LOGGER.error("Failed initializing " + classname);
 				LOGGER.error(e.toString());
 				return null;
 			}
@@ -113,7 +111,7 @@ public class RulesLoader {
 						try {
 							f.set(rule, property);
 							//Populate the uri set
-							if(f.isAnnotationPresent(URI.class)){
+							if (f.isAnnotationPresent(URI.class)) {
 								measurementRepository.addUri((String) property);
 							}
 							///
@@ -121,7 +119,7 @@ public class RulesLoader {
 							e.printStackTrace();
 						}
 					} else {
-						LOGGER.error("Field " + f.getName() + " not found in the database ["+classname+"]");
+						LOGGER.error("Field " + f.getName() + " not found in the database [" + classname + "]");
 					}
 				}
 			}
@@ -142,8 +140,8 @@ public class RulesLoader {
 				}
 
 				//Inject the rule set into the CompositeRule
-				Field ruleSetField = ReflectionUtils.findField(ruleClass,"ruleSet");
-				if ( ruleSetField != null){
+				Field ruleSetField = ReflectionUtils.findField(ruleClass, "ruleSet");
+				if (ruleSetField != null) {
 					try {
 						ruleSetField.set(rule, ruleSet);
 

@@ -1,57 +1,33 @@
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
+import com.google.gson.Gson;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.function.OFunction;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import it.cnit.gaia.rulesengine.configuration.OrientConfiguration;
+import it.cnit.gaia.rulesengine.event.EventService;
 import org.joda.time.DateTime;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import java.io.IOException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+@SpringBootTest
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {OrientConfiguration.class})
+@ContextConfiguration(classes = {OrientConfiguration.class, EventService.class})
 public class TestDB {
 
-
-	@Autowired
-	OPartitionedDatabasePool eventDbPool;
+	Gson gson = new Gson();
 
 	@Autowired
 	OrientGraphFactory ogf;
 
-	@Test
-	public void testEventLog() {
-		ODatabaseDocumentTx db = eventDbPool.acquire();
-		DateTime date = new DateTime();
-		for (int i = 0; i < 105120; i++) {
-			if (i % 1000 == 0)
-				System.out.println(i);
-			date = date.minusHours(1);
-			ODocument event = new ODocument("GaiaEvent");
-			event.field("name", "Prova").field("timestamp", date.toDate()).field("value", Math.random()).field("class", this.getClass().getName());
-			event.save();
-		}
-		db.close();
-	}
+	@Autowired
+	EventService eventService;
 
-	@Test
-	public void testRead() {
-
-	}
 
 	@Test
 	public void testDateDatime() {
@@ -61,68 +37,31 @@ public class TestDB {
 		System.err.println(date.getMillis());
 	}
 
-	@Test
-	public void timerange() {
-		ODatabaseDocumentTx db = eventDbPool.acquire();
-		OFunction timerangeSummary = db.getMetadata().getFunctionLibrary().getFunction("summary");
-		System.out.println(timerangeSummary);
-	}
-
 
 	@Test
-	public void schema() throws IOException {
-		OrientGraphNoTx graph_c = ogf.getNoTx();
-
-		OClass day_c = graph_c.createVertexType("Day", "V");
-		day_c.createProperty("log", OType.EMBEDDEDLIST, OType.DATETIME);
-
-		OClass month_c = graph_c.createVertexType("Month", "V");
-		month_c.createProperty("day", OType.LINKMAP, day_c);
-
-		OClass year_c = graph_c.createVertexType("Year", "V");
-		year_c.createProperty("value", OType.INTEGER);
-		year_c.createProperty("month", OType.LINKMAP, month_c);
-
-		graph_c.commit();
+	public void testGraphEvent() {
+		ODatabaseDocumentTx rawGraph = ogf.getTx().getRawGraph();
+		ODocument doc = new ODocument("GaiaEvent");
+		doc.field("Prova", 12);
+		doc.save();
+		rawGraph.commit().close();
 	}
 
 	@Test
-	public void initLogDb() {
-		OrientGraph graph = ogf.getTx();
-		for (int yy = 2017; yy <= 2017; yy++) {
-			Map<Integer, OrientVertex> months = new HashMap<>();
-			for (int mm = 0; mm < 12; mm++) {
-				Map<Integer, OrientVertex> days = new HashMap<>();
-				for (int dd = 1; dd < 32; dd++) {
-					OrientVertex day = graph.addVertex("class:Day");
-					days.put(dd, day);
-				}
-				OrientVertex month = graph.addVertex("class:Month");
-				month.setProperties("day", days);
-				months.put(mm, month);
-			}
-			OrientVertex year = graph.addVertex("class:Year");
-			year.setProperties("value", yy);
-			year.setProperties("month", months);
+	public void testGetEvents() {
+		OrientGraphNoTx graph = ogf.getNoTx();
+		OCommandSQL command = new OCommandSQL("SELECT * FROM GaiaEvent");
+		command.setFetchPlan("*:-1");
+		command.setLimit(10);
+		Iterable<OrientVertex> result = graph.command(command).execute();
+		StringBuilder sb = new StringBuilder();
+		sb.append("[");
+		sb.append(result.iterator().next().getRecord().toJSON());
+		for (OrientVertex v : result) {
+			sb.append("," + v.getRecord().toJSON());
 		}
-
-		graph.commit();
-		graph.shutdown();
-	}
-
-	@Test
-	public void eventlog() {
-		ODatabaseDocumentTx db = ogf.getTx().getRawGraph();
-		ODocument hourlyLog = ogf.getTx().getVertex("#58:0").getRecord();
-
-		List<Date> hour = hourlyLog.field("logs");
-		for (int i = 0; i < 12; i++) {
-			hour.add(new Date());
-		}
-		hourlyLog.field("logs", hour);
-		hourlyLog.save();
-		db.commit();
-		db.close();
+		sb.append("]");
+		System.out.println(sb.toString());
 	}
 
 
