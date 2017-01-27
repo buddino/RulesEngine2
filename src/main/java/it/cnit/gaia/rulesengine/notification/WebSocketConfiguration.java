@@ -12,7 +12,7 @@ public class WebSocketConfiguration extends AbstractWebSocketMessageBrokerConfig
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic");
+        config.enableSimpleBroker("/recommentations");
         config.setApplicationDestinationPrefixes("/app");        // /app/{name} if using @MessageMapping for receiving messages
     }
 

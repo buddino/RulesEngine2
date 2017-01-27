@@ -3,13 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>Gaia Rules Engine | Recommendations receiver DEMO</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"
+          integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
     <link rel="stylesheet" href="bootstrap/mdb/mdb.css">
     <link rel="stylesheet" href="dist/css/lobibox.css"/>
     <link rel="stylesheet" href="css/dashboard.css"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+            integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+            crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.1.1/sockjs.js"></script>
     <script src="dist/js/lobibox.js"></script>
@@ -19,32 +23,33 @@
             var socket = new SockJS('/gs-guide-notification');
             stompClient = Stomp.over(socket);
             stompClient.connect({}, function (f) {
-                $("#connectBtn").prop("disabled",true);
-                $("#disconnectBtn").prop("disabled",false);
-                        stompClient.subscribe('/topic/recommendations', function (message) {
-                            var notification = JSON.parse(message.body);
-                            var timestamp = new Date(notification.timestamp);
-                            var time = timestamp.getHours() + ":" + timestamp.getMinutes() + ":" + timestamp.getSeconds();
-                            var msg = time + notification.description;
-                            Lobibox.notify(notification.type,
-                                    {
-                                        title: notification.ruleId,
-                                        msg: time + '<br>' + notification.description,
-                                        delay: 15000,
-                                        delayIndicator: false,
-                                        onClick: function (a) {
-                                            $("#values").empty();
-                                            var val = "";
-                                            for(var key in notification.values){
-                                                val+=key+": "+notification.values[key]+"<br>";
-                                            }
-                                            $("#values").append(val)
-                                        },
-                                        showClass: 'bounceIn'
-                                    })
+                    $("#connectBtn").prop("disabled", true);
+                    $("#disconnectBtn").prop("disabled", false);
+                    var endpoint = $("#endpoint").val();
+                    stompClient.subscribe(endpoint, function (message) {
+                        var notification = JSON.parse(message.body);
+                        var timestamp = new Date(notification.timestamp);
+                        var time = timestamp.getHours() + ":" + timestamp.getMinutes() + ":" + timestamp.getSeconds();
+                        var msg = time + notification.description;
+                        Lobibox.notify(notification.type,
+                            {
+                                title: notification.ruleId,
+                                msg: time + '<br>' + notification.description,
+                                delay: 15000,
+                                delayIndicator: false,
+                                onClick: function (a) {
+                                    $("#values").empty();
+                                    var val = "";
+                                    for (var key in notification.values) {
+                                        val += key + ": " + notification.values[key] + "<br>";
+                                    }
+                                    $("#values").append(val)
+                                },
+                                showClass: 'bounceIn'
+                            })
 
-                        });
-                    }
+                    });
+                }
             )
             ;
         }
@@ -52,26 +57,26 @@
 
         function disconnect() {
             if (stompClient != null) {
-                $("#connectBtn").prop("disabled",false);
-                $("#disconnectBtn").prop("disabled",true);
+                $("#connectBtn").prop("disabled", false);
+                $("#disconnectBtn").prop("disabled", true);
                 stompClient.disconnect();
             }
         }
 
         $(function () {
 
-            $("#reportsBtn").on("click", function(){
+            $("#reportsBtn").on("click", function () {
                 $("#websocket").hide();
                 $.ajax({
                     url: "/report",
-                    success: function(data){
-                        for( i in data ){
+                    success: function (data) {
+                        for (i in data) {
                             var notification = data[i];
                             var timestamp = new Date(notification.timestamp);
                             var string = '<li class="list-group-item">' +
                                 notification.ruleId + '<br>' +
-                                    timestamp.toTimeString()+'<br>'+
-                                    notification.description+'</li>';
+                                timestamp.toTimeString() + '<br>' +
+                                notification.description + '</li>';
                             $("#list").append(string);
                         }
                         $("#reports").show();
@@ -79,13 +84,13 @@
                 });
 
             });
-            $("#websocketBtn").on("click", function(){
+            $("#websocketBtn").on("click", function () {
                 $("#reports").hide();
                 $("#websocket").show();
             });
-			$("form").on('submit', function(e){
-			e.preventDefault();
-			});
+            $("form").on('submit', function (e) {
+                e.preventDefault();
+            });
             $("#connectBtn").click(function () {
                 connect();
             });
@@ -99,39 +104,38 @@
 <body>
 
 
-
 <div class="container-fluid">
-        <div class="col-sm-3 col-md-2 sidebar">
-            <ul class="nav nav-sidebar">
-                <li id="websocketBtn" class="active"><a href="#">Overview <span class="sr-only">(current)</span></a></li>
-                <li><a id="reportsBtn" href="#">Reports</a></li>
-                <li><a href="#">Analytics</a></li>
-            </ul>
-        </div>
-        <div id="websocket" class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-            <h2 class="page-header">Websocket connection</h2>
-            <div id="main-content" class="container">
-                <div class="row">
-                    <div class="col-md-6">
-                        <form class="form-inline">
-                            <div class="form-group">
-                                <button id="connectBtn" class="btn btn-default" type="submit">Connect</button>
-                                <button id="disconnectBtn" class="btn btn-default" disabled type="submit">Disconnect
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+    <div class="col-sm-3 col-md-2 sidebar">
+        <ul class="nav nav-sidebar">
+            <li id="websocketBtn" class="active"><a href="#">Overview <span class="sr-only">(current)</span></a></li>
+            <li><a id="reportsBtn" href="#">Reports</a></li>
+            <li><a href="#">Analytics</a></li>
+        </ul>
+    </div>
+    <div id="websocket" class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+        <h2 class="page-header">Websocket connection</h2>
+        <div id="main-content" class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <form class="form-inline">
+                        <div class="form-group">
+                            <button id="connectBtn" class="btn btn-default" type="submit">Connect</button>
+                            <button id="disconnectBtn" class="btn btn-default" disabled type="submit">Disconnect
+                            </button>
+                            <input type="text" id="endpoint">
+                        </div>
+                    </form>
                 </div>
             </div>
-            <h2 class="sub-header">Notification data:</h2>
-            <div id="values"></div>
         </div>
-        <div id="reports" class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" hidden>
-            <ul id="list" class="list-group" >
-            </ul>
-        </div>
+        <h2 class="sub-header">Notification data:</h2>
+        <div id="values"></div>
+    </div>
+    <div id="reports" class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" hidden>
+        <ul id="list" class="list-group">
+        </ul>
+    </div>
 </div>
-
 
 
 </body>

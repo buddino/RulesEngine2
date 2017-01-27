@@ -1,5 +1,7 @@
 package it.cnit.gaia.rulesengine.model.notification;
 
+import it.cnit.gaia.rulesengine.model.School;
+
 import java.io.Serializable;
 import java.util.Date;
 import java.util.Map;
@@ -7,6 +9,7 @@ import java.util.Map;
 public class GAIANotification implements Serializable {
 
 	private Long timestamp = new Date().getTime();
+	private School school;
 	private String rule;
 	private Map values;
 	private String description;
@@ -109,6 +112,15 @@ public class GAIANotification implements Serializable {
 
 	public GAIANotification setName(String name) {
 		this.name = name;
+		return this;
+	}
+
+	public School getSchool() {
+		return school;
+	}
+
+	public GAIANotification setSchool(School school) {
+		this.school = school;
 		return this;
 	}
 }

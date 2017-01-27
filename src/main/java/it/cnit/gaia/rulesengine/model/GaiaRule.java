@@ -25,6 +25,8 @@ public abstract class GaiaRule implements Fireable {
 	public String suggestion;
 	public String description;
 	public String rid;
+	public School school;
+
 	protected Logger LOGGER = Logger.getLogger(this.getClass().getSimpleName());
 	//protected DB embeddedDB = ContextProvider.getBean(DB.class);
 	//protected SenderService amqpSenderService = ContextProvider.getBean(SenderService.class);
@@ -89,6 +91,7 @@ public abstract class GaiaRule implements Fireable {
 				.setRule(rid)
 				.setDescription(description)
 				.setSuggestion(suggestion)
+				.setSchool(school)
 				.setValues(getToBeLoggedMap());
 		return notification;
 	}
@@ -143,4 +146,12 @@ public abstract class GaiaRule implements Fireable {
 		return rid;
 	}
 
+	public School getSchool() {
+		return school;
+	}
+
+	public GaiaRule setSchool(School school) {
+		this.school = school;
+		return this;
+	}
 }

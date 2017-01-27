@@ -9,60 +9,52 @@ import it.cnit.gaia.rulesengine.measurements.MeasurementRepository;
 import it.cnit.gaia.rulesengine.model.Fireable;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.GaiaRuleSet;
+import it.cnit.gaia.rulesengine.model.School;
+import it.cnit.gaia.rulesengine.model.errors.ResourceNotFoundException;
 import it.cnit.gaia.rulesengine.rules.CompositeRule;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 @RestController
 public class RESTController {
-	Logger LOGGER = Logger.getRootLogger();
+	private Logger LOGGER = Logger.getRootLogger();
+	private Gson g = new Gson();
 
 	@Autowired
-	RulesLoader rulesLoader;
-	@Autowired
-	MeasurementRepository measurementRepository;
+	private RulesLoader rulesLoader;
 
-	Gson g = new Gson();
+	@Autowired
+	private MeasurementRepository measurementRepository;
+
+	@RequestMapping("/rules/{schoolId}")
+	public String getrulestree(@PathVariable String schoolId) {
+		School school = rulesLoader.getSchools().get(schoolId);
+		if(school==null)
+			throw new ResourceNotFoundException();
+		Fireable root = school.getRoot();
+		JsonElement json = traverse(root);
+		return json.toString();
+	}
+
+	@RequestMapping("/schools")
+	public @ResponseBody
+	Collection<School> getSchools() {
+		return rulesLoader.getSchools().values();
+	}
 
 	@RequestMapping("/uris")
-	public String getUris() {
-		return g.toJson(measurementRepository.getUriSet()).toString();
+	public @ResponseBody
+	Map<String,Long> getUriMapping() {
+		return measurementRepository.getMeterMap();
 	}
-
-	@RequestMapping("/rules/update")
-	public void updateRules() {
-		LOGGER.info("Updateing rules tree in next iteration");
-		rulesLoader.updateRuleTree();
-	}
-
-	@RequestMapping("/rules/{rid}")
-	public String getrulestree(@PathVariable(value = "rid") String rid) {
-		System.out.println(rid);
-		Fireable f = rulesLoader.getRuleTree("#" + rid);
-		JsonElement j = traverse(f);
-		return j.toString();
-	}
-
-	@RequestMapping("/rules")
-	public String getrulestree() {
-		Fireable f = rulesLoader.getRoot();
-		if (f == null)
-			return "{}";
-		JsonElement j = traverse(f);
-		return j.toString();
-	}
-
-	@RequestMapping("/urimapping")
-	public String getUriMapping() {
-		return g.toJson(measurementRepository.getMeterMap());
-	}
-
-
 
 	public JsonElement traverse(Fireable root) {
 		//Riguarda composite e ruleset forse ne basta uno solo

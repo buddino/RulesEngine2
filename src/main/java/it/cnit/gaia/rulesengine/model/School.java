@@ -1,7 +1,12 @@
 package it.cnit.gaia.rulesengine.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class School {
 	String name;
+	String id;
+
+	@JsonIgnore
 	Fireable root;
 
 	public String getName() {
@@ -19,6 +24,15 @@ public class School {
 
 	public School setRoot(Fireable root) {
 		this.root = root;
+		return this;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public School setId(String id) {
+		this.id = id;
 		return this;
 	}
 

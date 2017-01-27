@@ -14,14 +14,13 @@ public class MeasurementRepository  {
 
 	Logger LOGGER = Logger.getLogger(this.getClass().getSimpleName());
 	Set<String> uriSet = new HashSet<>();
-
-    @Autowired
-	@Qualifier("sparks")
-	MeasurementService sparks;
-
     Date lastupdate = null;
     Map<String, ResourceDataDTO> latestReadings = new HashMap<String, ResourceDataDTO>();
     Map<String, List<ResourceDataDTO>> lastHourRedings = new HashMap<String, List<ResourceDataDTO>>();
+
+	@Autowired
+	@Qualifier("sparks")
+	MeasurementService sparks;
 
     public Date getLastUpdate() {
         return lastupdate;
