@@ -1,8 +1,8 @@
 package it.cnit.gaia.rulesengine.rules;
 
 import it.cnit.gaia.rulesengine.model.GaiaRule;
-import it.cnit.gaia.rulesengine.model.annotation.FromConfiguration;
-import it.cnit.gaia.rulesengine.model.annotation.ToBeLogged;
+import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
+import it.cnit.gaia.rulesengine.model.annotation.LogMe;
 import it.cnit.gaia.rulesengine.model.annotation.URI;
 
 import java.util.Arrays;
@@ -10,13 +10,17 @@ import java.util.List;
 
 public class SimpleThresholdRule extends GaiaRule{
 
-	@ToBeLogged	@FromConfiguration @URI
+	@LogMe
+	@LoadMe
+	@URI
 	public String uri;
-	@ToBeLogged	@FromConfiguration
+	@LogMe
+	@LoadMe
 	public Double threshold;
-	@ToBeLogged	@FromConfiguration
+	@LogMe
+	@LoadMe
 	public String operator;
-	@ToBeLogged
+	@LogMe
 	public Double value;
 
 	List<String> validValues = Arrays.asList("==",">","<","<=",">=");

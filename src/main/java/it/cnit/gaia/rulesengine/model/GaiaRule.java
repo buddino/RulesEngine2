@@ -4,8 +4,8 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import it.cnit.gaia.rulesengine.configuration.ContextProvider;
 import it.cnit.gaia.rulesengine.event.EventService;
 import it.cnit.gaia.rulesengine.measurements.MeasurementRepository;
-import it.cnit.gaia.rulesengine.model.annotation.FromConfiguration;
-import it.cnit.gaia.rulesengine.model.annotation.ToBeLogged;
+import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
+import it.cnit.gaia.rulesengine.model.annotation.LogMe;
 import it.cnit.gaia.rulesengine.model.annotation.URI;
 import it.cnit.gaia.rulesengine.model.notification.GAIANotification;
 import it.cnit.gaia.rulesengine.model.notification.NotificationType;
@@ -19,44 +19,48 @@ import java.util.Map;
 import java.util.Set;
 
 public abstract class GaiaRule implements Fireable {
-	@ToBeLogged
-	@FromConfiguration
+	@LogMe(event = false)
+	@LoadMe
 	public String name;
+	@LoadMe(required = false)
 	public String suggestion;
 	public String description;
 	public String rid;
 	public School school;
 
 	protected Logger LOGGER = Logger.getLogger(this.getClass().getSimpleName());
-	//protected DB embeddedDB = ContextProvider.getBean(DB.class);
-	//protected SenderService amqpSenderService = ContextProvider.getBean(SenderService.class);
 	protected WebsocketService websocket = ContextProvider.getBean(WebsocketService.class);
 	protected EventService eventService = ContextProvider.getBean(EventService.class);
 	protected MeasurementRepository measurements = ContextProvider.getBean(MeasurementRepository.class);
 	protected OrientGraphFactory graphFactory = ContextProvider.getBean(OrientGraphFactory.class);
 
 	public abstract boolean condition();
-	public void action(){
-		GAIANotification notification = getBaseNotification();
-		websocket.pushNotification(notification);
-		eventService.addEvent(notification);
 
+	public void action() {
+		GAIANotification notification = getBaseNotification();
+		GAIANotification event = getBaseEvent(); //TODO Create an event directly
+		websocket.pushNotification(notification);
+		eventService.addEvent(event);
 	}
-	public void fire(){
-		if(condition())
+
+	public void fire() {
+		if (condition())
 			action();
 	}
 
 	public boolean validateFields() {
 		Field[] fields = this.getClass().getFields();
 		for (Field f : fields) {
-			if (f.isAnnotationPresent(FromConfiguration.class)) {
-				try {
-					if (f.get(this) == null || f.get(this).equals("")) {
-						return false;
+			if (f.isAnnotationPresent(LoadMe.class)) {
+				LoadMe annotation = f.getAnnotation(LoadMe.class);
+				if (annotation.required()) {
+					try {
+						if (f.get(this) == null || f.get(this).equals("")) {
+							return false;
+						}
+					} catch (IllegalAccessException e) {
+						e.printStackTrace();
 					}
-				} catch (IllegalAccessException e) {
-					e.printStackTrace();
 				}
 			}
 		}
@@ -67,10 +71,10 @@ public abstract class GaiaRule implements Fireable {
 		return validateFields();
 	}
 
-	protected Set<String> getURIs(){
+	protected Set<String> getURIs() {
 		Field[] fields = this.getClass().getFields();
 		Set<String> uriSet = new HashSet<>();
-		for(Field f : fields) {
+		for (Field f : fields) {
 			if (f.isAnnotationPresent(URI.class)) {
 				try {
 					String uri = (String) f.get(this);
@@ -83,7 +87,7 @@ public abstract class GaiaRule implements Fireable {
 		return uriSet;
 	}
 
-	protected GAIANotification getBaseNotification(){
+	protected GAIANotification getBaseNotification() {
 		GAIANotification notification = new GAIANotification();
 		notification.setRule(this.getClass().getSimpleName())
 				.setName(name)
@@ -92,23 +96,53 @@ public abstract class GaiaRule implements Fireable {
 				.setDescription(description)
 				.setSuggestion(suggestion)
 				.setSchool(school)
-				.setValues(getToBeLoggedMap());
+				.setValues(getFieldsForNotification());
+		return notification;
+	}
+
+	protected GAIANotification getBaseEvent() {
+		GAIANotification notification = new GAIANotification();
+		notification.setRule(rid)
+				.setSchool(school)
+				.setValues(getFieldsForEvent());
 		return notification;
 	}
 
 
-	protected Map<String,Object> getToBeLoggedMap(){
+	protected Map<String, Object> getFieldsForNotification() {
 		Field[] fields = this.getClass().getFields();
 		Map<String, Object> map = new HashMap<>();
-		for(Field f : fields) {
-			if (f.isAnnotationPresent(ToBeLogged.class)) {
-				try {
-					Object value = f.get(this);
-					String fieldName = f.getName();
-					map.put(fieldName, value);
+		for (Field f : fields) {
+			if (f.isAnnotationPresent(LogMe.class)) {
+				if (f.getAnnotation(LogMe.class).notification()) {
+					try {
+						Object value = f.get(this);
+						String fieldName = f.getName();
+						map.put(fieldName, value);
 
-				} catch (IllegalAccessException e) {
-					e.printStackTrace();
+					} catch (IllegalAccessException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return map;
+	}
+
+	protected Map<String, Object> getFieldsForEvent() {
+		Field[] fields = this.getClass().getFields();
+		Map<String, Object> map = new HashMap<>();
+		for (Field f : fields) {
+			if (f.isAnnotationPresent(LogMe.class)) {
+				if (f.getAnnotation(LogMe.class).event()) {
+					try {
+						Object value = f.get(this);
+						String fieldName = f.getName();
+						map.put(fieldName, value);
+
+					} catch (IllegalAccessException e) {
+						e.printStackTrace();
+					}
 				}
 			}
 		}

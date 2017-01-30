@@ -34,7 +34,9 @@ public class Scheduler {
 	@Scheduled(fixedDelay = 5000)
 	public void scheduledMethod() throws ApiException {
 		LOGGER.info("Running iteration");
-		//schools.forEach(School::fire);
+		schools = rulesLoader.getSchools().values();
+		measurements.updateLatest();
+		schools.forEach(School::fire);
 	}
 
 	//@Scheduled(fixedDelay = 1000)

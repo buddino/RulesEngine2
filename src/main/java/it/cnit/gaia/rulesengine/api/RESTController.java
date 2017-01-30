@@ -37,7 +37,7 @@ public class RESTController {
 	@RequestMapping("/rules/{schoolId}")
 	public String getrulestree(@PathVariable String schoolId) {
 		School school = rulesLoader.getSchools().get(schoolId);
-		if(school==null)
+		if (school == null)
 			throw new ResourceNotFoundException();
 		Fireable root = school.getRoot();
 		JsonElement json = traverse(root);
@@ -45,14 +45,21 @@ public class RESTController {
 	}
 
 	@RequestMapping("/schools")
-	public @ResponseBody
+	public
+	@ResponseBody
 	Collection<School> getSchools() {
 		return rulesLoader.getSchools().values();
 	}
 
+	@RequestMapping("/reload")
+	public void reload() {
+		rulesLoader.updateAllSchools();
+	}
+
 	@RequestMapping("/uris")
-	public @ResponseBody
-	Map<String,Long> getUriMapping() {
+	public
+	@ResponseBody
+	Map<String, Long> getUriMapping() {
 		return measurementRepository.getMeterMap();
 	}
 

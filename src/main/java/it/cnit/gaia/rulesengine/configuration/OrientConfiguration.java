@@ -12,13 +12,10 @@ public class OrientConfiguration {
 
 	@Value("${orientdb.database}")
 	String dbname;
-
 	@Value("${orientdb.user}")
 	String user;
-
 	@Value("${orientdb.password}")
 	String password;
-
 	@Value("${orientdb.url}")
 	String url;
 

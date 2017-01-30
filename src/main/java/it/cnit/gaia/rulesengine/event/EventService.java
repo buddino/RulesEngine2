@@ -29,7 +29,6 @@ public class EventService {
 		//Fill the fields
 		gaiaevent.field("timestamp", event.getTimestamp());
 		gaiaevent.field("rule", event.getRuleId());
-		gaiaevent.field("ruleName", event.getRuleName());
 		gaiaevent.field("values", event.getValues());
 		//Save the document, it works as long as an active database is in the scope
 		gaiaevent.save();

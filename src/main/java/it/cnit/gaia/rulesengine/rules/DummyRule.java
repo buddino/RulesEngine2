@@ -1,17 +1,17 @@
 package it.cnit.gaia.rulesengine.rules;
 
 import it.cnit.gaia.rulesengine.model.GaiaRule;
-import it.cnit.gaia.rulesengine.model.annotation.FromConfiguration;
-import it.cnit.gaia.rulesengine.model.annotation.ToBeLogged;
+import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
+import it.cnit.gaia.rulesengine.model.annotation.LogMe;
 
 public class DummyRule extends GaiaRule {
 
-	@FromConfiguration
-	@ToBeLogged
+	@LoadMe
+	@LogMe(event = false)
 	public Double threshold;
 
-	@FromConfiguration
-	@ToBeLogged
+	@LoadMe(required = false)
+	@LogMe(event = false)
 	public String uri;
 
 	@Override

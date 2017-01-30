@@ -8,7 +8,6 @@ import java.util.Map;
 public class GaiaEvent {
 	Date timestamp;
 	String ruleId;
-	String ruleName;
 	Map<String, Object> values;
 
 	public GaiaEvent() {
@@ -18,17 +17,6 @@ public class GaiaEvent {
 		ruleId = notification.getRule();
 		timestamp = new Date(notification.getTimestamp());
 		values = notification.getValues();
-		values.put("description", notification.getDescription());
-		values.put("suggestion", notification.getSuggestion());
-	}
-
-	public String getRuleName() {
-		return ruleName;
-	}
-
-	public GaiaEvent setRuleName(String ruleName) {
-		this.ruleName = ruleName;
-		return this;
 	}
 
 	public Date getTimestamp() {

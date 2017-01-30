@@ -10,7 +10,7 @@ import it.cnit.gaia.rulesengine.model.Fireable;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.GaiaRuleSet;
 import it.cnit.gaia.rulesengine.model.School;
-import it.cnit.gaia.rulesengine.model.annotation.FromConfiguration;
+import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
 import it.cnit.gaia.rulesengine.model.annotation.URI;
 import it.cnit.gaia.rulesengine.rules.CompositeRule;
 import org.apache.log4j.Logger;
@@ -28,6 +28,7 @@ import java.util.Set;
 public class RulesLoader {
 	private final String rulesPackage = "it.cnit.gaia.rulesengine.rules";
 	private final String ruleContainerName = "GaiaRuleSet";
+	//TODO Non serve a niente! Levalo!
 
 	@Autowired
 	private OrientGraphFactory graphFactory;
@@ -38,6 +39,7 @@ public class RulesLoader {
 	private Logger LOGGER = Logger.getLogger("RulesLoader");
 	private Map<String,School> schools = null;
 
+	//TODO return a set of School use the map internally exposing a getMethod
 	public Map<String,School> getSchools(){
 		if(schools!=null){
 			return schools;
@@ -46,7 +48,7 @@ public class RulesLoader {
 		OrientGraph tx = graphFactory.getTx();
 		Iterable<Vertex> schoolVertices = tx.getVerticesOfClass("School");
 		for(Vertex sv : schoolVertices){
-			School school =traverseSchool(sv);
+			School school = traverseSchool(sv);
 			schools.put(school.getId(),school);
 		}
 		measurementRepository.updateMeterMap();
@@ -125,7 +127,8 @@ public class RulesLoader {
 				e.printStackTrace();
 			}
 			for (Field f : fields) {
-				if (f.isAnnotationPresent(FromConfiguration.class)) {
+				if (f.isAnnotationPresent(LoadMe.class)) {
+					LoadMe annotation = f.getAnnotation(LoadMe.class);
 					Object property = v.getProperty(f.getName());
 					if (property != null && !property.equals("")) {
 						try {
@@ -139,7 +142,8 @@ public class RulesLoader {
 							e.printStackTrace();
 						}
 					} else {
-						LOGGER.error("Field " + f.getName() + " not found in the database [" + classname + "]");
+						if(annotation.required())
+							LOGGER.error("Field " + f.getName() + " not found in the database [" + v.getProperty("@rid") +"]");
 					}
 				}
 			}
