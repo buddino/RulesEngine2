@@ -10,13 +10,13 @@ public class PowerFactor extends GaiaRule{
 	@LogMe
 	@LoadMe
 	@URI
-	public String meter_uri;	//If 3-Phase this is the base uri, /1 /2 /3 will be added automatically
+	public String powerfactor_uri;	//If 3-Phase this is the base uri, /1 /2 /3 will be added automatically
 
-	@LoadMe
+	@LoadMe( required = false)
 	public int n_phases = 1;
 
 	@LogMe
-	@LoadMe
+	@LoadMe( required = false)
 	public Double pwf_threshold = 0.7;
 
 	@LogMe
@@ -26,14 +26,14 @@ public class PowerFactor extends GaiaRule{
 	public boolean condition() {
 		if(n_phases==1){
 			pwf_value = new Double[1];
-			pwf_value[0] = measurements.getLatestFor(meter_uri).getReading();
+			pwf_value[0] = measurements.getLatestFor(powerfactor_uri).getReading();
 			return pwf_value[0] < pwf_threshold;
 		}
 		else if(n_phases==3){
 			pwf_value = new Double[3];
-			pwf_value[0] = measurements.getLatestFor(meter_uri+"/1").getReading();
-			pwf_value[1] = measurements.getLatestFor(meter_uri+"/2").getReading();
-			pwf_value[2] = measurements.getLatestFor(meter_uri+"/3").getReading();
+			pwf_value[0] = measurements.getLatestFor(powerfactor_uri +"/1").getReading();
+			pwf_value[1] = measurements.getLatestFor(powerfactor_uri +"/2").getReading();
+			pwf_value[2] = measurements.getLatestFor(powerfactor_uri +"/3").getReading();
 			return pwf_value[0] < pwf_threshold || pwf_value[1] < pwf_threshold || pwf_value[2] < pwf_threshold;
 		}
 		else {

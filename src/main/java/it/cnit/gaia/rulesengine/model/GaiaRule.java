@@ -7,24 +7,22 @@ import it.cnit.gaia.rulesengine.measurements.MeasurementRepository;
 import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
 import it.cnit.gaia.rulesengine.model.annotation.LogMe;
 import it.cnit.gaia.rulesengine.model.annotation.URI;
+import it.cnit.gaia.rulesengine.model.event.GaiaEvent;
 import it.cnit.gaia.rulesengine.model.notification.GAIANotification;
-import it.cnit.gaia.rulesengine.model.notification.NotificationType;
 import it.cnit.gaia.rulesengine.notification.WebsocketService;
 import org.apache.log4j.Logger;
 
 import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public abstract class GaiaRule implements Fireable {
-	@LogMe(event = false)
-	@LoadMe
+	@LoadMe @LogMe(event = false)
 	public String name;
-	@LoadMe(required = false)
+	@LoadMe @LogMe(event = false)
 	public String suggestion;
+	@LogMe( event = false, notification = false)
 	public String description;
+
 	public String rid;
 	public School school;
 
@@ -38,7 +36,7 @@ public abstract class GaiaRule implements Fireable {
 
 	public void action() {
 		GAIANotification notification = getBaseNotification();
-		GAIANotification event = getBaseEvent(); //TODO Create an event directly
+		GaiaEvent event = getBaseEvent();
 		websocket.pushNotification(notification);
 		eventService.addEvent(event);
 	}
@@ -89,23 +87,23 @@ public abstract class GaiaRule implements Fireable {
 
 	protected GAIANotification getBaseNotification() {
 		GAIANotification notification = new GAIANotification();
-		notification.setRule(this.getClass().getSimpleName())
-				.setName(name)
-				.setType(NotificationType.info)
-				.setRule(rid)
-				.setDescription(description)
-				.setSuggestion(suggestion)
-				.setSchool(school)
-				.setValues(getFieldsForNotification());
+		Area area = new Area(); //TODO Move area inside GaiaRule
+		area.setId(UUID.randomUUID().toString());
+		notification.setRuleClass(this.getClass().getSimpleName())
+					.setRuleName(name)
+					.setRuleId(rid)
+					.setDescription(description)
+					.setSuggestion(suggestion)
+					.setSchool(school)
+					.setArea(area)
+					.setValues(getFieldsForNotification());
 		return notification;
 	}
 
-	protected GAIANotification getBaseEvent() {
-		GAIANotification notification = new GAIANotification();
-		notification.setRule(rid)
-				.setSchool(school)
-				.setValues(getFieldsForEvent());
-		return notification;
+	protected GaiaEvent getBaseEvent() {
+		GaiaEvent event = new GaiaEvent();
+		event.setTimestamp(new Date()).setRuleId(rid).setValues(getFieldsForEvent());
+		return event;
 	}
 
 

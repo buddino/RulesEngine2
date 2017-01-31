@@ -14,7 +14,7 @@ public class GaiaEvent {
 	}
 
 	public GaiaEvent(GAIANotification notification) {
-		ruleId = notification.getRule();
+		ruleId = notification.getRuleClass();
 		timestamp = new Date(notification.getTimestamp());
 		values = notification.getValues();
 	}

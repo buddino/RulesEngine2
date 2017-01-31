@@ -1,5 +1,6 @@
 package it.cnit.gaia.rulesengine.model.notification;
 
+import it.cnit.gaia.rulesengine.model.Area;
 import it.cnit.gaia.rulesengine.model.School;
 
 import java.io.Serializable;
@@ -7,14 +8,17 @@ import java.util.Date;
 import java.util.Map;
 
 public class GAIANotification implements Serializable {
-
 	private Long timestamp = new Date().getTime();
 	private School school;
-	private String rule;
+	private Area area;
+
+	private String ruleClass = "";
+	private String ruleName = "";
+	private String ruleId = "";
+
 	private Map values;
-	private String description;
-	private String name;
-	private String suggestion;
+	private String description = "";
+	private String suggestion = "";
 	private NotificationType type = NotificationType.info;
 
 
@@ -24,7 +28,7 @@ public class GAIANotification implements Serializable {
 		if (!(o instanceof GAIANotification)) return false;
 		GAIANotification that = (GAIANotification) o;
 		if (timestamp != null ? !timestamp.equals(that.timestamp) : that.timestamp != null) return false;
-		if (rule != null ? !rule.equals(that.rule) : that.rule != null) return false;
+		if (ruleClass != null ? !ruleClass.equals(that.ruleClass) : that.ruleClass != null) return false;
 		if (values != null ? !values.equals(that.values) : that.values != null) return false;
 		if (description != null ? !description.equals(that.description) : that.description != null) return false;
 		return type == that.type;
@@ -33,7 +37,7 @@ public class GAIANotification implements Serializable {
 	@Override
 	public int hashCode() {
 		int result = timestamp != null ? timestamp.hashCode() : 0;
-		result = 31 * result + (rule != null ? rule.hashCode() : 0);
+		result = 31 * result + (ruleClass != null ? ruleClass.hashCode() : 0);
 		result = 31 * result + (values != null ? values.hashCode() : 0);
 		result = 31 * result + (description != null ? description.hashCode() : 0);
 		result = 31 * result + (type != null ? type.hashCode() : 0);
@@ -49,12 +53,12 @@ public class GAIANotification implements Serializable {
 		return this;
 	}
 
-	public String getRule() {
-		return rule;
+	public String getRuleClass() {
+		return ruleClass;
 	}
 
-	public GAIANotification setRule(String rule) {
-		this.rule = rule;
+	public GAIANotification setRuleClass(String ruleClass) {
+		this.ruleClass = ruleClass;
 		return this;
 	}
 
@@ -98,7 +102,7 @@ public class GAIANotification implements Serializable {
 	public String toString() {
 		return "GAIANotification{" +
 				"timestamp=" + timestamp +
-				", rule='" + rule + '\'' +
+				", ruleClass='" + ruleClass + '\'' +
 				", values=" + values +
 				", description='" + description + '\'' +
 				", suggestion='" + suggestion + '\'' +
@@ -106,12 +110,12 @@ public class GAIANotification implements Serializable {
 				'}';
 	}
 
-	public String getName() {
-		return name;
+	public String getRuleName() {
+		return ruleName;
 	}
 
-	public GAIANotification setName(String name) {
-		this.name = name;
+	public GAIANotification setRuleName(String ruleName) {
+		this.ruleName = ruleName;
 		return this;
 	}
 
@@ -121,6 +125,24 @@ public class GAIANotification implements Serializable {
 
 	public GAIANotification setSchool(School school) {
 		this.school = school;
+		return this;
+	}
+
+	public Area getArea() {
+		return area;
+	}
+
+	public GAIANotification setArea(Area area) {
+		this.area = area;
+		return this;
+	}
+
+	public String getRuleId() {
+		return ruleId;
+	}
+
+	public GAIANotification setRuleId(String ruleId) {
+		this.ruleId = ruleId;
 		return this;
 	}
 }

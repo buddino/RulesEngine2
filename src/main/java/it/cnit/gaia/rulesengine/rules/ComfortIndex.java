@@ -9,9 +9,12 @@ import it.cnit.gaia.rulesengine.model.notification.NotificationType;
 
 public class ComfortIndex extends GaiaRule {
 
+	//Thresholds
 	@LogMe
 	@LoadMe
-	public Double threshold = 10.0;
+	public Double threshold = 30.0;
+
+	//URIs
 	@LogMe
 	@LoadMe
 	@URI
@@ -20,6 +23,8 @@ public class ComfortIndex extends GaiaRule {
 	@LoadMe
 	@URI
 	public String humidity_uri;
+
+	//Values
 	@LogMe
 	public Double index;
 	@LogMe
