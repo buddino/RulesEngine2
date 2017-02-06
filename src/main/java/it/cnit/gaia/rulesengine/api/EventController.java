@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import it.cnit.gaia.rulesengine.event.EventService;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,12 +33,25 @@ public class EventController {
 		return eventsToJson(eventService.getLatestEvents(limit, prefetch));
 	}
 
+	@RequestMapping("/events/{schoolId}")
+	public String getEventsForSchool(
+			@PathVariable String schoolId,
+			@RequestParam(required = false) Long from,
+			@RequestParam(required = false) Long to,
+			@RequestParam(defaultValue = "10", required = false) Integer limit) {
+		if (from == null || to == null)
+			return eventsToJson(eventService.getEventsForSchool(schoolId, limit));
+		else
+			return eventsToJson(eventService.getEventsForSchoolTimeRange(schoolId, from, to, limit));
+	}
+
+
 	@NotNull
 	private String eventsToJson(List<ODocument> list) {
 		if (list == null)
 			return "[]";
 		return list.stream()
-				.map(d -> d.toJSON())
+				.map(d -> d.toJSON("rid,fetchPlan:rule:1"))
 				.collect(Collectors.joining(",", "[", "]")).toString();
 	}
 

@@ -5,6 +5,7 @@ import io.swagger.client.model.ResourceDataDTO;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
@@ -80,6 +81,7 @@ public class MeasurementRepository  {
 		int counter = 0;
 		LOGGER.info(String.format("Resolving URIs (%d)", uriSet.size()));
 		Map<String, Long> map = new HashMap<>();
+		//TODO Update only the missing URIs
 		for (String uri : uriSet) {
 			try {
 				Long resourceId = sparks.uri2id(uri);
@@ -96,6 +98,11 @@ public class MeasurementRepository  {
 		LOGGER.info(String.format("Mapped %d URIs", map.entrySet().size()));
 		sparks.setMeterMap(map);
 		return map;
+	}
+
+	@Async
+	private void addToMap(Map map, String uri){
+
 	}
 
 	public Map<String, Long> getMeterMap() {

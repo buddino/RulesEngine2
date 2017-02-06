@@ -30,7 +30,6 @@
                         var notification = JSON.parse(message.body);
                         var timestamp = new Date(notification.timestamp);
                         var time = timestamp.getHours() + ":" + timestamp.getMinutes() + ":" + timestamp.getSeconds();
-
                         Lobibox.notify(notification.type,
                             {
                                 title: notification.ruleId,

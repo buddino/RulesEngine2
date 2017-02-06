@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.util.Collection;
 
 @Service
@@ -24,24 +23,18 @@ public class Scheduler {
 
 	Collection<School> schools;
 
-	@PostConstruct
+	//@PostConstruct
 	public void init() throws ApiException {
 		LOGGER.info("RulesEngine Initialization");
-		schools = rulesLoader.getSchools().values();
+		schools = rulesLoader.loadSchools().values();
 		//measurements.updateLatest();
 	}
 
-	@Scheduled(fixedDelay = 5000)
+	@Scheduled(fixedDelayString = "${scheduler.interval}")
 	public void scheduledMethod() throws ApiException {
 		LOGGER.info("Running iteration");
-		schools = rulesLoader.getSchools().values();
+		schools = rulesLoader.loadSchools().values();
 		measurements.updateLatest();
 		schools.forEach(School::fire);
 	}
-
-	//@Scheduled(fixedDelay = 1000)
-	public void repeatingrule() {
-
-	}
-
 }

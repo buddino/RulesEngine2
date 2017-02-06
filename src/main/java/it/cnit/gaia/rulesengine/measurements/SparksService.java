@@ -68,7 +68,7 @@ public class SparksService implements MeasurementService {
     }
 
 	@Override
-	public Map<String, ResourceDataDTO> queryLatest() throws ApiException {
+	public Map<String, ResourceDataDTO> queryLatest() {
 		Map<String, ResourceDataDTO> readings = new HashMap<>();
         QueryLatestResourceDataDTO query = new QueryLatestResourceDataDTO();
 		try {
@@ -81,15 +81,25 @@ public class SparksService implements MeasurementService {
 			LOGGER.error("You have to load the tree to fill the URIs set before querying for measuremeents");
 			e.printStackTrace();
 		}
-		QueryLatestResourceDataResultDTO result = dataApi.queryLatestResourcesDataUsingPOST(query);
-        Set<String> keySet = result.getResults().keySet();
-        for (String requestString : keySet) {
-            JsonObject obj = gson.fromJson(requestString, JsonObject.class);
-            String resourceURI = obj.get("resourceURI").toString().replace("\"", "");
-            ResourceDataDTO res = result.getResults().get(requestString);
-            readings.put(resourceURI, res);
-        }
-        return readings;
+		if(query.getQueries().size()>0) {
+			QueryLatestResourceDataResultDTO result = null;
+			try {
+				result = dataApi.queryLatestResourcesDataUsingPOST(query);
+			} catch (ApiException e) {
+				LOGGER.error("query: "+query);
+				LOGGER.error(e.getMessage());
+			}
+			Set<String> keySet = result.getResults().keySet();
+			for (String requestString : keySet) {
+				JsonObject obj = gson.fromJson(requestString, JsonObject.class);
+				String resourceURI = obj.get("resourceURI").toString().replace("\"", "");
+				ResourceDataDTO res = result.getResults().get(requestString);
+				readings.put(resourceURI, res);
+			}
+		}
+		else
+			LOGGER.warn("The resource list is empty, cannot update measurements");
+		return readings;
     }
 
 

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class School {
 	String name;
 	String id;
+	String rid;
 
 	@JsonIgnore
 	Fireable root;
@@ -40,4 +41,12 @@ public class School {
 		root.fire();
 	}
 
+	public String getRid() {
+		return rid;
+	}
+
+	public School setRid(String rid) {
+		this.rid = rid;
+		return this;
+	}
 }

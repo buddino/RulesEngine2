@@ -1,5 +1,6 @@
 package it.cnit.gaia.rulesengine.model;
 
+import com.google.gson.Gson;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import it.cnit.gaia.rulesengine.configuration.ContextProvider;
 import it.cnit.gaia.rulesengine.event.EventService;
@@ -10,17 +11,19 @@ import it.cnit.gaia.rulesengine.model.annotation.URI;
 import it.cnit.gaia.rulesengine.model.event.GaiaEvent;
 import it.cnit.gaia.rulesengine.model.notification.GAIANotification;
 import it.cnit.gaia.rulesengine.notification.WebsocketService;
+import org.apache.commons.lang.text.StrSubstitutor;
 import org.apache.log4j.Logger;
 
 import java.lang.reflect.Field;
 import java.util.*;
 
 public abstract class GaiaRule implements Fireable {
-	@LoadMe @LogMe(event = false)
+	@LoadMe
+	@LogMe(event = false)
 	public String name;
-	@LoadMe @LogMe(event = false)
+	@LoadMe
 	public String suggestion;
-	@LogMe( event = false, notification = false)
+	@LogMe(event = false, notification = false)
 	public String description;
 
 	public String rid;
@@ -90,22 +93,23 @@ public abstract class GaiaRule implements Fireable {
 		Area area = new Area(); //TODO Move area inside GaiaRule
 		area.setId(UUID.randomUUID().toString());
 		notification.setRuleClass(this.getClass().getSimpleName())
-					.setRuleName(name)
-					.setRuleId(rid)
-					.setDescription(description)
-					.setSuggestion(suggestion)
-					.setSchool(school)
-					.setArea(area)
-					.setValues(getFieldsForNotification());
+				.setRuleName(name)
+				.setRuleId(rid)
+				.setDescription(description)
+				.setSuggestion(getSuggestion())
+				.setSchool(school)
+				.setArea(area)
+				.setValues(getFieldsForNotification());
 		return notification;
 	}
 
 	protected GaiaEvent getBaseEvent() {
 		GaiaEvent event = new GaiaEvent();
-		event.setTimestamp(new Date()).setRuleId(rid).setValues(getFieldsForEvent());
+		Map<String, Object> fieldsForEvent = getFieldsForEvent();
+		fieldsForEvent.put("suggestion",getSuggestion());
+		event.setTimestamp(new Date()).setRuleId(rid).setValues(fieldsForEvent);
 		return event;
 	}
-
 
 	protected Map<String, Object> getFieldsForNotification() {
 		Field[] fields = this.getClass().getFields();
@@ -147,6 +151,16 @@ public abstract class GaiaRule implements Fireable {
 		return map;
 	}
 
+	protected Map<String, Object> getAllFields() {
+		//TODO Remove Gson here
+		Gson G = new Gson();
+		Map<String, Object> map = getFieldsForEvent();
+		map.putAll(getFieldsForNotification());
+
+
+		return map;
+	}
+
 	public String getName() {
 		return name;
 	}
@@ -157,12 +171,13 @@ public abstract class GaiaRule implements Fireable {
 	}
 
 	public String getSuggestion() {
-		return suggestion;
-	}
-
-	public GaiaRule setSuggestion(String suggestion) {
-		this.suggestion = suggestion;
-		return this;
+		Map<String, Object> fields = getAllFields();
+		fields.put("school", school.getName());
+		//Add useful fields
+		//...
+		String replaced = StrSubstitutor.replace(suggestion, fields);
+		System.out.println(replaced);
+		return replaced;
 	}
 
 	public String getDescription() {

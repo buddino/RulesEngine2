@@ -5,12 +5,15 @@ import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
 import it.cnit.gaia.rulesengine.model.annotation.LogMe;
 import it.cnit.gaia.rulesengine.model.annotation.URI;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class PowerFactor extends GaiaRule{
 
 	@LogMe
 	@LoadMe
 	@URI
-	public String powerfactor_uri;	//If 3-Phase this is the base uri, /1 /2 /3 will be added automatically
+	public String pwf_uri;	//If 3-Phase this is the base uri, /1 /2 /3 will be added automatically
 
 	@LoadMe( required = false)
 	public int n_phases = 1;
@@ -20,21 +23,25 @@ public class PowerFactor extends GaiaRule{
 	public Double pwf_threshold = 0.7;
 
 	@LogMe
-	public Double[] pwf_value;
+	public List<Double> pwf_value = new ArrayList<>();
 
 	@Override
 	public boolean condition() {
 		if(n_phases==1){
-			pwf_value = new Double[1];
-			pwf_value[0] = measurements.getLatestFor(powerfactor_uri).getReading();
-			return pwf_value[0] < pwf_threshold;
+			try {
+				pwf_value.add(measurements.getLatestFor(pwf_uri).getReading());
+			}
+			catch (NullPointerException e){LOGGER.error("["+rid+"]"+e.getMessage());}
+			return pwf_value.get(0) < pwf_threshold;
 		}
 		else if(n_phases==3){
-			pwf_value = new Double[3];
-			pwf_value[0] = measurements.getLatestFor(powerfactor_uri +"/1").getReading();
-			pwf_value[1] = measurements.getLatestFor(powerfactor_uri +"/2").getReading();
-			pwf_value[2] = measurements.getLatestFor(powerfactor_uri +"/3").getReading();
-			return pwf_value[0] < pwf_threshold || pwf_value[1] < pwf_threshold || pwf_value[2] < pwf_threshold;
+			try {
+				pwf_value.add(measurements.getLatestFor(pwf_uri + "/1").getReading());
+				pwf_value.add(measurements.getLatestFor(pwf_uri + "/2").getReading());
+				pwf_value.add(measurements.getLatestFor(pwf_uri + "/3").getReading());
+				}
+			catch (NullPointerException e){ LOGGER.error("["+rid+"]"+e.getMessage());}
+			return pwf_value.stream().anyMatch( value -> value < pwf_threshold);
 		}
 		else {
 			LOGGER.warn("Illegal number of phases");

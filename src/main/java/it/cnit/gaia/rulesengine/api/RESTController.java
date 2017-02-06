@@ -14,6 +14,8 @@ import it.cnit.gaia.rulesengine.model.errors.ResourceNotFoundException;
 import it.cnit.gaia.rulesengine.rules.CompositeRule;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -36,7 +38,7 @@ public class RESTController {
 
 	@RequestMapping("/rules/{schoolId}")
 	public String getrulestree(@PathVariable String schoolId) {
-		School school = rulesLoader.getSchools().get(schoolId);
+		School school = rulesLoader.loadSchools().get(schoolId);
 		if (school == null)
 			throw new ResourceNotFoundException();
 		Fireable root = school.getRoot();
@@ -48,12 +50,21 @@ public class RESTController {
 	public
 	@ResponseBody
 	Collection<School> getSchools() {
-		return rulesLoader.getSchools().values();
+		return rulesLoader.loadSchools().values();
 	}
 
-	@RequestMapping("/reload")
-	public void reload() {
-		rulesLoader.updateAllSchools();
+	@ResponseBody
+	@RequestMapping("/reload/{schoolId}")
+	public ResponseEntity<String> reload(@PathVariable(required = false) String schoolId) {
+		if(schoolId==null || schoolId.equals("")) {
+			rulesLoader.reloadAllSchools();
+			return new ResponseEntity<>(HttpStatus.OK);
+		} else {
+			if(!rulesLoader.reloadSchool(schoolId)){
+				return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+			}
+			return new ResponseEntity<>(HttpStatus.OK);
+		}
 	}
 
 	@RequestMapping("/uris")

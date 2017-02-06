@@ -18,10 +18,12 @@ public class OrientConfiguration {
 	String password;
 	@Value("${orientdb.url}")
 	String url;
+	@Value("${orientdb.port}")
+	String port;
 
 	@Bean
 	public OrientGraphFactory rulesdb(){
-		return new OrientGraphFactory("remote:" + url + "/" + dbname, user, password).setupPool(1, 10);
+		return new OrientGraphFactory("remote:" + url + ":"+port+"/" + dbname, user, password).setupPool(1, 10);
 	}
 
 

@@ -37,28 +37,46 @@ public class RulesLoader {
 	private MeasurementRepository measurementRepository;
 
 	private Logger LOGGER = Logger.getLogger("RulesLoader");
-	private Map<String,School> schools = null;
+	private Map<String, School> schools = null;
 
-	//TODO return a set of School use the map internally exposing a getMethod
-	public Map<String,School> getSchools(){
-		if(schools!=null){
+	private OrientGraph tx;
+
+
+	public Map<String, School> loadSchools() {
+		if (schools != null) {
 			return schools;
 		}
+		tx = graphFactory.getTx();
 		schools = new HashMap<>();
-		OrientGraph tx = graphFactory.getTx();
 		Iterable<Vertex> schoolVertices = tx.getVerticesOfClass("School");
-		for(Vertex sv : schoolVertices){
+		for (Vertex sv : schoolVertices) {
 			School school = traverseSchool(sv);
-			schools.put(school.getId(),school);
+			schools.put(school.getId(), school);
+			tx.commit();
 		}
+		tx.shutdown();
 		measurementRepository.updateMeterMap();
 		return schools;
 	}
 
-	private School traverseSchool(Vertex v){
+	public boolean reloadSchool(String id) {
+		if (schools.containsKey(id)) {
+			School school = schools.get(id);
+			Vertex schoolVertex = graphFactory.getTx().getVertex(school.getRid());
+			LOGGER.info("Reloading tree for school: " + school.getName());
+			school = traverseSchool(schoolVertex);
+			schools.put(id,school);
+			measurementRepository.updateMeterMap();
+			return true;
+		}
+		return false;
+	}
+
+	private School traverseSchool(Vertex v) {
 		OrientVertex ov = (OrientVertex) v;
 		School s = new School();
 		s.setName(ov.getProperty("name"));
+		s.setRid(ov.getRecord().getIdentity().toString());
 		s.setId(ov.getProperty("id")); //Riguarda Check id here?
 		LOGGER.info("Loading tree for school: " + s.getName());
 		try {
@@ -66,30 +84,26 @@ public class RulesLoader {
 			Fireable rootFireable = traverse(rootVertex, s);
 			s.setRoot(rootFireable);
 			return s;
-		}
-		catch (NullPointerException e){
-			LOGGER.error("Could not find the root rule for school: "+s.getId());
+		} catch (NullPointerException e) {
+			LOGGER.error("Could not find the root rule for school: " + s.getId());
 		}
 		return null;
 	}
 
-	public void updateSchoolTree(String schoolId) {
-		//TODO
-	}
-
-	public void updateAllSchools(){
+	public void reloadAllSchools() {
 		schools = null;
 	}
 
 
 	private Fireable traverse(Vertex v, School school) {
 		//If it is a GaiaRuleSet
-		String classname = v.getProperty("@class");
+		OrientVertex ov = (OrientVertex) v;
+		String classname = ov.getProperty("@class");
 		if (classname.equals(ruleContainerName)) {
 			GaiaRuleSet ruleSet = new GaiaRuleSet();                        //Instantiate a ruleSet
-			ruleSet.rid = v.getId().toString();
+			ruleSet.rid = ov.getId().toString();
 			//
-			Iterable<Vertex> children = v.getVertices(Direction.OUT);       //Get all the children
+			Iterable<Vertex> children = ov.getVertices(Direction.OUT);       //Get all the children
 			for (Vertex child : children) {
 				Fireable f = traverse(child, school);
 				if (f != null) {
@@ -119,7 +133,7 @@ public class RulesLoader {
 				e.printStackTrace();
 			}
 			//Add to the rule its @rid for fast retrieval
-			String rid = v.getId().toString();
+			String rid = ov.getId().toString();
 			try {
 				Field idField = ruleClass.getField("rid");
 				idField.set(rule, rid);
@@ -129,7 +143,7 @@ public class RulesLoader {
 			for (Field f : fields) {
 				if (f.isAnnotationPresent(LoadMe.class)) {
 					LoadMe annotation = f.getAnnotation(LoadMe.class);
-					Object property = v.getProperty(f.getName());
+					Object property = ov.getProperty(f.getName());
 					if (property != null && !property.equals("")) {
 						try {
 							f.set(rule, property);
@@ -142,14 +156,14 @@ public class RulesLoader {
 							e.printStackTrace();
 						}
 					} else {
-						if(annotation.required())
-							LOGGER.error("Field " + f.getName() + " not found in the database [" + v.getProperty("@rid") +"]");
+						if (annotation.required())
+							LOGGER.error("Field " + f.getName() + " not found in the database [" + v.getProperty("@rid") + "]");
 					}
 				}
 			}
 			//IF COMPOSITE RULE
 			if (rule instanceof CompositeRule) {
-				Iterable<Vertex> rules = v.getVertices(Direction.OUT);
+				Iterable<Vertex> rules = ov.getVertices(Direction.OUT);
 
 				//Create the rule set
 				Set<Fireable> ruleSet = new HashSet<>();
@@ -176,6 +190,9 @@ public class RulesLoader {
 
 			}
 			((GaiaRule) rule).setSchool(school);
+			ov.setProperty("school", school.getRid());
+			ov.attach(tx);
+			ov.save();
 			return (Fireable) rule;
 		}
 	}
