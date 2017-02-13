@@ -55,16 +55,18 @@ public class RESTController {
 
 	@ResponseBody
 	@RequestMapping("/reload/{schoolId}")
-	public ResponseEntity<String> reload(@PathVariable(required = false) String schoolId) {
-		if(schoolId==null || schoolId.equals("")) {
-			rulesLoader.reloadAllSchools();
-			return new ResponseEntity<>(HttpStatus.OK);
-		} else {
+	public ResponseEntity<String> reload(@PathVariable String schoolId) {
 			if(!rulesLoader.reloadSchool(schoolId)){
 				return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 			}
 			return new ResponseEntity<>(HttpStatus.OK);
-		}
+	}
+
+	@ResponseBody
+	@RequestMapping("/reload")
+	public ResponseEntity<String> reload() {
+		rulesLoader.reloadAllSchools();
+		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
 	@RequestMapping("/uris")

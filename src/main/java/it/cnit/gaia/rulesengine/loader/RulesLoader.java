@@ -13,6 +13,8 @@ import it.cnit.gaia.rulesengine.model.School;
 import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
 import it.cnit.gaia.rulesengine.model.annotation.URI;
 import it.cnit.gaia.rulesengine.rules.CompositeRule;
+import it.cnit.gaia.rulesengine.rules.ExpressionRule;
+import org.apache.commons.lang.math.NumberUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class RulesLoader {
@@ -50,9 +54,11 @@ public class RulesLoader {
 		schools = new HashMap<>();
 		Iterable<Vertex> schoolVertices = tx.getVerticesOfClass("School");
 		for (Vertex sv : schoolVertices) {
-			School school = traverseSchool(sv);
-			schools.put(school.getId(), school);
-			tx.commit();
+			if( sv.getProperty("enabled")) {
+				School school = traverseSchool(sv);
+				schools.put(school.getId(), school);
+				tx.commit();
+			}
 		}
 		tx.shutdown();
 		measurementRepository.updateMeterMap();
@@ -161,7 +167,38 @@ public class RulesLoader {
 					}
 				}
 			}
-			//IF COMPOSITE RULE
+			//EXPRESSION RULE
+			if (rule instanceof ExpressionRule) {
+				//The rule
+				ExpressionRule expressionRule = (ExpressionRule) rule;
+				//Matcher
+				String uriPattern = "(.*)_uri";
+				Pattern pattern = Pattern.compile(uriPattern);
+				//Build the rule
+				Map<String, Object> properties = ov.getProperties();
+				String expression = properties.get("expression").toString();
+				expressionRule.expression = expression;
+				for (String key : properties.keySet()) {
+					Matcher m = pattern.matcher(key);
+					if (m.lookingAt()) {
+						String variable = m.group(1);
+						if (properties.get(key) != null) {
+							String uri = properties.get(key).toString();
+							measurementRepository.addUri(uri);
+							expressionRule.variable2uri.put(variable, uri);
+						}
+					}
+					if (properties.get(key) != null) {
+						String stringValue = properties.get(key).toString();
+						if (NumberUtils.isNumber(stringValue)) {
+							double value = Double.parseDouble(stringValue);
+							expressionRule.fields.put(key, value);
+						}
+					}
+				}
+			}
+
+				//IF COMPOSITE RULE
 			if (rule instanceof CompositeRule) {
 				Iterable<Vertex> rules = ov.getVertices(Direction.OUT);
 

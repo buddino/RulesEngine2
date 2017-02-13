@@ -11,6 +11,7 @@ import it.cnit.gaia.rulesengine.model.annotation.URI;
 import it.cnit.gaia.rulesengine.model.event.GaiaEvent;
 import it.cnit.gaia.rulesengine.model.notification.GAIANotification;
 import it.cnit.gaia.rulesengine.notification.WebsocketService;
+import it.cnit.gaia.rulesengine.rules.ExpressionRule;
 import org.apache.commons.lang.text.StrSubstitutor;
 import org.apache.log4j.Logger;
 
@@ -29,7 +30,8 @@ public abstract class GaiaRule implements Fireable {
 	public String rid;
 	public School school;
 
-	protected Logger LOGGER = Logger.getLogger(this.getClass().getSimpleName());
+	protected Logger LOGGER = Logger.getLogger(this.getClass());
+
 	protected WebsocketService websocket = ContextProvider.getBean(WebsocketService.class);
 	protected EventService eventService = ContextProvider.getBean(EventService.class);
 	protected MeasurementRepository measurements = ContextProvider.getBean(MeasurementRepository.class);
@@ -45,8 +47,13 @@ public abstract class GaiaRule implements Fireable {
 	}
 
 	public void fire() {
-		if (condition())
-			action();
+		try {
+			if (condition())
+				action();
+		}
+		catch (Exception e){
+			LOGGER.error(e.getMessage());
+		}
 	}
 
 	public boolean validateFields() {
@@ -156,8 +163,10 @@ public abstract class GaiaRule implements Fireable {
 		Gson G = new Gson();
 		Map<String, Object> map = getFieldsForEvent();
 		map.putAll(getFieldsForNotification());
-
-
+		//Riguarda It there a better way?
+		if( this instanceof ExpressionRule ){
+			map.putAll( ((ExpressionRule)this).fields );
+		}
 		return map;
 	}
 
@@ -173,10 +182,11 @@ public abstract class GaiaRule implements Fireable {
 	public String getSuggestion() {
 		Map<String, Object> fields = getAllFields();
 		fields.put("school", school.getName());
+
 		//Add useful fields
 		//...
 		String replaced = StrSubstitutor.replace(suggestion, fields);
-		System.out.println(replaced);
+		LOGGER.debug(replaced);
 		return replaced;
 	}
 

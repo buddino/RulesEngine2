@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Gaia Rules Engine | Recommendations receiver DEMO</title>
+    <title>GAIA | RulesEngine</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
           integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"
@@ -10,132 +10,146 @@
     <link rel="stylesheet" href="bootstrap/mdb/mdb.css">
     <link rel="stylesheet" href="dist/css/lobibox.css"/>
     <link rel="stylesheet" href="css/dashboard.css"/>
+    <link rel="stylesheet" href="css/gaia.css"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
-            integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
-            crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.1.1/sockjs.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.6/handlebars.min.js"></script>
     <script src="dist/js/lobibox.js"></script>
+
+    <style>
+
+    </style>
     <script>
-        var stompClient = null;
-        function connect() {
-            var socket = new SockJS('/gs-guide-notification');
-            stompClient = Stomp.over(socket);
-            stompClient.connect({}, function (f) {
-                    $("#connectBtn").prop("disabled", true);
-                    $("#disconnectBtn").prop("disabled", false);
-                    var endpoint = $("#endpoint").val();
-                    stompClient.subscribe(endpoint, function (message) {
-                        var notification = JSON.parse(message.body);
-                        var timestamp = new Date(notification.timestamp);
-                        var time = timestamp.getHours() + ":" + timestamp.getMinutes() + ":" + timestamp.getSeconds();
-                        Lobibox.notify(notification.type,
-                            {
-                                title: notification.ruleId,
-                                msg: time + '<br>' + notification.suggestion,
-                                delay: 15000,
-                                delayIndicator: false,
-                                onClick: function (a) {
-                                    $("#values").empty();
-                                    var val = "";
-                                    for (var key in notification.values) {
-                                        val += key + ": " + notification.values[key] + "<br>";
-                                    }
-                                    $("#values").append(val)
-                                },
-                                showClass: 'bounceIn'
-                            })
-
-                    });
-                }
-            )
-            ;
+        var URL = "http://localhost:8080";
+        function switchView(name) {
+            $(".main").hide();
+            $("#" + name).show();
+            $(".viewBtn").removeClass("active");
+            $("#" + name + "Btn").parent().addClass("active");
         }
-
-
-        function disconnect() {
-            if (stompClient != null) {
-                $("#connectBtn").prop("disabled", false);
-                $("#disconnectBtn").prop("disabled", true);
-                stompClient.disconnect();
-            }
-        }
-
-        $(function () {
-
-            $("#reportsBtn").on("click", function () {
-                $("#websocket").hide();
-                $.ajax({
-                    url: "/report",
-                    success: function (data) {
-                        for (i in data) {
-                            var notification = data[i];
-                            var timestamp = new Date(notification.timestamp);
-                            var string = '<li class="list-group-item">' +
-                                notification.ruleId + '<br>' +
-                                timestamp.toTimeString() + '<br>' +
-                                notification.description + '</li>';
-                            $("#list").append(string);
-                        }
-                        $("#reports").show();
-                    }
-                });
-
-            });
-            $("#websocketBtn").on("click", function () {
-                $("#reports").hide();
-                $("#websocket").show();
-            });
-            $("form").on('submit', function (e) {
-                e.preventDefault();
-            });
-            $("#connectBtn").click(function () {
-                connect();
-            });
-            $("#disconnectBtn").click(function () {
-                disconnect();
-            });
-
-        });
     </script>
+
+
 </head>
 <body>
-
-
 <div class="container-fluid">
+    <!--Navigation-->
     <div class="col-sm-3 col-md-2 sidebar">
+        <div class="form-group form-inline">
+            <label for="selectSchool">School:</label>
+            <select class="form-control" id="selectSchool"></select>
+        </div>
         <ul class="nav nav-sidebar">
-            <li id="websocketBtn" class="active"><a href="#">Overview <span class="sr-only">(current)</span></a></li>
-            <li><a id="reportsBtn" href="#">Reports</a></li>
-            <li><a href="#">Analytics</a></li>
+            <li class="viewBtn active"><a id="websocketBtn" data-view="websocketView" href="#">Notifications <span
+                    id="notificationCounter" class="badge pull-right">0</span> </a></li>
+            <li class="viewBtn"><a id="logBtn" data-view="logView" href="#">Reports</a></li>
+            <li class="viewBtn"><a id="reloadBtn" data-view="#" href="#">Reload rules</a></li>
+            <li class="viewBtn"><a id="ruleTreeBtn" data-view="ruleTree" href="#"
+                                   style="text-decoration: line-through;">Rule tree</a></li>
         </ul>
     </div>
-    <div id="websocket" class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+
+    <!--Websocket-->
+    <div id="websocketView" class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
         <h2 class="page-header">Websocket connection</h2>
         <div id="main-content" class="container">
             <div class="row">
                 <div class="col-md-6">
-                    <form class="form-inline">
+                    <form id="wsform" class="form-inline">
                         <div class="form-group">
                             <button id="connectBtn" class="btn btn-default" type="submit">Connect</button>
                             <button id="disconnectBtn" class="btn btn-default" disabled type="submit">Disconnect
                             </button>
-                            <input type="text" id="endpoint">
                         </div>
                     </form>
                 </div>
             </div>
         </div>
         <h2 class="sub-header">Notification data:</h2>
-        <div id="values"></div>
+        <div id="expanded-notification">
+        </div>
     </div>
-    <div id="reports" class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" hidden>
-        <ul id="list" class="list-group">
+
+    <!--Event log-->
+    <div id="logView" class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" hidden>
+        <form id="eventsForm" class="form-inline" style="padding-bottom: 2em">
+            <label for="limit">Limit:</label>
+            <input class="form-control" value="10" id="limit" type="number" min="1">
+            <label for="limit">From:</label>
+            <input class="form-control" type="text">
+            <label for="limit">To:</label>
+            <input class="form-control" type="text">
+            <button type="submit" class="btn btn-default btn-sm">Query</button>
+        </form>
+        <ul id="eventList" class="list-group panel">
         </ul>
     </div>
+
+    <!--TODO-->
+    <div id="ruleTree" class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" hidden>
+
+    </div>
+
+
 </div>
 
 
 </body>
+
+<!--Templates-->
+<script id="event-template" type="text/x-handlebars-template">
+    <div>
+        <div class="list-group-item" data-toggle="collapse" data-target="#{{rid}}">
+            <a class="nostyle"><h4 class="list-group-item-heading">{{rule.name}}<span
+                    class="pull-right">{{timestamp}}</span></h4></a>
+        </div>
+        <div id="{{rid}}" class="collapse">
+            <dl class="dl-horizontal">
+                <dt>Rule name:</dt>
+                <dd>{{rule.name}}</dd>
+                <dt>Suggestion</dt>
+                <dd>{{rule.suggestion}}</dd>
+                <dt>Description:</dt>
+                <dd>{{rule.description}}</dd>
+            </dl>
+            <dl class="dl-horizontal">
+                {{#each values}}
+                <dt>{{@key}}</dt>
+                <dd>{{this}}</dd>
+                {{/each}}
+            </dl>
+        </div>
+    </div>
+</script>
+
+
+<script id="notification-expand-template" type="text/x-handlebars-template">
+    <div class="panel panel-default">
+        <div class="panel-heading">{{ruleName}}</div>
+        <dl class="dl-horizontal">
+            <dt>School</dt>
+            <dd>{{school.name}}</dd>
+            <dt>Timestamp</dt>
+            <dd>{{timestamp}}</dd>
+            <dt>Area</dt>
+            <dd>{{area.id}}</dd>
+            <dt>Rule class:</dt>
+            <dd>{{ruleClass}}</dd>
+            <dt>Rule name:</dt>
+            <dd>{{ruleName}} [{{ruleId}}]</dd>
+            {{#each values}}
+            <dt>{{@key}}</dt>
+            <dd>{{this}}</dd>
+            {{/each}}
+        </dl>
+    </div>
+</script>
+
+<script id="notification-template" type="text/x-handlebars-template">
+    {{timestamp}}<br>Area: {{area.id}}<br>{{suggestion}}
+</script>
+<script src="js/gaia_notifications.js"></script>
+<script src="js/gaia_event.js"></script>
 </html>

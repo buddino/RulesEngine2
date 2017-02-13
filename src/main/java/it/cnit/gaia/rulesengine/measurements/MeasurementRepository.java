@@ -62,6 +62,9 @@ public class MeasurementRepository  {
         LOGGER.error(uri + " not found in map");
 		LOGGER.info("Trying updating resources"); //FIXME
 		updateLatest();
+		if(latestReadings.get(uri)==null){
+			LOGGER.error("Empty response for uri: "+uri);
+		}
 		return latestReadings.get(uri);
     }
 
