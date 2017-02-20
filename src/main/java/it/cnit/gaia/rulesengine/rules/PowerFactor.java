@@ -23,10 +23,11 @@ public class PowerFactor extends GaiaRule{
 	public Double pwf_threshold = 0.7;
 
 	@LogMe
-	public List<Double> pwf_value = new ArrayList<>();
+	public List<Double> pwf_value;
 
 	@Override
 	public boolean condition() {
+		pwf_value = new ArrayList<>();
 		if(n_phases==1){
 			try {
 				pwf_value.add(measurements.getLatestFor(pwf_uri).getReading());
