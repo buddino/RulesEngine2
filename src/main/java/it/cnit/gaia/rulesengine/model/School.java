@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class School {
 	String name;
-	String id;
+	Long id;
 	String rid;
 
 	@JsonIgnore
@@ -28,11 +28,11 @@ public class School {
 		return this;
 	}
 
-	public String getId() {
+	public Long getId() {
 		return id;
 	}
 
-	public School setId(String id) {
+	public School setId(Long id) {
 		this.id = id;
 		return this;
 	}

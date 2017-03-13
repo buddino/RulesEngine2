@@ -75,7 +75,7 @@ public abstract class GaiaRule implements Fireable {
 		return true;
 	}
 
-	public boolean init() {
+	public boolean init() throws Exception {
 		return validateFields();
 	}
 

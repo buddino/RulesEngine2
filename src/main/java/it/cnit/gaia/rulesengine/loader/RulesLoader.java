@@ -41,12 +41,19 @@ public class RulesLoader {
 	private MeasurementRepository measurementRepository;
 
 	private Logger LOGGER = Logger.getLogger("RulesLoader");
-	private Map<String, School> schools = null;
+	private Map<Long, School> schools = null;
 
 	private OrientGraph tx;
 
-
-	public Map<String, School> loadSchools() {
+	//TEST
+	public void loadSchoolByRid(String rid){
+		tx = graphFactory.getTx();
+		OrientVertex sv = tx.getVertex(rid);
+		School school = traverseSchool(sv);
+		tx.shutdown();
+	}
+	//////
+	public Map<Long, School> loadSchools() {
 		if (schools != null) {
 			return schools;
 		}
@@ -65,7 +72,7 @@ public class RulesLoader {
 		return schools;
 	}
 
-	public boolean reloadSchool(String id) {
+	public boolean reloadSchool(Long id) {
 		if (schools.containsKey(id)) {
 			School school = schools.get(id);
 			Vertex schoolVertex = graphFactory.getTx().getVertex(school.getRid());
@@ -83,7 +90,7 @@ public class RulesLoader {
 		School s = new School();
 		s.setName(ov.getProperty("name"));
 		s.setRid(ov.getRecord().getIdentity().toString());
-		s.setId(ov.getProperty("id")); //Riguarda Check id here?
+		//s.setId(ov.getProperty("sid")); //Riguarda Check id here?
 		LOGGER.info("Loading tree for school: " + s.getName());
 		try {
 			OrientVertex rootVertex = (OrientVertex) v.getVertices(Direction.OUT).iterator().next();
@@ -100,6 +107,54 @@ public class RulesLoader {
 		schools = null;
 	}
 
+	public GaiaRule getRuleForTest(OrientVertex ov){
+		String classname = ov.getProperty("@class");
+		Class<?> ruleClass = null;
+		try {
+			ruleClass = Class.forName(rulesPackage + "." + classname);        //Get correspondant class
+		} catch (ClassNotFoundException e) {
+			LOGGER.error("Failed initializing " + classname);
+			LOGGER.error(e.toString());
+			return null;
+		}
+		Field[] fields = ruleClass.getFields();                //Get fields of the class
+		Object rule = null;
+		try {
+			rule = ruleClass.newInstance();                             //Istantiate the Rule
+		} catch (InstantiationException | IllegalAccessException e) {
+			e.printStackTrace();
+		}
+		//Add to the rule its @rid for fast retrieval
+		String rid = ov.getId().toString();
+		try {
+			Field idField = ruleClass.getField("rid");
+			idField.set(rule, rid);
+		} catch (NoSuchFieldException | IllegalAccessException e) {
+			e.printStackTrace();
+		}
+		for (Field f : fields) {
+			if (f.isAnnotationPresent(LoadMe.class)) {
+				LoadMe annotation = f.getAnnotation(LoadMe.class);
+				Object property = ov.getProperty(f.getName());
+				if (property != null && !property.equals("")) {
+					try {
+						f.set(rule, property);
+						//Populate the uri set
+						if (f.isAnnotationPresent(URI.class)) {
+							measurementRepository.addUri((String) property);
+						}
+						///
+					} catch (IllegalAccessException e) {
+						e.printStackTrace();
+					}
+				} else {
+					if (annotation.required())
+						LOGGER.error("Field " + f.getName() + " not found in the database [" + ov.getProperty("@rid") + "]");
+				}
+			}
+		}
+		return (GaiaRule) rule;
+	}
 
 	private Fireable traverse(Vertex v, School school) {
 		//If it is a GaiaRuleSet
@@ -113,8 +168,12 @@ public class RulesLoader {
 			for (Vertex child : children) {
 				Fireable f = traverse(child, school);
 				if (f != null) {
-					if (f.init())
-						ruleSet.add(f);
+					try {
+						if (f.init())
+							ruleSet.add(f);
+					} catch (Exception e) {
+						LOGGER.error(e.getMessage());
+					}
 				}
 			}
 			return ruleSet;
@@ -207,10 +266,14 @@ public class RulesLoader {
 				for (Vertex r : rules) {
 					Fireable f = traverse(r, school);
 					if (f != null) {
-						if (f.init())
-							ruleSet.add(f);
-						else
-							LOGGER.error("Failed initializing " + r.toString());
+						try {
+							if (f.init())
+								ruleSet.add(f);
+							else
+								LOGGER.error("Failed initializing " + r.toString());
+						} catch (Exception e) {
+							LOGGER.error(e.getMessage());
+						}
 					}
 				}
 

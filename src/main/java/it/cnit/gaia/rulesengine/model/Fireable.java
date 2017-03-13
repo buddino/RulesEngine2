@@ -10,6 +10,6 @@ public interface Fireable {
 	 * Initilization, Validation and URIs injection into measurement repository
 	 * @return true if the rule has been initialized succesfully
 	 */
-	boolean init();
+	boolean init() throws Exception;
 	//Riguarda Initialization and validation inside the constructor and null check during class loading
 }

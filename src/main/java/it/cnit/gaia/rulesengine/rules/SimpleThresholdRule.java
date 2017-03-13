@@ -8,7 +8,7 @@ import it.cnit.gaia.rulesengine.model.annotation.URI;
 import java.util.Arrays;
 import java.util.List;
 
-public class SimpleThresholdRule extends GaiaRule{
+public class SimpleThresholdRule extends GaiaRule {
 
 	@LogMe
 	@LoadMe
@@ -23,14 +23,15 @@ public class SimpleThresholdRule extends GaiaRule{
 	@LogMe
 	public Double value;
 
-	List<String> validValues = Arrays.asList("==",">","<","<=",">=");
+	List<String> validValues = Arrays.asList("==", ">", "<", "<=", ">=");
+
 	@Override
 	public boolean condition() {
 		//TODO Get from measurements
 		value = Math.random();
-		switch (operator){
+		switch (operator) {
 			case "==":
-				return Math.abs(value-threshold) < 0.001;
+				return Math.abs(value - threshold) < 0.001;
 			case ">":
 				return value > threshold;
 			case "<":
@@ -45,11 +46,11 @@ public class SimpleThresholdRule extends GaiaRule{
 	}
 
 	@Override
-	public boolean init(){
-		if(validValues.stream().anyMatch(v -> v.equals(operator)))
+	public boolean init() throws Exception {
+		if (validValues.stream().anyMatch(v -> v.equals(operator)))
 			return true;
-		LOGGER.error("Threshold rule operator "+operator+" is not valid. Valid operators: "+validValues.toString());
-		return false;
+		throw new Exception("Threshold rule operator " + operator + " is not valid. Valid operators: " + validValues.toString());
+
 	}
 
 

@@ -108,6 +108,10 @@ public class MeasurementRepository  {
 
 	}
 
+	public Long checkUri(String uri) throws ApiException {
+		return sparks.uri2id(uri);
+	}
+
 	public Map<String, Long> getMeterMap() {
 		return sparks.getMeterMap();
 	}
