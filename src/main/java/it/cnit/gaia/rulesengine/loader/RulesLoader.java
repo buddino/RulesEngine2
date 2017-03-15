@@ -6,9 +6,9 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import it.cnit.gaia.rulesengine.measurements.MeasurementRepository;
+import it.cnit.gaia.rulesengine.model.Area;
 import it.cnit.gaia.rulesengine.model.Fireable;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
-import it.cnit.gaia.rulesengine.model.GaiaRuleSet;
 import it.cnit.gaia.rulesengine.model.School;
 import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
 import it.cnit.gaia.rulesengine.model.annotation.URI;
@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
 @Service
 public class RulesLoader {
 	private final String rulesPackage = "it.cnit.gaia.rulesengine.rules";
-	private final String ruleContainerName = "GaiaRuleSet";
+	private final String ruleContainerName = "Area";
 	//TODO Non serve a niente! Levalo!
 
 	@Autowired
@@ -42,16 +42,16 @@ public class RulesLoader {
 
 	private Logger LOGGER = Logger.getLogger("RulesLoader");
 	private Map<Long, School> schools = null;
-
 	private OrientGraph tx;
 
 	//TEST
-	public void loadSchoolByRid(String rid){
+	public void loadSchoolByRid(String rid) {
 		tx = graphFactory.getTx();
 		OrientVertex sv = tx.getVertex(rid);
 		School school = traverseSchool(sv);
 		tx.shutdown();
 	}
+
 	//////
 	public Map<Long, School> loadSchools() {
 		if (schools != null) {
@@ -61,9 +61,9 @@ public class RulesLoader {
 		schools = new HashMap<>();
 		Iterable<Vertex> schoolVertices = tx.getVerticesOfClass("School");
 		for (Vertex sv : schoolVertices) {
-			if( sv.getProperty("enabled")) {
+			if (sv.getProperty("enabled")) {
 				School school = traverseSchool(sv);
-				schools.put(school.getId(), school);
+				schools.put(school.aid, school);
 				tx.commit();
 			}
 		}
@@ -78,7 +78,7 @@ public class RulesLoader {
 			Vertex schoolVertex = graphFactory.getTx().getVertex(school.getRid());
 			LOGGER.info("Reloading tree for school: " + school.getName());
 			school = traverseSchool(schoolVertex);
-			schools.put(id,school);
+			schools.put(id, school);
 			measurementRepository.updateMeterMap();
 			return true;
 		}
@@ -86,28 +86,35 @@ public class RulesLoader {
 	}
 
 	private School traverseSchool(Vertex v) {
-		OrientVertex ov = (OrientVertex) v;
-		School s = new School();
-		s.setName(ov.getProperty("name"));
-		s.setRid(ov.getRecord().getIdentity().toString());
-		//s.setId(ov.getProperty("sid")); //Riguarda Check id here?
-		LOGGER.info("Loading tree for school: " + s.getName());
-		try {
-			OrientVertex rootVertex = (OrientVertex) v.getVertices(Direction.OUT).iterator().next();
-			Fireable rootFireable = traverse(rootVertex, s);
-			s.setRoot(rootFireable);
-			return s;
-		} catch (NullPointerException e) {
-			LOGGER.error("Could not find the root rule for school: " + s.getId());
+		//Check if the given vertex is a School
+		OrientVertex schoolVertex = (OrientVertex) v;
+		if (!schoolVertex.getProperty("@class").equals("School")) {
+			return null;
+			//TODO throw new Exception("Not a School Vertex");
 		}
-		return null;
+
+		School school = new School();
+		school.setName(schoolVertex.getProperty("name"));
+		school.rid = schoolVertex.getRecord().getIdentity().toString();
+		school.aid = schoolVertex.getProperty("aid");
+		school.name = schoolVertex.getProperty("name");
+		school.type = "School";
+
+		LOGGER.info("Loading tree for school: " + school.getName());
+		Iterable<Vertex> children = schoolVertex.getVertices(Direction.OUT);
+		for (Vertex child : children) {
+			Fireable f = traverse((OrientVertex) child, school);
+			if (f != null)
+				school.add(f);
+		}
+		return school;
 	}
 
 	public void reloadAllSchools() {
 		schools = null;
 	}
 
-	public GaiaRule getRuleForTest(OrientVertex ov){
+	public GaiaRule getRuleForTest(OrientVertex ov) {
 		String classname = ov.getProperty("@class");
 		Class<?> ruleClass = null;
 		try {
@@ -156,33 +163,39 @@ public class RulesLoader {
 		return (GaiaRule) rule;
 	}
 
-	private Fireable traverse(Vertex v, School school) {
-		//If it is a GaiaRuleSet
-		OrientVertex ov = (OrientVertex) v;
+	private Fireable traverse(OrientVertex ov, School school) {
+		//If it is a Area
+		if (!(Boolean) ov.getProperty("enabled")) {
+			LOGGER.debug(ov.getIdentity().toString() + " DISABLED");
+			return null;
+		}
 		String classname = ov.getProperty("@class");
 		if (classname.equals(ruleContainerName)) {
-			GaiaRuleSet ruleSet = new GaiaRuleSet();                        //Instantiate a ruleSet
-			ruleSet.rid = ov.getId().toString();
-			//
+			Area area = new Area();                        //Instantiate a ruleSet
+			area.rid = ov.getIdentity().toString();
+			area.aid = ov.getProperty("aid");
+			area.name = ov.getProperty("name");
+			area.type = ov.getProperty("type");
+
+			//TODO Fields of the area
 			Iterable<Vertex> children = ov.getVertices(Direction.OUT);       //Get all the children
 			for (Vertex child : children) {
-				Fireable f = traverse(child, school);
+				Fireable f = traverse((OrientVertex) child, school);
 				if (f != null) {
 					try {
 						if (f.init())
-							ruleSet.add(f);
+							area.add(f);
 					} catch (Exception e) {
 						LOGGER.error(e.getMessage());
 					}
 				}
 			}
-			return ruleSet;
+			return area;
 		}
 
 		//If it is a GaiaRule
 		else {
-
-			Class<?> ruleClass = null;
+			Class<?> ruleClass;
 			try {
 				ruleClass = Class.forName(rulesPackage + "." + classname);        //Get correspondant class
 			} catch (ClassNotFoundException e) {
@@ -222,7 +235,7 @@ public class RulesLoader {
 						}
 					} else {
 						if (annotation.required())
-							LOGGER.error("Field " + f.getName() + " not found in the database [" + v.getProperty("@rid") + "]");
+							LOGGER.error("Field " + f.getName() + " not found in the database [" + ov.getProperty("@rid") + "]");
 					}
 				}
 			}
@@ -257,14 +270,14 @@ public class RulesLoader {
 				}
 			}
 
-				//IF COMPOSITE RULE
+			//IF COMPOSITE RULE
 			if (rule instanceof CompositeRule) {
 				Iterable<Vertex> rules = ov.getVertices(Direction.OUT);
 
 				//Create the rule set
 				Set<Fireable> ruleSet = new HashSet<>();
 				for (Vertex r : rules) {
-					Fireable f = traverse(r, school);
+					Fireable f = traverse((OrientVertex) r, school);
 					if (f != null) {
 						try {
 							if (f.init())

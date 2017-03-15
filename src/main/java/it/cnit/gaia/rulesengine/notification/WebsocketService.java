@@ -27,9 +27,9 @@ public class WebsocketService {
     public void pushNotification(GAIANotification notification) {
         try {
             String message = mapper.writeValueAsString(notification);
-            String destination = "/recommendations/"+notification.getSchool().getId();
+            String destination = "/recommendations/"+notification.getSchool().aid;
             this.template.convertAndSend(destination, message);
-            LOGGER.debug("\u001B[36mWS NOTIFICATION\u001B[0m\t"+destination);
+            LOGGER.debug(String.format("\u001B[36mWs:\u001B[0m [%s]\t%s",notification.getSchool().aid,notification.getSuggestion()));
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         } catch (NullPointerException e){

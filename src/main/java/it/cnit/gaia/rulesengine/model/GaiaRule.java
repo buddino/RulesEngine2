@@ -1,7 +1,11 @@
 package it.cnit.gaia.rulesengine.model;
 
 import com.google.gson.Gson;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import it.cnit.gaia.rulesengine.configuration.ContextProvider;
 import it.cnit.gaia.rulesengine.event.EventService;
 import it.cnit.gaia.rulesengine.measurements.MeasurementRepository;
@@ -17,6 +21,7 @@ import org.apache.log4j.Logger;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public abstract class GaiaRule implements Fireable {
 	@LoadMe
@@ -97,15 +102,13 @@ public abstract class GaiaRule implements Fireable {
 
 	protected GAIANotification getBaseNotification() {
 		GAIANotification notification = new GAIANotification();
-		Area area = new Area(); //TODO Move area inside GaiaRule
-		area.setId(UUID.randomUUID().toString());
+		//TODO Area
 		notification.setRuleClass(this.getClass().getSimpleName())
 				.setRuleName(name)
 				.setRuleId(rid)
 				.setDescription(description)
 				.setSuggestion(getSuggestion())
 				.setSchool(school)
-				.setArea(area)
 				.setValues(getFieldsForNotification());
 		return notification;
 	}
@@ -186,7 +189,6 @@ public abstract class GaiaRule implements Fireable {
 		//Add useful fields
 		//...
 		String replaced = StrSubstitutor.replace(suggestion, fields);
-		LOGGER.debug(replaced);
 		return replaced;
 	}
 
@@ -210,5 +212,16 @@ public abstract class GaiaRule implements Fireable {
 	public GaiaRule setSchool(School school) {
 		this.school = school;
 		return this;
+	}
+
+	public String getPath(){
+		OrientGraphNoTx noTx = graphFactory.getNoTx();
+		ORID identity = noTx.getVertex("#21:17121").getIdentity();
+		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>("select unionall(name) as path from (traverse in() from ?)");
+		List<ODocument> execute = query.execute(identity);
+		List<String> path = execute.get(0).field("path");
+		Collections.reverse(path);
+		String uri = path.stream().collect(Collectors.joining("/"));
+		return uri;
 	}
 }

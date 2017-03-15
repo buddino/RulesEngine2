@@ -4,9 +4,13 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OConcurrentResultSet;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import io.swagger.client.ApiException;
 import it.cnit.gaia.rulesengine.api.request.CustomRuleException;
@@ -14,9 +18,9 @@ import it.cnit.gaia.rulesengine.api.request.ErrorResponse;
 import it.cnit.gaia.rulesengine.api.request.NewRule;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
 import it.cnit.gaia.rulesengine.measurements.MeasurementRepository;
+import it.cnit.gaia.rulesengine.model.Area;
 import it.cnit.gaia.rulesengine.model.Fireable;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
-import it.cnit.gaia.rulesengine.model.GaiaRuleSet;
 import it.cnit.gaia.rulesengine.model.School;
 import it.cnit.gaia.rulesengine.model.errors.ResourceNotFoundException;
 import it.cnit.gaia.rulesengine.rules.CompositeRule;
@@ -27,6 +31,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -49,8 +54,7 @@ public class RESTController {
 		School school = rulesLoader.loadSchools().get(schoolId);
 		if (school == null)
 			throw new ResourceNotFoundException();
-		Fireable root = school.getRoot();
-		JsonElement json = traverse(root);
+		JsonElement json = traverse(school);
 		return json.toString();
 	}
 
@@ -107,7 +111,7 @@ public class RESTController {
 
 		tx.commit();
 		tx.shutdown();
-		return ResponseEntity.status(HttpStatus.CREATED).body(fieldMap);
+		return ResponseEntity.status(HttpStatus.OK).body(fieldMap);
 	}
 
 	@RequestMapping(value = "/rules", method = RequestMethod.POST, headers = "Accept=application/json")
@@ -121,7 +125,7 @@ public class RESTController {
 			school = (OrientVertex) iterator.iterator().next();
 		else {
 			tx.rollback();
-			throw new CustomRuleException(String.format("School %d not found", newRule.school));
+			throw new CustomRuleException(String.format("BuildingBDB %d not found", newRule.school));
 		}
 		iterator = tx.getVertices("aid", newRule.parent);
 		if (iterator.iterator().hasNext())
@@ -167,11 +171,22 @@ public class RESTController {
 		return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
 	}
 
-	@RequestMapping(value = "/schools", method = RequestMethod.GET)
+	@RequestMapping(value = "/school", method = RequestMethod.GET)
 	public
 	@ResponseBody
 	Collection<School> getSchools() {
 		return rulesLoader.loadSchools().values();
+	}
+
+	@RequestMapping(value = "/school/{sid}/area", method = RequestMethod.GET)
+	public ResponseEntity<Object> getAreas(@PathVariable Long sid){
+		OrientGraphNoTx db = graphFactory.getNoTx();
+		OSQLSynchQuery query = new OSQLSynchQuery("select * from (traverse * from (select from BuildingBDB where aid = ?)) where @class = \"Area\"");
+		query.execute(sid);
+		OConcurrentResultSet<ODocument> result = (OConcurrentResultSet<ODocument>) query.getResult();
+		Map<String,String> areas = new HashMap<>();
+		result.forEach(r -> areas.put(r.field("uri") , r.getIdentity().toString()));
+		return ResponseEntity.status(HttpStatus.OK).body(areas);
 	}
 
 	@ResponseBody
@@ -199,12 +214,12 @@ public class RESTController {
 
 	public JsonElement traverse(Fireable root) {
 		//Riguarda composite e ruleset forse ne basta uno solo
-		if (root instanceof GaiaRuleSet) {
+		if (root instanceof Area) {
 			JsonObject obj = new JsonObject();
 			obj.addProperty("rule", root.getClass().getSimpleName());
-			obj.addProperty("rid", ((GaiaRuleSet) root).getRid());
+			obj.addProperty("rid", ((Area) root).getRid());
 			JsonArray arr = new JsonArray();
-			Set<Fireable> ruleSet = ((GaiaRuleSet) root).getRuleSet();
+			Set<Fireable> ruleSet = ((Area) root).getRuleSet();
 			for (Fireable f : ruleSet) {
 				arr.add(traverse(f));
 			}
