@@ -26,8 +26,9 @@ public class Scheduler {
 	@PostConstruct
 	public void init() throws ApiException {
 		LOGGER.info("RulesEngine Initialization");
-		schools = rulesLoader.loadSchools().values();
-		schools.forEach(s -> s.fire());
+		//schools = rulesLoader.loadSchools().values();
+		//measurements.updateLatest();
+		//schools.forEach(s -> s.fire());
 	}
 
 	//@Scheduled(fixedDelayString = "${scheduler.interval}")

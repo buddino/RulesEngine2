@@ -1,51 +1,59 @@
 package model;
 
-import it.cnit.gaia.rulesengine.buildingdb.*;
+import it.cnit.gaia.buildingdb.*;
 import org.junit.Test;
 
 import java.util.List;
 
 public class TestBuildingSchool {
 	@Test
-	public void testAreas() throws BDBException {
+	public void testAreas() throws BuildingDatabaseException {
 		BuildingDatabaseService bdbs = new BuildingDatabaseService();
-		List<AreaBDB> s =  bdbs.getAreas(27827L);
+		List<AreaDTO> s = bdbs.getAreas(27827L);
 		System.out.println(s.toString());
 	}
 
 	@Test
-	public void testArea() throws BDBException {
+	public void testArea() throws BuildingDatabaseException {
 		BuildingDatabaseService bdbs = new BuildingDatabaseService();
-		AreaBDB a =  bdbs.getAreaById(10L);
+		AreaDTO a = bdbs.getAreaById(10L);
 		System.out.println(a.toString());
 	}
 
 	@Test
-	public void testBuildings() throws BDBException {
+	public void testBuildings() throws BuildingDatabaseException {
 		BuildingDatabaseService bdbs = new BuildingDatabaseService();
-		List<BuildingBDB> a =  bdbs.getBuildings();
+		List<BuildingDTO> a = bdbs.getBuildings();
 		System.out.println(a.toString());
 	}
 
 	@Test
-	public void testBuilding() throws BDBException {
+	public void testBuilding() throws BuildingDatabaseException {
 		BuildingDatabaseService bdbs = new BuildingDatabaseService();
-		BuildingBDB a =  bdbs.getBuildingById(27827L);
+		BuildingDTO a = bdbs.getBuildingById(27827L);
 		System.out.println(a.toString());
 	}
 
 	@Test
-	public void testGateways() throws BDBException {
+	public void testGateways() throws BuildingDatabaseException {
 		BuildingDatabaseService bdbs = new BuildingDatabaseService();
-		List<GatewayBDB> a =  bdbs.getGateways(155076L);
+		List<GatewayDTO> a = bdbs.getGateways(155076L);
 		System.out.println(a.toString());
 	}
 
 	@Test
-	public void testGateway() throws BDBException {
+	public void testGateway() throws BuildingDatabaseException {
 		BuildingDatabaseService bdbs = new BuildingDatabaseService();
-		GatewayBDB a =  bdbs.getGatewayById(155076L);
+		GatewayDTO a = bdbs.getGatewayById(155076L);
 		System.out.println(a.toString());
 	}
+
+	@Test
+	public void testStructure() throws BuildingDatabaseException {
+		BuildingDatabaseService bdbs = new BuildingDatabaseService();
+		BuildingDTO buildingDTO = bdbs.getBuildingStructure(155076L);
+		System.out.println(buildingDTO.getChildren());
+	}
+
 
 }

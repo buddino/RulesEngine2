@@ -102,7 +102,6 @@ public class SparksService implements MeasurementService {
 		return readings;
     }
 
-
 	@Override
 	public Map<String, List<ResourceDataDTO>> queryLatestHour() throws ApiException {
 		Map<String, List<ResourceDataDTO>> readings = new HashMap<>();

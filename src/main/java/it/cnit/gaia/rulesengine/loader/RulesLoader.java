@@ -100,12 +100,19 @@ public class RulesLoader {
 		school.name = schoolVertex.getProperty("name");
 		school.type = "School";
 
+		//Riguarda External loading maybe put inside...
 		LOGGER.info("Loading tree for school: " + school.getName());
 		Iterable<Vertex> children = schoolVertex.getVertices(Direction.OUT);
 		for (Vertex child : children) {
 			Fireable f = traverse((OrientVertex) child, school);
-			if (f != null)
-				school.add(f);
+			if (f != null) {
+				try {
+					if (f.init())
+						school.add(f);
+				} catch (Exception e) {
+					LOGGER.error(e.getMessage());
+				}
+			}
 		}
 		return school;
 	}

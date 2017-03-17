@@ -215,8 +215,9 @@ public abstract class GaiaRule implements Fireable {
 	}
 
 	public String getPath(){
+		//Riguarda Maybe a static method?
 		OrientGraphNoTx noTx = graphFactory.getNoTx();
-		ORID identity = noTx.getVertex("#21:17121").getIdentity();
+		ORID identity = noTx.getVertex(rid).getIdentity();
 		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>("select unionall(name) as path from (traverse in() from ?)");
 		List<ODocument> execute = query.execute(identity);
 		List<String> path = execute.get(0).field("path");
@@ -224,4 +225,5 @@ public abstract class GaiaRule implements Fireable {
 		String uri = path.stream().collect(Collectors.joining("/"));
 		return uri;
 	}
+
 }

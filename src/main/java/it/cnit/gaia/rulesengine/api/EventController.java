@@ -4,6 +4,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import it.cnit.gaia.rulesengine.event.EventService;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -18,19 +20,19 @@ public class EventController {
 	@Autowired
 	private EventService eventService;
 
-	@RequestMapping("/events")
-	public String getEvents(
+	@RequestMapping(value = "/events" , produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<List<ODocument>> getEvents(
 			@RequestParam(defaultValue = "", required = false) String ruleClass,
 			@RequestParam(defaultValue = "", required = false) String ruleId,
 			@RequestParam(defaultValue = "false", required = false) Boolean prefetch,
 			@RequestParam(defaultValue = "10", required = false) Integer limit) {
 		if (!ruleId.equals("")) {
-			return eventsToJson(eventService.getEventsForRule(ruleId, limit, prefetch));
+			return ResponseEntity.ok(eventService.getEventsForRule(ruleId, limit, prefetch));
 		}
 		if (!ruleClass.equals("")) {
-			return eventsToJson(eventService.getEventsByRuleClass(ruleClass, limit, prefetch));
+			return  ResponseEntity.ok(eventService.getEventsByRuleClass(ruleClass, limit, prefetch));
 		}
-		return eventsToJson(eventService.getLatestEvents(limit, prefetch));
+		return  ResponseEntity.ok(eventService.getLatestEvents(limit, prefetch));
 	}
 
 	@RequestMapping("/events/{schoolId}")

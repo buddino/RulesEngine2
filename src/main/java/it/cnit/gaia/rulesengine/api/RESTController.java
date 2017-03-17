@@ -49,7 +49,7 @@ public class RESTController {
 	@Autowired
 	private MeasurementRepository measurementRepository;
 
-	@RequestMapping(value = "/rules/{schoolId}", method = RequestMethod.GET)
+	//@RequestMapping(value = "/rules/{schoolId}", method = RequestMethod.GET)
 	public String getrulestree(@PathVariable Long schoolId) {
 		School school = rulesLoader.loadSchools().get(schoolId);
 		if (school == null)
@@ -60,12 +60,22 @@ public class RESTController {
 
 
 	@CrossOrigin(origins = "*")
+	@RequestMapping(value = "/rules/{rid}", method = RequestMethod.GET)
+	@ResponseBody
+	public ResponseEntity<String> getRule(@PathVariable String rid) {
+		OrientGraph tx = graphFactory.getTx();
+		OrientVertex v = tx.getVertex(rid);
+		GaiaRule ruleForTest = rulesLoader.getRuleForTest(v);
+		return ResponseEntity.ok(ruleForTest.getPath());
+	}
+
+	@CrossOrigin(origins = "*")
 	@RequestMapping(value = "/rules/{rid}", method = RequestMethod.DELETE)
 	@ResponseBody
 	public ResponseEntity<String> deleteRule(@PathVariable String rid) {
 		OrientGraph tx = graphFactory.getTx();
 		OrientVertex v = tx.getVertex(rid);
-		if(!(Boolean)v.getProperty("custom")){
+		if (!(Boolean) v.getProperty("custom")) {
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
 		}
 		v.remove();
@@ -83,11 +93,10 @@ public class RESTController {
 		Map<String, Object> fieldMap = newRule.rule;
 		try {
 			ruleVertex = tx.getVertex(rid);
-		}
-		catch (Exception e){
+		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
 		}
-		if(!(Boolean)ruleVertex.getProperty("custom")){
+		if (!(Boolean) ruleVertex.getProperty("custom")) {
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
 		}
 
@@ -147,7 +156,7 @@ public class RESTController {
 		Map<String, Object> fieldMap = newRule.rule;
 		OrientVertex ruleVertex = tx.addVertex("class:" + fieldMap.get("@class").toString());
 		ruleVertex.setProperties(fieldMap);
-		ruleVertex.setProperty("custom",true);
+		ruleVertex.setProperty("custom", true);
 		ruleVertex.save();
 
 		GaiaRule javaRule = rulesLoader.getRuleForTest(ruleVertex);
@@ -160,7 +169,7 @@ public class RESTController {
 
 		tx.addEdge(null, areaVertex, ruleVertex, "E");
 		tx.commit();
-		fieldMap.put("@rid",ruleVertex.getIdentity().toString());
+		fieldMap.put("@rid", ruleVertex.getIdentity().toString());
 		tx.shutdown();
 		return ResponseEntity.status(HttpStatus.CREATED).body(fieldMap);
 	}
@@ -179,13 +188,13 @@ public class RESTController {
 	}
 
 	@RequestMapping(value = "/school/{sid}/area", method = RequestMethod.GET)
-	public ResponseEntity<Object> getAreas(@PathVariable Long sid){
+	public ResponseEntity<Object> getAreas(@PathVariable Long sid) {
 		OrientGraphNoTx db = graphFactory.getNoTx();
 		OSQLSynchQuery query = new OSQLSynchQuery("select * from (traverse * from (select from BuildingBDB where aid = ?)) where @class = \"Area\"");
 		query.execute(sid);
 		OConcurrentResultSet<ODocument> result = (OConcurrentResultSet<ODocument>) query.getResult();
-		Map<String,String> areas = new HashMap<>();
-		result.forEach(r -> areas.put(r.field("uri") , r.getIdentity().toString()));
+		Map<String, String> areas = new HashMap<>();
+		result.forEach(r -> areas.put(r.field("uri"), r.getIdentity().toString()));
 		return ResponseEntity.status(HttpStatus.OK).body(areas);
 	}
 

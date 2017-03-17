@@ -5,10 +5,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.*;
+import it.cnit.gaia.buildingdb.AreaDTO;
+import it.cnit.gaia.buildingdb.BuildingDTO;
+import it.cnit.gaia.buildingdb.BuildingDatabaseException;
+import it.cnit.gaia.buildingdb.BuildingDatabaseService;
 import it.cnit.gaia.rulesengine.configuration.OrientConfiguration;
 import it.cnit.gaia.rulesengine.event.EventService;
 import it.cnit.gaia.rulesengine.model.School;
@@ -122,6 +123,57 @@ public class TestDB {
 		}
 		return null;
 	}
+
+	@Test
+	public void syncSchool() throws BuildingDatabaseException {
+		BuildingDatabaseService bds = new BuildingDatabaseService();
+		List<BuildingDTO> buildings = bds.getBuildings();
+		OrientGraph g = ogf.getTx();
+		for (BuildingDTO b : buildings) {
+			OrientVertex vertex = g.addVertex("class:School");
+			vertex.setProperty("name", b.getName());
+			vertex.setProperty("country", b.getCountry());
+			vertex.setProperty("aid", b.getId());
+			vertex.save();
+			g.commit();
+			System.out.println("School: " + vertex.getIdentity());
+		}
+	}
+
+	@Test
+	public void syncBuilding() throws BuildingDatabaseException, IllegalAccessException {
+		BuildingDatabaseService bds = new BuildingDatabaseService();
+		BuildingDTO school = bds.getBuildingStructure(155076L);
+		OrientGraph g = ogf.getTx();
+		OrientVertex schoolVertex = g.addVertex("class:School");
+		schoolVertex.setProperty("name", school.getName());
+		schoolVertex.setProperty("people", school.getPeople());
+		schoolVertex.setProperty("sqmt", school.getSqmt());
+		schoolVertex.setProperty("country", school.getCountry());
+		schoolVertex.setProperty("aid", school.getId());
+		schoolVertex.save();
+		traverseChildren(school,schoolVertex);
+		g.commit();
+	}
+
+	private void traverseChildren(AreaDTO root, OrientVertex rootVertex) throws IllegalAccessException {
+		Set<AreaDTO> children = root.getChildren();
+		OrientBaseGraph g = rootVertex.getGraph();
+		for (AreaDTO child : children) {
+			OrientVertex childVertex = g.addVertex("class:Area");
+			childVertex.setProperty("name",child.getName());
+			childVertex.setProperty("description",child.getDescription());
+			childVertex.setProperty("aid",child.getId());
+			childVertex.setProperty("type",child.getType());
+			childVertex.setProperty("json",child.getJson());
+			//childVertex.setProperty("json",child.getJson(), OType.EMBEDDEDMAP);
+			childVertex.save();
+			g.addEdge(null, rootVertex, childVertex, "E").save();
+			traverseChildren(child,childVertex);
+		}
+	}
+
+
 
 
 }
