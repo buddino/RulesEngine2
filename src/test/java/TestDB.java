@@ -110,7 +110,6 @@ public class TestDB {
 			vertices = result.getVertices(Direction.OUT);
 		}
 		System.out.println(result);
-
 	}
 
 	private OrientVertex findByName(Iterable<Vertex> schools, String name) {
@@ -171,6 +170,22 @@ public class TestDB {
 			g.addEdge(null, rootVertex, childVertex, "E").save();
 			traverseChildren(child,childVertex);
 		}
+	}
+
+	@Test
+	public void testLatestTriggerTimestamp(){
+		String rid = "#21:17123";
+		OrientGraphNoTx G = ogf.getNoTx();
+		OSQLSynchQuery query = new OSQLSynchQuery("select * from GaiaEvent where rule=? ORDER BY timestamp DESC LIMIT 1");
+		List<ODocument> result = (List<ODocument>) query.execute(G.getVertex(rid).getIdentity());
+		if(result.size()==0 || result==null){
+
+		}
+		else{
+			Date timestamp = result.get(0).field("timestamp");
+			System.out.println(timestamp);
+		}
+
 	}
 
 

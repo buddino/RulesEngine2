@@ -2,6 +2,7 @@ package it.cnit.gaia.rulesengine.measurements;
 
 import io.swagger.client.ApiException;
 import io.swagger.client.model.ResourceDataDTO;
+import io.swagger.client.model.SummaryDTO;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,4 +19,6 @@ public interface MeasurementService {
 	Map<String, Long> getMeterMap();
 
 	MeasurementService setMeterMap(Map<String, Long> meterMap);
+
+	SummaryDTO getSummary(Long resourceId) throws ApiException;
 }

@@ -5,7 +5,7 @@ import java.util.Map;
 public class NewRule {
 
 	public Long school;
-	public Long parent;
+	public Long area;
 	public Map<String,Object> rule;
 
 }

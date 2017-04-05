@@ -4,6 +4,7 @@ import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
 import it.cnit.gaia.rulesengine.model.annotation.LogMe;
 import it.cnit.gaia.rulesengine.model.annotation.URI;
+import it.cnit.gaia.rulesengine.model.exceptions.RuleInitializationException;
 
 import java.util.Arrays;
 import java.util.List;
@@ -46,10 +47,10 @@ public class SimpleThresholdRule extends GaiaRule {
 	}
 
 	@Override
-	public boolean init() throws Exception {
+	public boolean init() throws RuleInitializationException {
 		if (validValues.stream().anyMatch(v -> v.equals(operator)))
 			return true;
-		throw new Exception("Threshold rule operator " + operator + " is not valid. Valid operators: " + validValues.toString());
+		throw new RuleInitializationException("Threshold rule operator " + operator + " is not valid. Valid operators: " + validValues.toString());
 
 	}
 

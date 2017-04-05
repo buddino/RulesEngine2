@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import it.cnit.gaia.rulesengine.configuration.ContextProvider;
 import it.cnit.gaia.rulesengine.event.EventService;
 import it.cnit.gaia.rulesengine.measurements.MeasurementRepository;
@@ -13,6 +14,7 @@ import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
 import it.cnit.gaia.rulesengine.model.annotation.LogMe;
 import it.cnit.gaia.rulesengine.model.annotation.URI;
 import it.cnit.gaia.rulesengine.model.event.GaiaEvent;
+import it.cnit.gaia.rulesengine.model.exceptions.RuleInitializationException;
 import it.cnit.gaia.rulesengine.model.notification.GAIANotification;
 import it.cnit.gaia.rulesengine.notification.WebsocketService;
 import it.cnit.gaia.rulesengine.rules.ExpressionRule;
@@ -24,6 +26,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class GaiaRule implements Fireable {
+
+	//Riguarda Mixing a lot of responsabilities including Queries to the DB
+
 	@LoadMe
 	@LogMe(event = false)
 	public String name;
@@ -34,6 +39,16 @@ public abstract class GaiaRule implements Fireable {
 
 	public String rid;
 	public School school;
+
+	//TODO Add minimum interval between triggering
+	@LoadMe(required = false)
+	public Long intervalInSeconds = 0L;
+	/*
+	Ask the database last time the rule has been triggered
+	Compute the difference
+	Comprare the difference with the minimum period of the rule
+	If equals to 0 or not present do not query the DB
+	* */
 
 	protected Logger LOGGER = Logger.getLogger(this.getClass());
 
@@ -47,21 +62,42 @@ public abstract class GaiaRule implements Fireable {
 	public void action() {
 		GAIANotification notification = getBaseNotification();
 		GaiaEvent event = getBaseEvent();
+		setLatestTrigger();
 		websocket.pushNotification(notification);
-		eventService.addEvent(event);
+		ODocument evt = eventService.addEvent(event);
+	}
+
+	protected void setLatestTrigger(){
+		OrientVertex vertex = graphFactory.getNoTx().getVertex(rid);
+		vertex.setProperty("latest_event", new Date());
+		vertex.save();
+	}
+
+	private boolean isTriggeringIntervalValid(){
+		if(intervalInSeconds == 0)
+			return true;
+		Date latest = getLatestEventTimestamp();
+		if( latest == null)
+			return true;
+		Date now = new Date();
+		return now.getTime() - latest.getTime() > intervalInSeconds * 1000;
 	}
 
 	public void fire() {
+		if(!isTriggeringIntervalValid()) {
+		LOGGER.debug(String.format("Rule %s not triggered beacuse of the interval contraint", rid));
+				return;
+		}
 		try {
 			if (condition())
 				action();
-		}
-		catch (Exception e){
+		} catch (Exception e) {
 			LOGGER.error(e.getMessage());
 		}
 	}
 
-	public boolean validateFields() {
+	//TODO Excpetion
+	protected boolean validateFields() {
 		Field[] fields = this.getClass().getFields();
 		for (Field f : fields) {
 			if (f.isAnnotationPresent(LoadMe.class)) {
@@ -80,7 +116,7 @@ public abstract class GaiaRule implements Fireable {
 		return true;
 	}
 
-	public boolean init() throws Exception {
+	public boolean init() throws RuleInitializationException {
 		return validateFields();
 	}
 
@@ -116,7 +152,7 @@ public abstract class GaiaRule implements Fireable {
 	protected GaiaEvent getBaseEvent() {
 		GaiaEvent event = new GaiaEvent();
 		Map<String, Object> fieldsForEvent = getFieldsForEvent();
-		fieldsForEvent.put("suggestion",getSuggestion());
+		fieldsForEvent.put("suggestion", getSuggestion());
 		event.setTimestamp(new Date()).setRuleId(rid).setValues(fieldsForEvent);
 		return event;
 	}
@@ -167,8 +203,8 @@ public abstract class GaiaRule implements Fireable {
 		Map<String, Object> map = getFieldsForEvent();
 		map.putAll(getFieldsForNotification());
 		//Riguarda It there a better way?
-		if( this instanceof ExpressionRule ){
-			map.putAll( ((ExpressionRule)this).fields );
+		if (this instanceof ExpressionRule) {
+			map.putAll(((ExpressionRule) this).fields);
 		}
 		return map;
 	}
@@ -214,7 +250,7 @@ public abstract class GaiaRule implements Fireable {
 		return this;
 	}
 
-	public String getPath(){
+	public String getPath() {
 		//Riguarda Maybe a static method?
 		OrientGraphNoTx noTx = graphFactory.getNoTx();
 		ORID identity = noTx.getVertex(rid).getIdentity();
@@ -224,6 +260,23 @@ public abstract class GaiaRule implements Fireable {
 		Collections.reverse(path);
 		String uri = path.stream().collect(Collectors.joining("/"));
 		return uri;
+	}
+
+	public Date getLatestEventTimestamp() {
+		ODocument latestEvent = getLatestEvent();
+		if (latestEvent == null)
+			return null;
+		return (Date) latestEvent.field("timestamp");
+	}
+
+	public ODocument getLatestEvent() {
+		OrientGraphNoTx G = graphFactory.getNoTx();
+		OSQLSynchQuery query = new OSQLSynchQuery("select from GaiaEvent where rule=? ORDER BY timestamp DESC LIMIT 1");
+		List<ODocument> result = (List<ODocument>) query.execute(G.getVertex(rid).getIdentity());
+		if (result.size() == 0 || result == null) {
+			return null;
+		}
+		return result.get(0);
 	}
 
 }

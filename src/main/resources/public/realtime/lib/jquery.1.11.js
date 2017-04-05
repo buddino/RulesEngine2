@@ -6720,7 +6720,7 @@ jQuery.extend({
 			if ( !hooks || !("set" in hooks) || (value = hooks.set( elem, value, extra )) !== undefined ) {
 
 				// Support: IE
-				// Swallow errors from 'invalid' CSS values (#5509)
+				// Swallow exceptions from 'invalid' CSS values (#5509)
 				try {
 					// Support: Chrome, Safari
 					// Setting style to blank string required to delete "style: x !important;"
@@ -8835,7 +8835,7 @@ function ajaxConvert( s, response, jqXHR, isSuccess ) {
 				// Apply converter (if not an equivalence)
 				if ( conv !== true ) {
 
-					// Unless errors are allowed to bubble, catch and return them
+					// Unless exceptions are allowed to bubble, catch and return them
 					if ( conv && s[ "throws" ] ) {
 						response = conv( response );
 					} else {
@@ -10014,7 +10014,7 @@ jQuery.fn.load = function( url, params, callback ) {
 			self.html( selector ?
 
 				// If a selector was specified, locate the right elements in a dummy div
-				// Exclude scripts to avoid IE 'Permission Denied' errors
+				// Exclude scripts to avoid IE 'Permission Denied' exceptions
 				jQuery("<div>").append( jQuery.parseHTML( responseText ) ).find( selector ) :
 
 				// Otherwise use the full result

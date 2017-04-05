@@ -21,21 +21,20 @@ public class EventController {
 	private EventService eventService;
 
 	@RequestMapping(value = "/events" , produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<List<ODocument>> getEvents(
+	public ResponseEntity<String> getEvents(
 			@RequestParam(defaultValue = "", required = false) String ruleClass,
 			@RequestParam(defaultValue = "", required = false) String ruleId,
-			@RequestParam(defaultValue = "false", required = false) Boolean prefetch,
 			@RequestParam(defaultValue = "10", required = false) Integer limit) {
 		if (!ruleId.equals("")) {
-			return ResponseEntity.ok(eventService.getEventsForRule(ruleId, limit, prefetch));
+			return ResponseEntity.ok(eventsToJson(eventService.getEventsForRule(ruleId, limit)));
 		}
 		if (!ruleClass.equals("")) {
-			return  ResponseEntity.ok(eventService.getEventsByRuleClass(ruleClass, limit, prefetch));
+			return  ResponseEntity.ok(eventsToJson(eventService.getEventsByRuleClass(ruleClass, limit)));
 		}
-		return  ResponseEntity.ok(eventService.getLatestEvents(limit, prefetch));
+		return  ResponseEntity.ok(eventsToJson(eventService.getLatestEvents(limit)));
 	}
 
-	@RequestMapping("/events/{schoolId}")
+	@RequestMapping("/building/{schoolId}/events")
 	public String getEventsForSchool(
 			@PathVariable String schoolId,
 			@RequestParam(required = false) Long from,
@@ -54,7 +53,7 @@ public class EventController {
 			return "[]";
 		return list.stream()
 				.map(d -> d.toJSON("rid,fetchPlan:rule:1"))
-				.collect(Collectors.joining(",", "[", "]")).toString();
+				.collect(Collectors.joining(",", "[", "]"));
 	}
 
 

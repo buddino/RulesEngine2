@@ -24,10 +24,10 @@ public class RestControllerAAA extends ResourceServerConfigurerAdapter {
 
 	@Override
 	public void configure(HttpSecurity http) throws Exception {
-		http
-				.authorizeRequests()
-				.antMatchers("/**")
-				.access("#oauth2.hasScope('read')");
+		//http.authorizeRequests().antMatchers("/**").permitAll();
+		//http.authorizeRequests().requestMatchers(CorsUtils::isPreFlightRequest).permitAll().antMatchers("/**").hasRole("USER");
+		//http.authorizeRequests().antMatchers(HttpMethod.OPTIONS).permitAll().antMatchers("/**").hasRole("USER");
+		http.cors().and().authorizeRequests().antMatchers("/**").hasRole("USER"); //Preflight not allowed, do CORS before Spring Security
 	}
 
 }

@@ -2,6 +2,8 @@ package it.cnit.gaia.rulesengine.rules;
 
 
 import it.cnit.gaia.rulesengine.model.GaiaRule;
+import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
+import it.cnit.gaia.rulesengine.model.annotation.LogMe;
 import org.quartz.CronExpression;
 
 import java.text.ParseException;
@@ -9,10 +11,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class CronComposite extends CompositeRule{
+public class CronComposite extends CompositeRule {
 	public GaiaRule rule;
 	private List<CronExpression> cronexps = new ArrayList<>();
 	public List<String> cronstrs = new ArrayList<>();
+	@LogMe
+	@LoadMe(required = false)
+	boolean negative = false;
 
 	//Da lista di string a espressione e validazione
 	//return a.compareTo(d) * d.compareTo(b) >= 0;
@@ -23,35 +28,31 @@ public class CronComposite extends CompositeRule{
 	@Override
 	public boolean condition() {
 		Date now = new Date();
-		//If at least one of the cron is satisfied
-		if(cronexps.stream().anyMatch(ce -> ce.isSatisfiedBy(now))){
-
+		if (negative) {
+			//If all the cron are not satisfied
+			return cronexps.stream().allMatch(ce -> !ce.isSatisfiedBy(now));
+		} else {
+			//If at least one of the cron is satisfied
+			return cronexps.stream().anyMatch(ce -> ce.isSatisfiedBy(now));
 		}
-
-		//If at least one of the cron is satisfied
-		if(cronexps.stream().allMatch(ce -> ce.isSatisfiedBy(now))){
-
-		}
-		return false;
 	}
 
 	@Override
-	public boolean init(){
+	public boolean init() {
 		boolean result = true;
-		if(ruleSet.size()==1) {
+		if (ruleSet.size() == 1) {
 			rule = ruleSet.iterator().next();
-			for(String s : cronstrs){
+			for (String s : cronstrs) {
 				try {
 					cronexps.add(new CronExpression(s));
 				} catch (ParseException e) {
-					LOGGER.error("Cron expression '"+s+"' is not valid");
-					result=false;
+					LOGGER.error("Cron expression '" + s + "' is not valid");
+					result = false;
 				}
 			}
-		}
-		else  {
+		} else {
 			result = false;
-			if(ruleSet.size()==0)
+			if (ruleSet.size() == 0)
 				LOGGER.error("No rule linked");
 			else
 				LOGGER.error("More than ONE rule linked");

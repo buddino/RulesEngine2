@@ -72,6 +72,18 @@ public class RulesLoader {
 		return schools;
 	}
 
+	//FIXME Fix general exceptions
+	public School getSchool(Long id) throws Exception {
+		if (schools == null || schools.size() == 0){
+			throw new Exception("No school has been loaded. Try loading the school structure before gettin a school by id [loadSchools()]");
+		}
+		School s = schools.get(id);
+		if(s == null){
+			throw new Exception("School with id ["+id+"] not found");
+		}
+		return s;
+	}
+
 	public boolean reloadSchool(Long id) {
 		if (schools.containsKey(id)) {
 			School school = schools.get(id);

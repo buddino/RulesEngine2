@@ -6,9 +6,9 @@ import it.cnit.gaia.rulesengine.measurements.MeasurementRepository;
 import it.cnit.gaia.rulesengine.model.School;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.util.Collection;
 
 @Service
@@ -23,16 +23,19 @@ public class Scheduler {
 
 	Collection<School> schools;
 
-	@PostConstruct
+	//@PostConstruct
 	public void init() throws ApiException {
 		LOGGER.info("RulesEngine Initialization");
-		//schools = rulesLoader.loadSchools().values();
-		//measurements.updateLatest();
-		//schools.forEach(s -> s.fire());
+		schools = rulesLoader.loadSchools().values();
+		measurements.updateLatest();
+		schools.forEach(s -> s.fire());
 	}
 
-	//@Scheduled(fixedDelayString = "${scheduler.interval}")
+	@Scheduled(fixedDelayString = "${scheduler.interval}")
 	public void scheduledMethod() throws ApiException {
+		rulesLoader.reloadAllSchools();
 		schools = rulesLoader.loadSchools().values();
+		measurements.updateLatest();
+		schools.forEach(s -> s.fire());
 	}
 }

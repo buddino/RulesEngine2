@@ -82,24 +82,26 @@ public class MeasurementRepository  {
 
 	public Map<String, Long> updateMeterMap() {
 		int counter = 0;
-		LOGGER.info(String.format("Resolving URIs (%d)", uriSet.size()));
-		Map<String, Long> map = new HashMap<>();
-		//TODO Update only the missing URIs
+		LOGGER.debug(String.format("Resolving URIs (%d)", uriSet.size()));
+		Map<String, Long> map = sparks.getMeterMap();
 		for (String uri : uriSet) {
-			try {
-				Long resourceId = sparks.uri2id(uri);
-				map.put(uri, resourceId);
-				counter++;
-				LOGGER.debug(String.format("%s: %d", uri, resourceId));
-				if (counter % 10 == 0) {
-					LOGGER.info(String.format("%d/%d mapped", counter, uriSet.size()));
+			//Check if the map already contains the mapping for the URI
+			if (!map.containsKey(uri)) {
+				try {
+					//If not, query for the mapping
+					Long resourceId = sparks.uri2id(uri);
+					map.put(uri, resourceId);
+					counter++;
+					LOGGER.debug(String.format("%s: %d", uri, resourceId));
+					if (counter % 10 == 0) {
+						LOGGER.info(String.format("%d/%d mapped", counter, uriSet.size()));
+					}
+				} catch (ApiException e) {
+					LOGGER.error(String.format("[%s] -> %s", uri, e.getMessage()));
 				}
-			} catch (ApiException e) {
-				LOGGER.error(String.format("[%s] -> %s", uri, e.getMessage()));
 			}
 		}
-		LOGGER.info(String.format("Mapped %d URIs", map.entrySet().size()));
-		sparks.setMeterMap(map);
+		LOGGER.info(String.format("Mapped %d new URIs", counter));
 		return map;
 	}
 
@@ -110,6 +112,10 @@ public class MeasurementRepository  {
 
 	public Long checkUri(String uri) throws ApiException {
 		return sparks.uri2id(uri);
+	}
+
+	public MeasurementService getMeasurementService(){
+		return sparks;
 	}
 
 	public Map<String, Long> getMeterMap() {

@@ -9,10 +9,11 @@ import com.google.gson.reflect.TypeToken;
 import com.squareup.okhttp.OkHttpClient;
 import io.swagger.client.ApiClient;
 import io.swagger.client.ApiException;
-import io.swagger.client.api.DataapicontrollerApi;
-import io.swagger.client.api.ResourceapicontrollerApi;
+import io.swagger.client.api.ResourceDataAPIApi;
+import io.swagger.client.api.ResourceAPIApi;
 import io.swagger.client.model.*;
 import it.cnit.gaia.rulesengine.configuration.SwaggerTokenRequest;
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Service;
@@ -27,12 +28,12 @@ import java.util.concurrent.TimeUnit;
 
 @Service(value = "sparks")
 public class SparksService implements MeasurementService {
-	private final DataapicontrollerApi dataApi = new DataapicontrollerApi();
-	private final ResourceapicontrollerApi resApi = new ResourceapicontrollerApi();
+	private final ResourceDataAPIApi dataApi = new ResourceDataAPIApi();
+	private final ResourceAPIApi resApi = new ResourceAPIApi();
 	private final Logger LOGGER = Logger.getLogger(this.getClass().getSimpleName());
 	Gson gson = new Gson();
 
-	private Map<String, Long> meterMap;
+	private Map<String, Long> meterMap = new HashMap<>();
 
 	public SparksService() {
 		//Read credentials from file
@@ -84,7 +85,7 @@ public class SparksService implements MeasurementService {
 		if(query.getQueries().size()>0) {
 			QueryLatestResourceDataResultDTO result = null;
 			try {
-				result = dataApi.queryLatestResourcesDataUsingPOST(query);
+				result = dataApi.queryLatestValuesForResources(query);
 			} catch (ApiException e) {
 				LOGGER.error("query: "+query);
 				LOGGER.error(e.getMessage());
@@ -117,12 +118,12 @@ public class SparksService implements MeasurementService {
             query.addQueriesItem(crtierium);
         }
 
-		QueryTimeRangeResourceDataResultDTO result = dataApi.queryTimeRangeResourcesDataUsingPOST(query);
+		QueryTimeRangeResourceDataResultDTO result = dataApi.queryLatestValuesForResourcesWithinTimeWindow(query);
         Set<String> keySet = result.getResults().keySet();
         for (String requestString : keySet) {
             JsonObject obj = gson.fromJson(requestString, JsonObject.class);
             String resourceURI = obj.get("resourceURI").toString().replace("\"", "");
-            List measurements = result.getResults().get(requestString);
+            List measurements = (List) result.getResults().get(requestString);
             JsonArray arr = (JsonArray) gson.toJsonTree(measurements);
             List<ResourceDataDTO> list = gson.fromJson(arr, new TypeToken<List<ResourceDataDTO>>() {
             }.getType());
@@ -133,7 +134,12 @@ public class SparksService implements MeasurementService {
 
 	@Override
 	public Long uri2id(String uri) throws ApiException {
-		ResourceDTO res = resApi.getByUriUsingGET(uri);
+		//Check if the URI is instead a resourceID
+		if(StringUtils.isNumeric(uri)) {
+			return Long.valueOf(uri);
+		}
+		//Query for the resource ID of the URI
+		ResourceDTO res = resApi.retrieveResourceByUri(uri);
 		return res.getResourceId();
 	}
 
@@ -141,6 +147,11 @@ public class SparksService implements MeasurementService {
 	public MeasurementService setMeterMap(Map<String, Long> meterMap) {
 		this.meterMap = meterMap;
 		return this;
+	}
+
+	@Override
+	public SummaryDTO getSummary(Long resourceId) throws ApiException {
+		return dataApi.retrieveLatestSummary(resourceId);
 	}
 
 	@Override

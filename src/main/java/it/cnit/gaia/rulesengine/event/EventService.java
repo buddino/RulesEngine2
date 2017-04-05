@@ -22,7 +22,7 @@ public class EventService {
 	private Logger LOGGER = Logger.getLogger(this.getClass().getSimpleName());
 	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-	public void addEvent(GaiaEvent event) {
+	public ODocument addEvent(GaiaEvent event) {
 		//Get the underlying Document database ( GaiaEvent is not a subclass of the Vertex class)
 		ODatabaseDocumentTx rawGraph = graphFactory.getTx().getRawGraph();
 		ODocument gaiaevent = new ODocument("GaiaEvent");
@@ -33,27 +33,27 @@ public class EventService {
 		//Save the document, it works as long as an active database is in the scope
 		gaiaevent.save();
 		rawGraph.commit().close();
+		return gaiaevent;
 		//LOGGER.debug("\u001B[36mNEW EVENT\u001B[0m\t");
 	}
 
-	public void addEvent(GAIANotification notification) {
+	public ODocument addEvent(GAIANotification notification) {
 		GaiaEvent gaiaEvent = new GaiaEvent(notification);
-		addEvent(gaiaEvent);
+		return addEvent(gaiaEvent);
 	}
 
 	/**
-	 * @param limit    the number of object to be returned
-	 * @param prefetch if true the rule field will be fetched
+	 * @param limit the number of object to be returned
 	 * @return Iterable of OrientVertex. The record (ODocument) can be retrieved using .getRecord()
 	 */
-	public List<ODocument> getLatestEvents(int limit, boolean prefetch) {
+	public List<ODocument> getLatestEvents(int limit) {
 		ODatabaseDocumentTx db = graphFactory.getNoTx().getRawGraph();
 		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("SELECT * FROM GaiaEvent order by timestamp DESC FETCHPLAN rule:1");
 		query.setLimit(limit);
 		return db.query(query);
 	}
 
-	public List<ODocument> getEventsForRule(String ruleId, int limit, boolean prefetch) {
+	public List<ODocument> getEventsForRule(String ruleId, int limit) {
 		ODatabaseDocumentTx db = graphFactory.getNoTx().getRawGraph();
 		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("SELECT * FROM GaiaEvent WHERE rule=? order by timestamp DESC FETCHPLAN rule:1");
 		query.setLimit(limit);
@@ -62,21 +62,21 @@ public class EventService {
 
 	}
 
-	public List<ODocument> getEventsForRule(GaiaRule rule, int limit, boolean prefetch) {
+	public List<ODocument> getEventsForRule(GaiaRule rule, int limit) {
 		ODatabaseDocumentTx db = graphFactory.getNoTx().getRawGraph();
-				OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("SELECT * FROM GaiaEvent WHERE rule = ? order by timestamp DESC FETCHPLAN rule:1");
+		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("SELECT * FROM GaiaEvent WHERE rule = ? order by timestamp DESC FETCHPLAN rule:1");
 		query.setLimit(limit);
 		List<ODocument> result = db.command(query).execute(rule.getRid());
 		return result;
 	}
-	public List<ODocument> getEventsByRuleClass(String ruleClass, int limit, boolean prefetch) {
+
+	public List<ODocument> getEventsByRuleClass(String ruleClass, int limit) {
 		ODatabaseDocumentTx db = graphFactory.getNoTx().getRawGraph();
 		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("SELECT * FROM GaiaEvent WHERE rule.@class = ? ORDER BY timestamp DESC FETCHPLAN rule:1");
 		query.setLimit(limit);
 		List<ODocument> result = db.command(query).execute(ruleClass);
 		return result;
 	}
-
 
 	public List<ODocument> getEventsForSchool(String schoolId, Integer limit) {
 		ODatabaseDocumentTx db = graphFactory.getNoTx().getRawGraph();
@@ -90,7 +90,7 @@ public class EventService {
 		ODatabaseDocumentTx db = graphFactory.getNoTx().getRawGraph();
 		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from GaiaEvent where rule.school.id = ? AND timestamp between ? and ? order by timestamp DESC FETCHPLAN rule:1");
 		query.setLimit(limit);
-		List<ODocument> result = db.command(query).execute(schoolId, sdf.format(from) , sdf.format(to));
+		List<ODocument> result = db.command(query).execute(schoolId, sdf.format(from), sdf.format(to));
 		return result;
 	}
 
@@ -98,7 +98,7 @@ public class EventService {
 		ODatabaseDocumentTx db = graphFactory.getNoTx().getRawGraph();
 		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from GaiaEvent where rule.school.id = ? AND timestamp between ? and ? order by timestamp DESC FETCHPLAN rule:1");
 		query.setLimit(limit);
-		List<ODocument> result = db.command(query).execute(schoolId, from , to);
+		List<ODocument> result = db.command(query).execute(schoolId, from, to);
 		return result;
 	}
 }
