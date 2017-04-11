@@ -1,4 +1,4 @@
-package it.cnit.gaia.rulesengine.notification;
+package it.cnit.gaia.rulesengine.configuration;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;

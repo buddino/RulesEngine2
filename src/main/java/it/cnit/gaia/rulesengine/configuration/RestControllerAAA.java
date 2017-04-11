@@ -27,7 +27,13 @@ public class RestControllerAAA extends ResourceServerConfigurerAdapter {
 		//http.authorizeRequests().antMatchers("/**").permitAll();
 		//http.authorizeRequests().requestMatchers(CorsUtils::isPreFlightRequest).permitAll().antMatchers("/**").hasRole("USER");
 		//http.authorizeRequests().antMatchers(HttpMethod.OPTIONS).permitAll().antMatchers("/**").hasRole("USER");
-		http.cors().and().authorizeRequests().antMatchers("/**").hasRole("USER"); //Preflight not allowed, do CORS before Spring Security
+
+		//Preflight not allowed
+		//Public APIs
+		//Requires Role.USER for all other resources
+		http.cors()
+				.and().authorizeRequests().antMatchers("/docs/*").permitAll().and().authorizeRequests().antMatchers("/v2/api-docs").permitAll()
+				.and().authorizeRequests().antMatchers("/**").hasRole("USER");
 	}
 
 }

@@ -28,7 +28,7 @@ public class SwaggerConfigurator {
         } catch (YamlException e) {
             e.printStackTrace();
         }
-        SwaggerTokenRequest tokenRequest = new SwaggerTokenRequest(map.get("username"),map.get("password"),map.get("secret"),map.get("client"));
+        SparksTokenRequest tokenRequest = new SparksTokenRequest(map.get("username"),map.get("password"),map.get("secret"),map.get("client"));
         apiClient = new ApiClient();
         apiClient.setAccessToken(tokenRequest.getAccess_token());
     }
