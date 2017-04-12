@@ -1,9 +1,10 @@
-package it.cnit.gaia.rulesengine.event;
+package it.cnit.gaia.rulesengine.service;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.event.GaiaEvent;
 import it.cnit.gaia.rulesengine.model.notification.GAIANotification;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -100,5 +102,22 @@ public class EventService {
 		query.setLimit(limit);
 		List<ODocument> result = db.command(query).execute(schoolId, from, to);
 		return result;
+	}
+
+	public ODocument getLatestEventForRule(String rid){
+		OrientGraphNoTx G = graphFactory.getNoTx();
+		OSQLSynchQuery query = new OSQLSynchQuery("select from GaiaEvent where rule=? ORDER BY timestamp DESC LIMIT 1");
+		List<ODocument> result = (List<ODocument>) query.execute(G.getVertex(rid).getIdentity());
+		if (result.size() == 0 || result == null) {
+			return null;
+		}
+		return result.get(0);
+	}
+
+	public Date getLatestEventTimestamp(String rid) {
+		ODocument latestEvent = getLatestEventForRule(rid);
+		if (latestEvent == null)
+			return null;
+		return (Date) latestEvent.field("timestamp");
 	}
 }

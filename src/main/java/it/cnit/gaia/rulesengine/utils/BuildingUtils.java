@@ -4,10 +4,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.*;
-import it.cnit.gaia.buildingdb.AreaDTO;
-import it.cnit.gaia.buildingdb.BuildingDTO;
-import it.cnit.gaia.buildingdb.BuildingDatabaseException;
-import it.cnit.gaia.buildingdb.BuildingDatabaseService;
+import it.cnit.gaia.buildingdb.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,8 +18,10 @@ public class BuildingUtils {
 	@Autowired
 	OrientGraphFactory graphFactory;
 
+	@Autowired
+	BuildingDatabaseService bds;
+
 	public OrientVertex buildTreeFromBuildingDB(Long buildingId) throws BuildingDatabaseException, IllegalAccessException {
-		BuildingDatabaseService bds = new BuildingDatabaseService();
 		BuildingDTO school = bds.getBuildingStructure(buildingId);
 		OrientGraph g = graphFactory.getTx();
 		//Check if a school with the same aid already exists

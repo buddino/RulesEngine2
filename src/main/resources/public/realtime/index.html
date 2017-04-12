@@ -22,7 +22,7 @@
 
     </style>
     <script>
-        var URL = "http://localhost:8080";
+        var URL = "";
         function switchView(name) {
             $(".main").hide();
             $("#" + name).show();
@@ -39,7 +39,7 @@
     <div class="col-sm-3 col-md-2 sidebar">
         <div class="form-group form-inline">
             <label for="selectSchool">School:</label>
-            <select class="form-control" id="selectSchool"></select>
+            <input class="form-control" id="selectSchool" type="text">
         </div>
         <ul class="nav nav-sidebar">
             <li class="viewBtn active"><a id="websocketBtn" data-view="websocketView" href="#">Notifications <span

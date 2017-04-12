@@ -14,6 +14,8 @@ import java.util.List;
 public class CronComposite extends CompositeRule {
 	public GaiaRule rule;
 	private List<CronExpression> cronexps = new ArrayList<>();
+
+	@LoadMe
 	public List<String> cronstrs = new ArrayList<>();
 	@LogMe
 	@LoadMe(required = false)
@@ -28,6 +30,7 @@ public class CronComposite extends CompositeRule {
 	@Override
 	public boolean condition() {
 		Date now = new Date();
+
 		if (negative) {
 			//If all the cron are not satisfied
 			return cronexps.stream().allMatch(ce -> !ce.isSatisfiedBy(now));
@@ -35,6 +38,11 @@ public class CronComposite extends CompositeRule {
 			//If at least one of the cron is satisfied
 			return cronexps.stream().anyMatch(ce -> ce.isSatisfiedBy(now));
 		}
+	}
+
+	@Override
+	public void action(){
+		rule.fire();
 	}
 
 	@Override

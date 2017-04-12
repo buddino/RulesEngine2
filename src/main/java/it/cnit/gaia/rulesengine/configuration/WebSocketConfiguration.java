@@ -20,5 +20,4 @@ public class WebSocketConfiguration extends AbstractWebSocketMessageBrokerConfig
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/gs-guide-notification").setAllowedOrigins("*").withSockJS();
     }
-
 }

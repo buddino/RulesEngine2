@@ -6,7 +6,8 @@ import com.squareup.okhttp.FormEncodingBuilder;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.AuthenticationException;
 
@@ -14,8 +15,8 @@ import java.io.IOException;
 
 public class SparksTokenRequest {
 	private final String sso = "https://sso.sparkworks.net/aa/oauth/token";
-	Logger LOGGER = Logger.getLogger(this.getClass()
-										 .getName());
+	private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
+
 	private String access_token = null;
 	private String refresh_token = null;
 	private Long expires_in = null;

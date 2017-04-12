@@ -4,22 +4,26 @@ import com.google.gson.Gson;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import it.cnit.gaia.buildingdb.BuildingDatabaseService;
 import it.cnit.gaia.rulesengine.configuration.ContextProvider;
-import it.cnit.gaia.rulesengine.event.EventService;
-import it.cnit.gaia.rulesengine.measurements.MeasurementRepository;
 import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
 import it.cnit.gaia.rulesengine.model.annotation.LogMe;
 import it.cnit.gaia.rulesengine.model.annotation.URI;
 import it.cnit.gaia.rulesengine.model.event.GaiaEvent;
 import it.cnit.gaia.rulesengine.model.exceptions.RuleInitializationException;
 import it.cnit.gaia.rulesengine.model.notification.GAIANotification;
-import it.cnit.gaia.rulesengine.notification.WebsocketService;
 import it.cnit.gaia.rulesengine.rules.ExpressionRule;
+import it.cnit.gaia.rulesengine.service.EventService;
+import it.cnit.gaia.rulesengine.service.MeasurementRepository;
+import it.cnit.gaia.rulesengine.service.WebsocketService;
 import org.apache.commons.lang.text.StrSubstitutor;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -27,12 +31,12 @@ import java.util.stream.Collectors;
 
 public abstract class GaiaRule implements Fireable {
 
-	//Riguarda Mixing a lot of responsabilities including Queries to the DB
+	//Riguarda Questa classe ha troppe responsabilità
 
-	@LoadMe
+	@LoadMe(required = false)
 	@LogMe(event = false)
 	public String name;
-	@LoadMe
+	@LoadMe(required = false)
 	public String suggestion;
 	@LogMe(event = false, notification = false)
 	public String description;
@@ -40,22 +44,17 @@ public abstract class GaiaRule implements Fireable {
 	public String rid;
 	public School school;
 
-	//TODO Add minimum interval between triggering
 	@LoadMe(required = false)
 	public Long intervalInSeconds = 0L;
-	/*
-	Ask the database last time the rule has been triggered
-	Compute the difference
-	Comprare the difference with the minimum period of the rule
-	If equals to 0 or not present do not query the DB
-	* */
 
-	protected Logger LOGGER = Logger.getLogger(this.getClass());
+	protected final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
+	//Services (from application context)
 	protected WebsocketService websocket = ContextProvider.getBean(WebsocketService.class);
 	protected EventService eventService = ContextProvider.getBean(EventService.class);
 	protected MeasurementRepository measurements = ContextProvider.getBean(MeasurementRepository.class);
 	protected OrientGraphFactory graphFactory = ContextProvider.getBean(OrientGraphFactory.class);
+	protected BuildingDatabaseService buildingDBService = ContextProvider.getBean(BuildingDatabaseService.class);
 
 	public abstract boolean condition();
 
@@ -64,7 +63,7 @@ public abstract class GaiaRule implements Fireable {
 		GaiaEvent event = getBaseEvent();
 		setLatestTrigger();
 		websocket.pushNotification(notification);
-		ODocument evt = eventService.addEvent(event);
+		eventService.addEvent(event);
 	}
 
 	protected void setLatestTrigger(){
@@ -76,12 +75,13 @@ public abstract class GaiaRule implements Fireable {
 	private boolean isTriggeringIntervalValid(){
 		if(intervalInSeconds == 0)
 			return true;
-		Date latest = getLatestEventTimestamp();
+		Date latest = eventService.getLatestEventTimestamp(rid);
 		if( latest == null)
 			return true;
 		Date now = new Date();
 		return now.getTime() - latest.getTime() > intervalInSeconds * 1000;
 	}
+
 
 	public void fire() {
 		if(!isTriggeringIntervalValid()) {
@@ -92,7 +92,7 @@ public abstract class GaiaRule implements Fireable {
 			if (condition())
 				action();
 		} catch (Exception e) {
-			LOGGER.error(e.getMessage());
+			LOGGER.error(e.getMessage(),e);
 		}
 	}
 
@@ -105,6 +105,7 @@ public abstract class GaiaRule implements Fireable {
 				if (annotation.required()) {
 					try {
 						if (f.get(this) == null || f.get(this).equals("")) {
+							LOGGER.warn(String.format("Required field missing or empty (%s)", f.getName()));
 							return false;
 						}
 					} catch (IllegalAccessException e) {
@@ -262,21 +263,49 @@ public abstract class GaiaRule implements Fireable {
 		return uri;
 	}
 
-	public Date getLatestEventTimestamp() {
-		ODocument latestEvent = getLatestEvent();
-		if (latestEvent == null)
-			return null;
-		return (Date) latestEvent.field("timestamp");
-	}
-
-	public ODocument getLatestEvent() {
-		OrientGraphNoTx G = graphFactory.getNoTx();
-		OSQLSynchQuery query = new OSQLSynchQuery("select from GaiaEvent where rule=? ORDER BY timestamp DESC LIMIT 1");
-		List<ODocument> result = (List<ODocument>) query.execute(G.getVertex(rid).getIdentity());
-		if (result.size() == 0 || result == null) {
+	public Long getAreaId(){
+		OrientVertex ruleVertex = graphFactory.getNoTx()
+				.getVertex(rid);
+		try {
+			Vertex areaVertex = ruleVertex.getVertices(Direction.IN)
+					.iterator()
+					.next();
+			Long aid = areaVertex.getProperty("aid");
+			if( aid == null ){
+				LOGGER.error(String.format("The rule %s is not connected to a valid area (no aid found)",rid));
+				return null;
+			}
+			return aid;
+		}
+		catch (NoSuchElementException e){
+			LOGGER.error(String.format("The rule %s is not connected to an area",rid));
 			return null;
 		}
-		return result.get(0);
+
 	}
 
+	public GaiaRule setWebsocket(WebsocketService websocket) {
+		this.websocket = websocket;
+		return this;
+	}
+
+	public GaiaRule setEventService(EventService eventService) {
+		this.eventService = eventService;
+		return this;
+	}
+
+	public GaiaRule setMeasurements(MeasurementRepository measurements) {
+		this.measurements = measurements;
+		return this;
+	}
+
+	public GaiaRule setGraphFactory(OrientGraphFactory graphFactory) {
+		this.graphFactory = graphFactory;
+		return this;
+	}
+
+	public GaiaRule setBuildingDBService(BuildingDatabaseService buildingDBService) {
+		this.buildingDBService = buildingDBService;
+		return this;
+	}
 }

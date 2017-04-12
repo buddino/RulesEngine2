@@ -29,7 +29,7 @@ public class SchemaTest {
 
 	@Test
 	public void testAddToSchema() {
-		final String classname = "PowerFactor2";
+		final String classname = "PowerFactor";
 		final String rulesPackage = "it.cnit.gaia.rulesengine.rules.";
 		Class<?> ruleClass = null;
 		OSchemaProxy schema = ogf.getDatabase().getMetadata().getSchema();
@@ -58,12 +58,12 @@ public class SchemaTest {
 
 	@Test
 	public void testService(){
-		dbs.addClassToSchema("PowerFactor2");
+		dbs.addClassToSchema("PowerFactor");
 	}
 
 	@Test
 	public void testDefault(){
-		String classname = "PowerFactor2";
+		String classname = "PowerFactor";
 		String properyName = "suggestion";
 		String defaultValue = "VALORE DI DEFAULT";
 		OSchemaProxy schema = ogf.getDatabase().getMetadata().getSchema();

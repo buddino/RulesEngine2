@@ -10,7 +10,7 @@ import org.springframework.security.oauth2.provider.token.RemoteTokenServices;
 
 @Configuration
 @EnableResourceServer
-public class RestControllerAAA extends ResourceServerConfigurerAdapter {
+public class SecurityConfiguration extends ResourceServerConfigurerAdapter {
 
 	@Primary
 	@Bean
@@ -28,12 +28,11 @@ public class RestControllerAAA extends ResourceServerConfigurerAdapter {
 		//http.authorizeRequests().requestMatchers(CorsUtils::isPreFlightRequest).permitAll().antMatchers("/**").hasRole("USER");
 		//http.authorizeRequests().antMatchers(HttpMethod.OPTIONS).permitAll().antMatchers("/**").hasRole("USER");
 
-		//Preflight not allowed
-		//Public APIs
-		//Requires Role.USER for all other resources
-		http.cors()
-				.and().authorizeRequests().antMatchers("/docs/*").permitAll().and().authorizeRequests().antMatchers("/v2/api-docs").permitAll()
-				.and().authorizeRequests().antMatchers("/**").hasRole("USER");
+		http.cors()																									//Enable CORS
+			.and().authorizeRequests().antMatchers("/docs/*").permitAll().and().authorizeRequests()		//Allows Swagger API
+			.antMatchers("/v2/api-docs").permitAll()													//Allows Swagger API
+			.and().authorizeRequests().antMatchers("/gs-guide-notification/**").permitAll()				//Allows web socket //Riguarda
+			.and().authorizeRequests().antMatchers("/**").hasRole("USER");							//Block all other request except from user with ROLE.USER
 	}
 
 }

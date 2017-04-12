@@ -1,22 +1,36 @@
-import it.cnit.gaia.rulesengine.configuration.RestControllerAAA;
+import it.cnit.gaia.rulesengine.configuration.SparksTokenRequest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.oauth2.provider.OAuth2Authentication;
-import org.springframework.security.oauth2.provider.token.RemoteTokenServices;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.util.Assert;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = RestControllerAAA.class)
+@SpringBootTest( classes = TestAAA.class)
 public class TestAAA {
 
-	@Autowired
-	RemoteTokenServices tokenService;
+	SparksTokenRequest tokenRequest;
 
 	@Test
-	public void test() {
-		OAuth2Authentication oAuth2Authentication = tokenService.loadAuthentication("28f48152-c86e-42a6-b2de-58e2f7de4dc5");
-		System.out.println(oAuth2Authentication.toString());
+	public void testAccessTokenRequest() {
+		tokenRequest = new SparksTokenRequest("gaia-prato","cmRxm2","c9ce97aa-3b71-446e-b3f4-f7130dfddb32","CNIT");
+		Assert.notNull(tokenRequest.getAccess_token());
+	}
+
+	@Test(expected=AuthenticationCredentialsNotFoundException.class)
+	public void testAccessWrongTokenRequest() {
+		tokenRequest = new SparksTokenRequest("gaia-prato","wrongpassword","c9ce97aa-3b71-446e-b3f4-f7130dfddb32","CNIT");
+	}
+
+	@Test
+	public void testRefreshToken(){
+		tokenRequest = new SparksTokenRequest("gaia-prato","cmRxm2","c9ce97aa-3b71-446e-b3f4-f7130dfddb32","CNIT");
+		String token = tokenRequest.getAccess_token();
+		System.out.println(token);
+		tokenRequest.refreshToken();
+		String refreshedToken = tokenRequest.getAccess_token();
+		System.out.println(refreshedToken);
+		Assert.isTrue(!token.equals(refreshedToken));
 	}
 }

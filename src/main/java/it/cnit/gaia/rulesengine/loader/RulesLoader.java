@@ -5,7 +5,6 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import it.cnit.gaia.rulesengine.measurements.MeasurementRepository;
 import it.cnit.gaia.rulesengine.model.Area;
 import it.cnit.gaia.rulesengine.model.Fireable;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
@@ -14,8 +13,10 @@ import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
 import it.cnit.gaia.rulesengine.model.annotation.URI;
 import it.cnit.gaia.rulesengine.rules.CompositeRule;
 import it.cnit.gaia.rulesengine.rules.ExpressionRule;
+import it.cnit.gaia.rulesengine.service.MeasurementRepository;
 import org.apache.commons.lang.math.NumberUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ReflectionUtils;
@@ -40,7 +41,7 @@ public class RulesLoader {
 	@Autowired
 	private MeasurementRepository measurementRepository;
 
-	private Logger LOGGER = Logger.getLogger("RulesLoader");
+	private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 	private Map<Long, School> schools = null;
 	private OrientGraph tx;
 
@@ -85,6 +86,7 @@ public class RulesLoader {
 	}
 
 	public boolean reloadSchool(Long id) {
+		graphFactory.getDatabase().getLocalCache().invalidate();
 		if (schools.containsKey(id)) {
 			School school = schools.get(id);
 			Vertex schoolVertex = graphFactory.getTx().getVertex(school.getRid());
@@ -112,8 +114,7 @@ public class RulesLoader {
 		school.name = schoolVertex.getProperty("name");
 		school.type = "School";
 
-		//Riguarda External loading maybe put inside...
-		LOGGER.info("Loading tree for school: " + school.getName());
+		LOGGER.debug("Loading tree for school: " + school.getName());
 		Iterable<Vertex> children = schoolVertex.getVertices(Direction.OUT);
 		for (Vertex child : children) {
 			Fireable f = traverse((OrientVertex) child, school);
@@ -122,7 +123,7 @@ public class RulesLoader {
 					if (f.init())
 						school.add(f);
 				} catch (Exception e) {
-					LOGGER.error(e.getMessage());
+					LOGGER.error(e.getMessage(),e);
 				}
 			}
 		}
@@ -130,6 +131,7 @@ public class RulesLoader {
 	}
 
 	public void reloadAllSchools() {
+		graphFactory.getDatabase().getLocalCache().invalidate();
 		schools = null;
 	}
 

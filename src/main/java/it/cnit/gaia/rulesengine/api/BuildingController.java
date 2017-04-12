@@ -10,8 +10,8 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import it.cnit.gaia.buildingdb.BuildingDatabaseException;
 import it.cnit.gaia.rulesengine.api.request.ErrorResponse;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
-import it.cnit.gaia.rulesengine.measurements.MeasurementRepository;
 import it.cnit.gaia.rulesengine.model.School;
+import it.cnit.gaia.rulesengine.service.MeasurementRepository;
 import it.cnit.gaia.rulesengine.utils.BuildingUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +25,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/building")
 public class BuildingController {
 	private Logger LOGGER = Logger.getRootLogger();
 	private Gson g = new Gson();
@@ -46,26 +45,26 @@ public class BuildingController {
 		return new ResponseEntity<>(error, HttpStatus.CONFLICT);
 	}
 
-	@RequestMapping(value="/{id}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+	@RequestMapping(value="/building/{id}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody ResponseEntity<?> buildTreeFromBuildingDB(@PathVariable Long id) throws BuildingDatabaseException, IllegalAccessException {
 		OrientVertex vertex = buildingUtils.buildTreeFromBuildingDB(id);
 		return ResponseEntity.ok(vertex.getRecord().toJSON());
 	}
 
-	@RequestMapping(value="/{id}", method = RequestMethod.DELETE)
+	@RequestMapping(value="/building/{id}", method = RequestMethod.DELETE)
 	public @ResponseBody ResponseEntity<?> deleteBuildingTree(@PathVariable Long id) throws BuildingDatabaseException, IllegalAccessException {
 		buildingUtils.deleteBuildingTree(id);
 		return ResponseEntity.ok(null);
 	}
 
-	@RequestMapping(value = "/", method = RequestMethod.GET)
+	@RequestMapping(value = "/building", method = RequestMethod.GET)
 	public
 	@ResponseBody
 	Collection<School> getSchools() {
 		return rulesLoader.loadSchools().values();
 	}
 
-	@RequestMapping(value = "/{sid}/area", method = RequestMethod.GET)
+	@RequestMapping(value = "/building/{sid}/area", method = RequestMethod.GET)
 	public ResponseEntity<Object> getAreas(@PathVariable Long sid) {
 		OrientGraphNoTx db = graphFactory.getNoTx();
 		OSQLSynchQuery query = new OSQLSynchQuery("select * from (traverse * from (select from BuildingBDB where aid = ?)) where @class = \"Area\"");
@@ -77,8 +76,8 @@ public class BuildingController {
 	}
 
 	@ResponseBody
-	@RequestMapping(value = "/reload/{schoolId}", method = RequestMethod.GET)
-	public ResponseEntity<String> reload(@PathVariable Long schoolId) {
+	@RequestMapping(value = "/building/reload/{schoolId}", method = RequestMethod.GET)
+	public ResponseEntity<String> reloadSchoolTree(@PathVariable Long schoolId) {
 		if (!rulesLoader.reloadSchool(schoolId)) {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
@@ -86,13 +85,13 @@ public class BuildingController {
 	}
 
 	@ResponseBody
-	@RequestMapping("/reload")
-	public ResponseEntity<String> reload() {
+	@GetMapping("/building/reload")
+	public ResponseEntity<String> reloadAllSchools() {
 		rulesLoader.reloadAllSchools();
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
-	@RequestMapping("/uris")
+	@GetMapping("/building/uris")
 	public
 	@ResponseBody ResponseEntity<Map<String, Long>> getUriMapping() {
 		return ResponseEntity.ok(measurementRepository.getMeterMap());

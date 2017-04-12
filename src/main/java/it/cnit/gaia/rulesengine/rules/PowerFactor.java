@@ -1,53 +1,73 @@
 package it.cnit.gaia.rulesengine.rules;
 
+import io.swagger.client.ApiException;
+import io.swagger.client.model.SummaryDTO;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
 import it.cnit.gaia.rulesengine.model.annotation.LogMe;
 import it.cnit.gaia.rulesengine.model.annotation.URI;
+import it.cnit.gaia.rulesengine.model.event.GaiaEvent;
+import it.cnit.gaia.rulesengine.model.notification.GAIANotification;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.OptionalDouble;
 
-public class PowerFactor extends GaiaRule{
+public class PowerFactor extends GaiaRule {
 
 	@LogMe
 	@LoadMe
 	@URI
-	public String pwf_uri;	//If 3-Phase this is the base uri, /1 /2 /3 will be added automatically
-
-	@LoadMe( required = false)
-	public int n_phases = 1;
+	public String pwf_uri;
 
 	@LogMe
-	@LoadMe( required = false)
-	public Double pwf_threshold = 0.7;
+	@LoadMe(required = false)
+	public Double pwf_threshold = 0.95;
 
 	@LogMe
-	public List<Double> pwf_value;
+	@LoadMe(required = false)
+	public int windowLength = 10;
+
+	private double average;
+
 
 	@Override
 	public boolean condition() {
-		pwf_value = new ArrayList<>();
-		if(n_phases==1){
-			try {
-				pwf_value.add(measurements.getLatestFor(pwf_uri).getReading());
+		//If the resource ID is not present the rule is discarder, so you don't need null check
+		Long resourceId = measurements.getMeasurementService().getMeterMap().get(pwf_uri);
+		try {
+			SummaryDTO summary = measurements.getMeasurementService().getSummary(resourceId);
+			OptionalDouble optionalAverage = summary.getDay().stream()
+					.limit(windowLength)
+					.filter(d -> d > 0.0)
+					.mapToDouble(d -> d)
+					.average();
+			if (!optionalAverage.isPresent()) {
+				LOGGER.warn(String.format("[%s] Cannot compute the average beacuse there are no valid values.", rid));
+				return false;
 			}
-			catch (NullPointerException e){LOGGER.error("["+rid+"]"+e.getMessage());}
-			return pwf_value.get(0) < pwf_threshold;
+
+			average = optionalAverage.getAsDouble();
+			if (average < pwf_threshold) {
+				return true;
+			}
+		} catch (ApiException e) {
+			LOGGER.error(e.getStackTrace().toString());
 		}
-		else if(n_phases==3){
-			try {
-				pwf_value.add(measurements.getLatestFor(pwf_uri + "/1").getReading());
-				pwf_value.add(measurements.getLatestFor(pwf_uri + "/2").getReading());
-				pwf_value.add(measurements.getLatestFor(pwf_uri + "/3").getReading());
-				}
-			catch (NullPointerException e){ LOGGER.error("["+rid+"]"+e.getMessage());}
-			return pwf_value.stream().anyMatch( value -> value < pwf_threshold);
+		return false;
+	}
+
+	@Override
+	public void action() {
+		GAIANotification notification = getBaseNotification();
+		GaiaEvent event = getBaseEvent();
+		setLatestTrigger();
+		if(average < 0.7){
+			notification.setSuggestion(String.format("The power factor average value in the latest %d days is %.3f. This is a critical low value and the energy provider can force you to solve this issue.", windowLength, average));
 		}
 		else {
-			LOGGER.warn("Illegal number of phases");
-			return false;
+			notification.setSuggestion(String.format("The power factor average value in the latest %d days is %.3f. Energy provider can add fees to you bill.", windowLength, average));
 		}
+		websocket.pushNotification(notification);
+		eventService.addEvent(event);
 	}
 
 }

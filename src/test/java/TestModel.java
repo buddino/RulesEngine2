@@ -1,5 +1,5 @@
 import it.cnit.gaia.rulesengine.model.Area;
-import model.RuleForTest;
+import it.cnit.rulesengine.model.RuleForTest;
 import org.junit.Test;
 
 public class TestModel {

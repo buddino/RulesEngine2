@@ -1,13 +1,14 @@
 package it.cnit.gaia.rulesengine.api;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import it.cnit.gaia.rulesengine.event.EventService;
+import it.cnit.gaia.rulesengine.service.EventService;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,7 +21,7 @@ public class EventController {
 	@Autowired
 	private EventService eventService;
 
-	@RequestMapping(value = "/events" , produces = MediaType.APPLICATION_JSON_VALUE)
+	@GetMapping(value = "/events" , produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<String> getEvents(
 			@RequestParam(defaultValue = "", required = false) String ruleClass,
 			@RequestParam(defaultValue = "", required = false) String ruleId,
@@ -34,7 +35,7 @@ public class EventController {
 		return  ResponseEntity.ok(eventsToJson(eventService.getLatestEvents(limit)));
 	}
 
-	@RequestMapping("/building/{schoolId}/events")
+	@GetMapping("/building/{schoolId}/events")
 	public String getEventsForSchool(
 			@PathVariable String schoolId,
 			@RequestParam(required = false) Long from,

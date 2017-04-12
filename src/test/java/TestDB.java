@@ -11,7 +11,6 @@ import it.cnit.gaia.buildingdb.BuildingDTO;
 import it.cnit.gaia.buildingdb.BuildingDatabaseException;
 import it.cnit.gaia.buildingdb.BuildingDatabaseService;
 import it.cnit.gaia.rulesengine.configuration.OrientConfiguration;
-import it.cnit.gaia.rulesengine.event.EventService;
 import it.cnit.gaia.rulesengine.model.School;
 import org.joda.time.DateTime;
 import org.junit.Test;
@@ -26,7 +25,7 @@ import java.util.stream.Collectors;
 
 @SpringBootTest
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {OrientConfiguration.class, EventService.class})
+@ContextConfiguration(classes = {OrientConfiguration.class, BuildingDatabaseService.class})
 public class TestDB {
 
 	Gson gson = new Gson();
@@ -35,8 +34,7 @@ public class TestDB {
 	OrientGraphFactory ogf;
 
 	@Autowired
-	EventService eventService;
-
+	BuildingDatabaseService bds;
 
 	@Test
 	public void testDateDatime() {
@@ -125,7 +123,6 @@ public class TestDB {
 
 	@Test
 	public void syncSchool() throws BuildingDatabaseException {
-		BuildingDatabaseService bds = new BuildingDatabaseService();
 		List<BuildingDTO> buildings = bds.getBuildings();
 		OrientGraph g = ogf.getTx();
 		for (BuildingDTO b : buildings) {
@@ -141,7 +138,6 @@ public class TestDB {
 
 	@Test
 	public void syncBuilding() throws BuildingDatabaseException, IllegalAccessException {
-		BuildingDatabaseService bds = new BuildingDatabaseService();
 		BuildingDTO school = bds.getBuildingStructure(155076L);
 		OrientGraph g = ogf.getTx();
 		OrientVertex schoolVertex = g.addVertex("class:School");

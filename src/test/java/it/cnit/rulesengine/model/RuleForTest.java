@@ -1,4 +1,4 @@
-package model;
+package it.cnit.rulesengine.model;
 
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 
