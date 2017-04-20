@@ -1,0 +1,10 @@
+${AnsiColor.BRIGHT_GREEN}   _____          _____
+${AnsiColor.BRIGHT_GREEN}  / ____|   /\   |_   _|   /\
+${AnsiColor.BRIGHT_GREEN} | |  __   /  \    | |    /  \
+${AnsiColor.BRIGHT_GREEN} | | |_ | / /\ \   | |   / /\ \
+${AnsiColor.BRIGHT_GREEN} | |__| |/ ____ \ _| |_ / ____ \  ${AnsiColor.DEFAULT}Rules
+${AnsiColor.BRIGHT_GREEN}  \_____/_/    \_\_____/_/    \_\ ${AnsiColor.DEFAULT}Engine
+     ${AnsiColor.BRIGHT_YELLOW}GREEN AWARENESS IN ACTION
+${AnsiColor.DEFAULT}
+Version: ${application.version}
+Spring Boot: ${spring-boot.version}

@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 @Service
@@ -57,7 +56,7 @@ public class EventService {
 
 	public List<ODocument> getEventsForRule(String ruleId, int limit) {
 		ODatabaseDocumentTx db = graphFactory.getNoTx().getRawGraph();
-		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("SELECT * FROM GaiaEvent WHERE rule=? order by timestamp DESC FETCHPLAN rule:1");
+		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("SELECT * FROM GaiaEvent WHERE rule = ? order by timestamp DESC FETCHPLAN rule:1");
 		query.setLimit(limit);
 		List<ODocument> result = db.command(query).execute(ruleId);
 		return result;
@@ -114,10 +113,11 @@ public class EventService {
 		return result.get(0);
 	}
 
-	public Date getLatestEventTimestamp(String rid) {
-		ODocument latestEvent = getLatestEventForRule(rid);
-		if (latestEvent == null)
-			return null;
-		return (Date) latestEvent.field("timestamp");
+	public List<ODocument> getLatestEventsForRule(String rid, Long from, Long to){
+		OrientGraphNoTx G = graphFactory.getNoTx();
+		OSQLSynchQuery query = new OSQLSynchQuery("select from GaiaEvent where rule = ? AND timestamp between ? and ? ORDER BY timestamp");
+		List<ODocument> result = (List<ODocument>) query.execute(G.getVertex(rid).getIdentity(), from, to);
+		return result;
 	}
+
 }

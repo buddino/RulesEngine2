@@ -22,22 +22,27 @@ public class Area implements Fireable {
 	public String uri;
 	public String type;
 	public Long aid;
-
 	protected OrientGraphFactory graphFactory = ContextProvider.getBean(OrientGraphFactory.class);
-
-
 	@JsonIgnore
 	Set<Fireable> ruleSet = new HashSet<>();
+
 	//public void fire(){ ruleSet.parallelStream().forEach(f-> f.fire());}
-	public void fire(){ ruleSet.forEach(f-> f.fire());}
+	public void fire() {
+		ruleSet.forEach(f -> f.fire());
+	}
 
 	@Override
 	public boolean init() {
 		return true;
 	}
 
-	public boolean add(Fireable f){ return ruleSet.add(f);}
-	public boolean remove(Fireable f){ return ruleSet.remove(f);}
+	public boolean add(Fireable f) {
+		return ruleSet.add(f);
+	}
+
+	public boolean remove(Fireable f) {
+		return ruleSet.remove(f);
+	}
 
 	public String getRid() {
 		return rid;
@@ -51,7 +56,7 @@ public class Area implements Fireable {
 				.toString();
 	}
 
-	public String getPath(){
+	public String getPath() {
 		OrientGraphNoTx noTx = graphFactory.getNoTx();
 		ORID identity = noTx.getVertex(rid).getIdentity();
 		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>("select unionall(name) as path from (traverse in() from ?)");

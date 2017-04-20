@@ -28,7 +28,7 @@ public class SimpleThresholdRule extends GaiaRule {
 
 	@Override
 	public boolean condition() {
-		//TODO Get from measurements
+		//TODO Get from measurementRepositorys
 		value = Math.random();
 		switch (operator) {
 			case "==":

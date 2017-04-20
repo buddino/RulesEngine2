@@ -5,9 +5,9 @@ import it.cnit.gaia.buildingdb.BuildingDatabaseService;
 import it.cnit.gaia.rulesengine.configuration.ContextProvider;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.School;
-import it.cnit.gaia.rulesengine.rules.DummyRule;
 import it.cnit.gaia.rulesengine.service.EventService;
 import it.cnit.gaia.rulesengine.service.MeasurementRepository;
+import it.cnit.gaia.rulesengine.service.RuleDatabaseService;
 import it.cnit.gaia.rulesengine.service.WebsocketService;
 import org.junit.runner.RunWith;
 import org.mockito.Answers;
@@ -21,7 +21,6 @@ import static org.mockito.Mockito.when;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {ContextProvider.class, GenericRuleTest.class})
 public class GenericRuleTest {
-	DummyRule rule;
 
 	@Mock(answer = Answers.RETURNS_MOCKS)
 	OrientGraphFactory graphFactory;
@@ -33,6 +32,8 @@ public class GenericRuleTest {
 	MeasurementRepository measurementRepository;
 	@Mock
 	BuildingDatabaseService buildingDatabaseService;
+	@Mock
+	RuleDatabaseService ruleDatabaseService;
 
 
 	protected void setUpRule(GaiaRule rule){
@@ -43,7 +44,7 @@ public class GenericRuleTest {
 		rule.setBuildingDBService(buildingDatabaseService);
 		rule.setEventService(eventService);
 		rule.setMeasurements(measurementRepository);
-		rule.setGraphFactory(graphFactory);
+		rule.setRuleDatabaseService(ruleDatabaseService);
 		rule.description = "description";
 		rule.suggestion = "suggestion";
 		rule.name = "name";

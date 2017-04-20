@@ -1,6 +1,5 @@
 package it.cnit.gaia.rulesengine.rules;
 
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
 
@@ -23,21 +22,16 @@ public class RepeatingRule extends CompositeRule{
 	}
 
 	protected void updateCounter(){
-		OrientGraph orientdb = graphFactory.getTx();
 		if( rule.condition() ){
-			//TODO Manage field not found
-			counter = orientdb.getVertex(rid).getProperty("counter");
-			orientdb.getVertex(rid).setProperty("counter",++counter);
+			counter = ruleDatabaseService.incrementCounter(rid);
 		}
 		else {
-			orientdb.getVertex(rid).setProperty("counter",0);
+			resetCounter();
 		}
-		orientdb.commit();
 	}
 
 	protected void resetCounter(){
-		OrientGraph orientdb = graphFactory.getTx();
-		orientdb.getVertex(rid).setProperty("counter",0);
+		ruleDatabaseService.resetRuleCounter(rid);
 	}
 
 	@Override

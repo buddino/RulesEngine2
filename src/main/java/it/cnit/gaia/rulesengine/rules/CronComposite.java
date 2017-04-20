@@ -4,6 +4,7 @@ package it.cnit.gaia.rulesengine.rules;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
 import it.cnit.gaia.rulesengine.model.annotation.LogMe;
+import it.cnit.gaia.rulesengine.model.exceptions.RuleInitializationException;
 import org.quartz.CronExpression;
 
 import java.text.ParseException;
@@ -19,7 +20,7 @@ public class CronComposite extends CompositeRule {
 	public List<String> cronstrs = new ArrayList<>();
 	@LogMe
 	@LoadMe(required = false)
-	boolean negative = false;
+	public boolean negative = false;
 
 	//Da lista di string a espressione e validazione
 	//return a.compareTo(d) * d.compareTo(b) >= 0;
@@ -46,7 +47,7 @@ public class CronComposite extends CompositeRule {
 	}
 
 	@Override
-	public boolean init() {
+	public boolean init() throws RuleInitializationException {
 		boolean result = true;
 		if (ruleSet.size() == 1) {
 			rule = ruleSet.iterator().next();
@@ -54,17 +55,15 @@ public class CronComposite extends CompositeRule {
 				try {
 					cronexps.add(new CronExpression(s));
 				} catch (ParseException e) {
-					LOGGER.error("Cron expression '" + s + "' is not valid");
-					result = false;
+					throw new RuleInitializationException("Cron expression '" + s + "' is not valid");
 				}
 			}
 		} else {
-			result = false;
 			if (ruleSet.size() == 0)
-				LOGGER.error("No rule linked");
+				throw new RuleInitializationException("No linked rules");
 			else
 				LOGGER.error("More than ONE rule linked");
 		}
-		return result;
+		return true;
 	}
 }

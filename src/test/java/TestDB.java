@@ -1,4 +1,3 @@
-import com.google.gson.Gson;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -27,8 +26,6 @@ import java.util.stream.Collectors;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {OrientConfiguration.class, BuildingDatabaseService.class})
 public class TestDB {
-
-	Gson gson = new Gson();
 
 	@Autowired
 	OrientGraphFactory ogf;

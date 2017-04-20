@@ -9,6 +9,7 @@ import it.cnit.gaia.rulesengine.service.MeasurementRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -28,20 +29,28 @@ public class Scheduler {
 
 	Collection<School> schools;
 
+	@Value("${scheduler.interval}")
+	String schedulerInterval;
+
+
 	@PostConstruct
 	public void init() throws ApiException {
 		LOGGER.info("RulesEngine Initialization");
+		LOGGER.info("Interval: "+schedulerInterval +"ms");
+
 		//Test connection to the database
 		LOGGER.info("Testing connection to the database");
 		ODatabase.STATUS status = ogf.getDatabase().getStatus();
-		LOGGER.debug(status.toString());
+		LOGGER.debug("Database status: "+status.toString());
 	}
 
 	@Scheduled(fixedDelayString = "${scheduler.interval}")
-	public void scheduledMethod() throws ApiException {
-		rulesLoader.reloadAllSchools();
+	public void scheduledMethod() {
+		LOGGER.info("Executing iteration");
+		//rulesLoader.reloadAllSchools();
 		schools = rulesLoader.loadSchools().values();
 		measurements.updateLatest();
 		schools.forEach(s -> s.fire());
 	}
+
 }

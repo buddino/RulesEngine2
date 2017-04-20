@@ -27,6 +27,7 @@ public class SparksTokenRequest {
 
 
 	public SparksTokenRequest(String username, String password, String secret, String clientname) {
+		int retryCounter = 0;
 		this.username = username;
 		this.password = password;
 		this.secret = secret;
@@ -39,14 +40,18 @@ public class SparksTokenRequest {
 											   .add("username", username)
 											   .add("password", password)
 											   .build();
-		try {
-			requestAccessToken(requestBody);
-		} catch (IOException e) {
-			LOGGER.error("Error while requesting access token: " + e.getMessage());
+		while(true) {
+			try {
+				requestAccessToken(requestBody);
+				return;
+			} catch (IOException e) {
+				retryCounter++;
+				if( retryCounter == 3) {
+					LOGGER.error("Error while requesting access token: " + e.getMessage());
+				}
+			}
 		}
 	}
-
-
 	public void refreshToken() {
 		LOGGER.info("Refreshing access token");
 		FormEncodingBuilder formEncodingBuilder = new FormEncodingBuilder();
@@ -64,8 +69,6 @@ public class SparksTokenRequest {
 			LOGGER.error("Error while requesting access token: " + e.getMessage());
 		}
 	}
-
-
 	private void requestAccessToken(RequestBody formBody) throws AuthenticationException, IOException {
 		OkHttpClient client = new OkHttpClient();
 		ObjectMapper mapper = new ObjectMapper();
@@ -83,15 +86,12 @@ public class SparksTokenRequest {
 		else
 			throw new AuthenticationCredentialsNotFoundException("Authentication failed");
 	}
-
 	public String getAccess_token() {
 		return access_token;
 	}
-
 	public String getRefresh_token() {
 		return refresh_token;
 	}
-
 	public Long getExpires_in() {
 		return expires_in;
 	}

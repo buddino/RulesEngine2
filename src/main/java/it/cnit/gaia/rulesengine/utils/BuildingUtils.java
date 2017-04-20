@@ -4,7 +4,12 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.*;
-import it.cnit.gaia.buildingdb.*;
+import it.cnit.gaia.buildingdb.AreaDTO;
+import it.cnit.gaia.buildingdb.BuildingDTO;
+import it.cnit.gaia.buildingdb.BuildingDatabaseException;
+import it.cnit.gaia.buildingdb.BuildingDatabaseService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +25,8 @@ public class BuildingUtils {
 
 	@Autowired
 	BuildingDatabaseService bds;
+
+	final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
 	public OrientVertex buildTreeFromBuildingDB(Long buildingId) throws BuildingDatabaseException, IllegalAccessException {
 		BuildingDTO school = bds.getBuildingStructure(buildingId);
@@ -43,6 +50,7 @@ public class BuildingUtils {
 	}
 
 	private void traverseChildren(AreaDTO root, OrientVertex rootVertex) throws IllegalAccessException {
+		LOGGER.info(root.getChildren().toString());
 		Set<AreaDTO> children = root.getChildren();
 		OrientBaseGraph g = rootVertex.getGraph();
 		for (AreaDTO child : children) {

@@ -11,6 +11,7 @@ import it.cnit.gaia.buildingdb.BuildingDatabaseException;
 import it.cnit.gaia.rulesengine.api.request.ErrorResponse;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
 import it.cnit.gaia.rulesengine.model.School;
+import it.cnit.gaia.rulesengine.model.exceptions.RulesLoaderException;
 import it.cnit.gaia.rulesengine.service.MeasurementRepository;
 import it.cnit.gaia.rulesengine.utils.BuildingUtils;
 import org.apache.log4j.Logger;
@@ -77,7 +78,7 @@ public class BuildingController {
 
 	@ResponseBody
 	@RequestMapping(value = "/building/reload/{schoolId}", method = RequestMethod.GET)
-	public ResponseEntity<String> reloadSchoolTree(@PathVariable Long schoolId) {
+	public ResponseEntity<String> reloadSchoolTree(@PathVariable Long schoolId) throws RulesLoaderException {
 		if (!rulesLoader.reloadSchool(schoolId)) {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}

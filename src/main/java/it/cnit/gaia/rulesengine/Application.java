@@ -13,13 +13,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class Application implements CommandLineRunner {
 
 	public static void main(final String[] args) {
-		System.out.println("   _____          _____          \n" +
-				"  / ____|   /\\   |_   _|   /\\    \n" +
-				" | |  __   /  \\    | |    /  \\   \n" +
-				" | | |_ | / /\\ \\   | |   / /\\ \\  \n" +
-				" | |__| |/ ____ \\ _| |_ / ____ \\  Rules\n" +
-				"  \\_____/_/    \\_\\_____/_/    \\_\\ Engine\n" +
-				"     \u001B[32mGREEN AWARENESS IN ACTION\u001B[0m");
 		SpringApplication.run(Application.class, args);
 	}
 

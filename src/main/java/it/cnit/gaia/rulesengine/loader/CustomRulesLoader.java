@@ -1,13 +1,10 @@
 package it.cnit.gaia.rulesengine.loader;
 
-import org.apache.http.annotation.Experimental;
-
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 
-@Experimental
 public class CustomRulesLoader {
 	private String classpath = "./CustomRules/";
 	private File file = new File(classpath);

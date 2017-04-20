@@ -26,7 +26,8 @@ public class PowerFactor extends GaiaRule {
 	@LoadMe(required = false)
 	public int windowLength = 10;
 
-	private double average;
+	@LogMe
+	public double average;
 
 
 	@Override
@@ -34,12 +35,12 @@ public class PowerFactor extends GaiaRule {
 		//If the resource ID is not present the rule is discarder, so you don't need null check
 		Long resourceId = measurements.getMeasurementService().getMeterMap().get(pwf_uri);
 		try {
-			SummaryDTO summary = measurements.getMeasurementService().getSummary(resourceId);
+			SummaryDTO summary = measurements.getSummary(resourceId);
 			OptionalDouble optionalAverage = summary.getDay().stream()
-					.limit(windowLength)
-					.filter(d -> d > 0.0)
-					.mapToDouble(d -> d)
-					.average();
+													.limit(windowLength)
+													.filter(d -> d > 0.0)
+													.mapToDouble(d -> d)
+													.average();
 			if (!optionalAverage.isPresent()) {
 				LOGGER.warn(String.format("[%s] Cannot compute the average beacuse there are no valid values.", rid));
 				return false;
@@ -50,7 +51,12 @@ public class PowerFactor extends GaiaRule {
 				return true;
 			}
 		} catch (ApiException e) {
-			LOGGER.error(e.getStackTrace().toString());
+			if (e.getCode() == 401 || e.getCode() == 403) {
+				LOGGER.warn(e.getMessage());
+				LOGGER.info("Force refreshing access token");
+				measurements.getMeasurementService().refreshAccessToken();
+			} else
+				LOGGER.error(e.getMessage(), e);
 		}
 		return false;
 	}
@@ -59,12 +65,12 @@ public class PowerFactor extends GaiaRule {
 	public void action() {
 		GAIANotification notification = getBaseNotification();
 		GaiaEvent event = getBaseEvent();
-		setLatestTrigger();
-		if(average < 0.7){
-			notification.setSuggestion(String.format("The power factor average value in the latest %d days is %.3f. This is a critical low value and the energy provider can force you to solve this issue.", windowLength, average));
-		}
-		else {
-			notification.setSuggestion(String.format("The power factor average value in the latest %d days is %.3f. Energy provider can add fees to you bill.", windowLength, average));
+		if (average < 0.7) {
+			notification.setSuggestion(String
+					.format("The power factor average value in the latest %d days is %.3f. This is a critical low value and the energy provider can force you to solve this issue.", windowLength, average));
+		} else {
+			notification.setSuggestion(String
+					.format("The power factor average value in the latest %d days is %.3f. Energy provider can add fees to you bill.", windowLength, average));
 		}
 		websocket.pushNotification(notification);
 		eventService.addEvent(event);

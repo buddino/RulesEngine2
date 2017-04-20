@@ -13,5 +13,4 @@ public class BuildingDBConfiguration {
 		return new BuildingDatabaseServiceImpl();
 	}
 
-
 }

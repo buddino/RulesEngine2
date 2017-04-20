@@ -2,9 +2,7 @@ package it.cnit.gaia.rulesengine.api;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import it.cnit.gaia.rulesengine.service.EventService;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -48,7 +46,6 @@ public class EventController {
 	}
 
 
-	@NotNull
 	private String eventsToJson(List<ODocument> list) {
 		if (list == null)
 			return "[]";
