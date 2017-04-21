@@ -52,7 +52,6 @@ public class EnergyWasting extends GaiaRule {
 		if (power_value > on_threshold) {
 			//Device ON threshold
 			//Notify and Log the event, normal behaviour
-			suggestion = ""; //TODO
 			super.action();
 		} else {
 			//Some devices may be have left in standby
@@ -62,11 +61,8 @@ public class EnergyWasting extends GaiaRule {
 					.getLatestEventsForRule(rid, now.minusHours(interval).getMillis(), now.getMillis());
 			if (eventsForRule.size() > times) {
 				//Send notification only after times
-				suggestion = "";
 				websocket.pushNotification(getBaseNotification());
 			}
-
-
 		}
 	}
 
