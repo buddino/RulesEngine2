@@ -32,10 +32,9 @@ public class PowerFactor extends GaiaRule {
 
 	@Override
 	public boolean condition() {
-		//If the resource ID is not present the rule is discarder, so you don't need null check
-		Long resourceId = measurements.getMeasurementService().getMeterMap().get(pwf_uri);
+		//If the resource ID is not present the rule is discarded, so you don't need null check
 		try {
-			SummaryDTO summary = measurements.getSummary(resourceId);
+			SummaryDTO summary = measurements.getSummary(pwf_uri);
 			OptionalDouble optionalAverage = summary.getDay().stream()
 													.limit(windowLength)
 													.filter(d -> d > 0.0)
@@ -51,12 +50,7 @@ public class PowerFactor extends GaiaRule {
 				return true;
 			}
 		} catch (ApiException e) {
-			if (e.getCode() == 401 || e.getCode() == 403) {
-				LOGGER.warn(e.getMessage());
-				LOGGER.info("Force refreshing access token");
-				measurements.getMeasurementService().refreshAccessToken();
-			} else
-				LOGGER.error(e.getMessage(), e);
+				LOGGER.error("Error: "+pwf_uri, e);
 		}
 		return false;
 	}

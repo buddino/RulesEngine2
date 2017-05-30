@@ -20,39 +20,40 @@ public class SparksTokenRequest {
 	private String access_token = null;
 	private String refresh_token = null;
 	private Long expires_in = null;
+
 	private String username;
 	private String password;
 	private String secret;
 	private String clientname;
 
 
-	public SparksTokenRequest(String username, String password, String secret, String clientname) {
+	public SparksTokenRequest(String username, String password, String secret, String clientname)  {
 		int retryCounter = 0;
 		this.username = username;
 		this.password = password;
 		this.secret = secret;
 		this.clientname = clientname;
+
+	}
+
+	public String requestAccessToken() throws IOException {
 		FormEncodingBuilder formEncodingBuilder = new FormEncodingBuilder();
 		RequestBody requestBody = formEncodingBuilder.add("client_id", clientname)
-											   .add("client_secret", secret)
-											   .add("scope", "read")
-											   .add("grant_type", "password")
-											   .add("username", username)
-											   .add("password", password)
-											   .build();
-		while(true) {
-			try {
-				requestAccessToken(requestBody);
-				return;
-			} catch (IOException e) {
-				retryCounter++;
-				if( retryCounter == 3) {
-					LOGGER.error("Error while requesting access token: " + e.getMessage());
-				}
-			}
-		}
+													 .add("client_secret", secret)
+													 .add("scope", "read")
+													 .add("grant_type", "password")
+													 .add("username", username)
+													 .add("password", password)
+													 .build();
+		requestAccessToken(requestBody);
+		return access_token;
 	}
-	public void refreshToken() {
+
+	/**
+	 * Use the refresh token to resfresh the access token
+	 * @throws IOException
+	 */
+	public void refreshToken() throws IOException {
 		LOGGER.info("Refreshing access token");
 		FormEncodingBuilder formEncodingBuilder = new FormEncodingBuilder();
 		RequestBody requestBody = formEncodingBuilder.add("client_id", clientname)
@@ -63,12 +64,10 @@ public class SparksTokenRequest {
 													 .add("username", username)
 													 .add("password", password)
 													 .build();
-		try {
-			requestAccessToken(requestBody);
-		} catch (IOException e) {
-			LOGGER.error("Error while requesting access token: " + e.getMessage());
-		}
+		requestAccessToken(requestBody);
+
 	}
+
 	private void requestAccessToken(RequestBody formBody) throws AuthenticationException, IOException {
 		OkHttpClient client = new OkHttpClient();
 		ObjectMapper mapper = new ObjectMapper();
@@ -78,20 +77,22 @@ public class SparksTokenRequest {
 				.build();
 		String responseBody = client.newCall(request).execute().body().string();
 		JsonNode resp = mapper.readTree(responseBody);
-		if( resp.hasNonNull("access_token")) {
+		if (resp.hasNonNull("access_token")) {
 			access_token = resp.findValue("access_token").asText();
 			expires_in = resp.get("expires_in").asLong();
 			refresh_token = resp.get("refresh_token").asText();
-		}
-		else
-			throw new AuthenticationCredentialsNotFoundException("Authentication failed");
+		} else
+			throw new AuthenticationCredentialsNotFoundException("Latest token: " + access_token);
 	}
-	public String getAccess_token() {
+
+	public String getAccessToken() {
 		return access_token;
 	}
+
 	public String getRefresh_token() {
 		return refresh_token;
 	}
+
 	public Long getExpires_in() {
 		return expires_in;
 	}

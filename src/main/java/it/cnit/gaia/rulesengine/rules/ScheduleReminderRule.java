@@ -42,11 +42,11 @@ public class ScheduleReminderRule extends GaiaRule {
 		try {
 			//Get schedule
 			ScheduleDTO scheduleForArea = buildingDBService.getScheduleForArea(areaId);
-			if(scheduleForArea==null)
-				throw new RuleInitializationException("Error retrieving the schedule for area "+areaId);
-			if(scheduleForArea.getCronstrs()==null)
-				throw new RuleInitializationException("Error retrieving the expressions collection for area "+areaId);
-			if(scheduleForArea.getCronstrs().size()==0)
+			if (scheduleForArea == null)
+				throw new RuleInitializationException("Error retrieving the schedule for area " + areaId);
+			if (scheduleForArea.getCronstrs() == null)
+				throw new RuleInitializationException("Error retrieving the expressions collection for area " + areaId);
+			if (scheduleForArea.getCronstrs().size() == 0)
 				throw new RuleInitializationException("The CRON expressions collection is empty");
 			for (String s : scheduleForArea.getCronstrs()) {
 				//Create CRON expressions (and validate)
@@ -68,11 +68,9 @@ public class ScheduleReminderRule extends GaiaRule {
 		Date now = new Date();
 		OptionalLong next;
 		try {
-			next = cronexps.stream()
-										.mapToLong(x -> x.getNextValidTimeAfter(now).getTime())
-										.min();
-		}
-		catch (NullPointerException e){
+			next = cronexps.stream().mapToLong(x -> x.getNextValidTimeAfter(now).getTime())
+						   .min();
+		} catch (NullPointerException e) {
 			return 0L;
 		}
 		if (next.isPresent())

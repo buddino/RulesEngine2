@@ -37,7 +37,6 @@ public class Scheduler {
 	public void init() throws ApiException {
 		LOGGER.info("RulesEngine Initialization");
 		LOGGER.info("Interval: "+schedulerInterval +"ms");
-
 		//Test connection to the database
 		LOGGER.info("Testing connection to the database");
 		ODatabase.STATUS status = ogf.getDatabase().getStatus();
@@ -46,6 +45,9 @@ public class Scheduler {
 
 	@Scheduled(fixedDelayString = "${scheduler.interval}")
 	public void scheduledMethod() {
+		//Riguarda
+		measurements.getMeasurementService().checkAuth();
+
 		LOGGER.info("Executing iteration");
 		//rulesLoader.reloadAllSchools();
 		schools = rulesLoader.loadSchools().values();

@@ -1,6 +1,7 @@
 package it.cnit.gaia.rulesengine.model;
 
 import com.google.gson.Gson;
+import io.swagger.client.ApiException;
 import it.cnit.gaia.buildingdb.BuildingDatabaseService;
 import it.cnit.gaia.rulesengine.configuration.ContextProvider;
 import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
@@ -23,28 +24,63 @@ public abstract class GaiaRule implements Fireable {
 	//Riguarda Questa classe ha troppe responsabilità
 
 	protected final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
+	/**
+	 * The name of the rule, mostly useful for heavily customized instances.
+	 * It is not required meaning a rule with no name can be instantiated
+	 */
 	@LoadMe(required = false)
 	@LogMe(event = false)
 	public String name;
+
+	/**
+	 * The suggestion to sent to the client
+	 */
 	@LoadMe(required = false)
 	public String suggestion;
+
 	@LogMe(event = false, notification = false)
 	public String description;
+
+	/**
+	 * The id of the rule in the persistency layer, filled during instantiation
+	 */
 	public String rid;
+	/**
+	 * The School object associated with the rule, linked during loading
+	 */
 	public School school;
+	public Area area;
+
+	/**
+	 * Interval in seconds between 2 fires (e.g. 900 means at most one time every 15 minutes)
+	 */
 	@LoadMe(required = false)
 	public Long intervalInSeconds = 0L;
-	//Services (from application context)
+
+	/**
+	 * The timestamp of the latest fire
+	 */
+	public Date latestFireTime;
+
+	/**
+	 * Services, manually loaded from the application context
+	 */
 	protected WebsocketService websocket = ContextProvider.getBean(WebsocketService.class);
 	protected EventService eventService = ContextProvider.getBean(EventService.class);
 	protected MeasurementRepository measurements = ContextProvider.getBean(MeasurementRepository.class);
 	protected BuildingDatabaseService buildingDBService = ContextProvider.getBean(BuildingDatabaseService.class);
 	protected RuleDatabaseService ruleDatabaseService = ContextProvider.getBean(RuleDatabaseService.class);
 	protected ScheduleService scheduleService = ContextProvider.getBean(ScheduleService.class);
-	public Date latestFireTime; //Cache latest fire time
 
+	/**
+	 * Default fire() behavior is if( condition() ) then action()
+	 * The condition() method is abstract and must be specified in the inheriting subclass
+	 */
 	public abstract boolean condition();
 
+	/**
+	 * The default behavior of the action() method is log the event using the event service and to send a notification through the websocket channel
+	 */
 	public void action() {
 		GAIANotification notification = getBaseNotification();
 		GaiaEvent event = getBaseEvent();
@@ -52,8 +88,13 @@ public abstract class GaiaRule implements Fireable {
 		eventService.addEvent(event);
 	}
 
+	/**
+	 * Checks if the rule can be fired
+	 *
+	 * @return true if the rule can be fired or false if it is not the time yet
+	 */
 	private boolean isTriggeringIntervalValid() {
-		if (intervalInSeconds == 0)		//There rule will be fires at every iteration
+		if (intervalInSeconds == 0)        //There rule will be fires at every iteration
 			return true;
 		Date now = new Date();
 		if (latestFireTime == null)        //The rule has never been fired before
@@ -62,7 +103,10 @@ public abstract class GaiaRule implements Fireable {
 				.getTime() > intervalInSeconds * 1000;
 	}
 
-	public void fire(){
+	/**
+	 * The default implementation of the fire method is to check if the right amount of time passed
+	 */
+	public void fire() {
 		if (!isTriggeringIntervalValid()) {
 			LOGGER.debug(String.format("Rule %s not triggered beacuse of the interval constraint", rid));
 			return;
@@ -87,10 +131,19 @@ public abstract class GaiaRule implements Fireable {
 				if (annotation.required()) {
 					try {
 						if (f.get(this) == null || f.get(this).equals("")) {
-							throw new RuleInitializationException(String.format("Required field missing or empty (%s)", f.getName()));
+							throw new RuleInitializationException(String
+									.format("Required field missing or empty (%s)", f.getName()));
+						}
+						if (f.isAnnotationPresent(URI.class)) {
+							//FIXME Checking by querying here, results in a double query and in a slow validation time
+							//Potrebbe essere un'idea fare il mapping non tutto insieme ma via via che si aggiungono uri (perdo parallel)
+							measurements.checkUri( (String) f.get(this) );
 						}
 					} catch (IllegalAccessException e) {
 						e.printStackTrace();
+					} catch (ApiException e) {
+						throw new RuleInitializationException(String
+								.format("Required uri not found in resource map (%s)", f.getName()));
 					}
 				}
 			}
@@ -231,8 +284,9 @@ public abstract class GaiaRule implements Fireable {
 		return this;
 	}
 
-
-
+	public Long getParentAreaId() {
+		return ruleDatabaseService.getParentArea(rid);
+	}
 
 
 	// SETTER FOR SERVICES //

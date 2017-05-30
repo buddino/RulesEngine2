@@ -6,6 +6,8 @@ import org.springframework.security.authentication.AuthenticationCredentialsNotF
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.Assert;
 
+import java.io.IOException;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest( classes = TestAAA.class)
 public class TestAAA {
@@ -15,7 +17,7 @@ public class TestAAA {
 	@Test
 	public void testAccessTokenRequest() {
 		tokenRequest = new SparksTokenRequest("gaia-prato","cmRxm2","c9ce97aa-3b71-446e-b3f4-f7130dfddb32","CNIT");
-		Assert.notNull(tokenRequest.getAccess_token());
+		Assert.notNull(tokenRequest.getAccessToken());
 	}
 
 	@Test(expected=AuthenticationCredentialsNotFoundException.class)
@@ -24,12 +26,12 @@ public class TestAAA {
 	}
 
 	@Test
-	public void testRefreshToken(){
+	public void testRefreshToken() throws IOException {
 		tokenRequest = new SparksTokenRequest("gaia-prato","cmRxm2","c9ce97aa-3b71-446e-b3f4-f7130dfddb32","CNIT");
-		String token = tokenRequest.getAccess_token();
+		String token = tokenRequest.getAccessToken();
 		System.out.println(token);
 		tokenRequest.refreshToken();
-		String refreshedToken = tokenRequest.getAccess_token();
+		String refreshedToken = tokenRequest.getAccessToken();
 		System.out.println(refreshedToken);
 		Assert.isTrue(!token.equals(refreshedToken));
 	}
