@@ -7,14 +7,14 @@ import java.util.Map;
 
 public class GaiaEvent {
 	Date timestamp;
-	String ruleId;
+	String rule;
 	Map<String, Object> values;
 
 	public GaiaEvent() {
 	}
 
 	public GaiaEvent(GAIANotification notification) {
-		ruleId = notification.getRuleClass();
+		rule = notification.getRuleClass();
 		timestamp = new Date(notification.getTimestamp());
 		values = notification.getValues();
 	}
@@ -28,12 +28,12 @@ public class GaiaEvent {
 		return this;
 	}
 
-	public String getRuleId() {
-		return ruleId;
+	public String getRule() {
+		return rule;
 	}
 
-	public GaiaEvent setRuleId(String ruleId) {
-		this.ruleId = ruleId;
+	public GaiaEvent setRule(String rule) {
+		this.rule = rule;
 		return this;
 	}
 

@@ -1,6 +1,6 @@
 package rules;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import it.cnit.gaia.rulesengine.api.request.EventDTO;
 import it.cnit.gaia.rulesengine.model.event.GaiaEvent;
 import it.cnit.gaia.rulesengine.model.exceptions.RuleInitializationException;
 import it.cnit.gaia.rulesengine.model.notification.GAIANotification;
@@ -155,7 +155,7 @@ public class TestEnergyWasting extends GenericRuleTest {
 		rule.on_threshold = ON_TH;
 		when(measurementRepository.getLatestFor("power")).thenReturn(MeasurementsUtils.getResourceDTO(SB));
 		when(measurementRepository.getLatestFor("occupancy")).thenReturn(MeasurementsUtils.getResourceDTO(EMPTY));
-		List<ODocument> mockList = mock(List.class);
+		List<EventDTO> mockList = mock(List.class);
 		when(eventService.getLatestEventsForRule(anyString(), anyLong(), anyLong())).thenReturn(mockList);
 		rule.init();
 		//Fire the rule times+1 times

@@ -1,6 +1,7 @@
 package it.cnit.gaia.rulesengine;
 
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import io.swagger.client.ApiException;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
@@ -10,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -39,11 +39,19 @@ public class Scheduler {
 		LOGGER.info("Interval: "+schedulerInterval +"ms");
 		//Test connection to the database
 		LOGGER.info("Testing connection to the database");
-		ODatabase.STATUS status = ogf.getDatabase().getStatus();
-		LOGGER.debug("Database status: "+status.toString());
+		try {
+			ODatabase.STATUS status = ogf.getDatabase().getStatus();
+			LOGGER.debug("Database status: "+status.toString());
+		}
+		catch (OStorageException e){
+			LOGGER.error(e.getMessage());
+		}
+		LOGGER.info("Checking authentication");
+		measurements.getMeasurementService().checkAuth();
+
 	}
 
-	@Scheduled(fixedDelayString = "${scheduler.interval}")
+	//@Scheduled(fixedDelayString = "${scheduler.interval}")
 	public void scheduledMethod() {
 		//Riguarda
 		measurements.getMeasurementService().checkAuth();

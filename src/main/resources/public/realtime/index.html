@@ -102,17 +102,17 @@
 <script id="event-template" type="text/x-handlebars-template">
     <div>
         <div class="list-group-items" data-toggle="collapse" data-target="#{{rid}}">
-            <a class="nostyle"><h4 class="list-group-items-heading">{{rule.name}}<span
+            <a class="nostyle"><h4 class="list-group-items-heading">{{fields.name}}<span
                     class="pull-right">{{timestamp}}</span></h4></a>
         </div>
         <div id="{{rid}}" class="collapse">
             <dl class="dl-horizontal">
                 <dt>Rule name:</dt>
-                <dd>{{rule.name}}</dd>
+                <dd>{{fields.name}}</dd>
                 <dt>Suggestion</dt>
-                <dd>{{rule.suggestion}}</dd>
+                <dd>{{fields.suggestion}}</dd>
                 <dt>Description:</dt>
-                <dd>{{rule.description}}</dd>
+                <dd>{{fields.description}}</dd>
             </dl>
             <dl class="dl-horizontal">
                 {{#each values}}
@@ -138,7 +138,7 @@
             <dt>Rule class:</dt>
             <dd>{{ruleClass}}</dd>
             <dt>Rule name:</dt>
-            <dd>{{ruleName}} [{{ruleId}}]</dd>
+            <dd>{{ruleName}} [{{rule}}]</dd>
             {{#each values}}
             <dt>{{@key}}</dt>
             <dd>{{this}}</dd>

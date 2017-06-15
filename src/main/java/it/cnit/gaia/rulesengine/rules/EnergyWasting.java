@@ -1,6 +1,6 @@
 package it.cnit.gaia.rulesengine.rules;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import it.cnit.gaia.rulesengine.api.request.EventDTO;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
 import it.cnit.gaia.rulesengine.model.annotation.LogMe;
@@ -58,7 +58,7 @@ public class EnergyWasting extends GaiaRule {
 			//Some devices may be have left in standby
 			eventService.addEvent(getBaseEvent());
 			DateTime now = DateTime.now();
-			List<ODocument> eventsForRule = eventService
+			List<EventDTO> eventsForRule = eventService
 					.getLatestEventsForRule(rid, now.minusHours(interval).getMillis(), now.getMillis());
 			if (eventsForRule.size() > times) {
 				//Send notification only after times

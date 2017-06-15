@@ -4,12 +4,11 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.springframework.boot.jackson.JsonComponent;
 
 import java.io.IOException;
 import java.util.List;
 
-@JsonComponent
+//@JsonComponent
 public class SerializerODocument extends JsonSerializer<List<ODocument>> {
 
 	@Override

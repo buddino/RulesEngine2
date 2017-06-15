@@ -81,10 +81,10 @@ public class BuildingController {
 		return ResponseEntity.ok(Lists.newArrayList(rulesLoader.loadSchools().values()));
 	}
 
-	@GetMapping(value = "/building/{sid}/areas")
+	@GetMapping(value = "/building/{bid}/areas")
 	@ApiOperation(value = "Get all subareas of an area/building stored in the rule database")
-	public ResponseEntity<List<Area>> getAreas(@ApiParam("ID of the area") @PathVariable Long aid) {
-		List<Area> subAreas = buildingUtils.getSubAreas(aid);
+	public ResponseEntity<List<Area>> getAreas(@ApiParam("ID of the building") @PathVariable Long bid) {
+		List<Area> subAreas = buildingUtils.getSubAreas(bid);
 		return ResponseEntity.status(HttpStatus.OK).body(subAreas);
 	}
 

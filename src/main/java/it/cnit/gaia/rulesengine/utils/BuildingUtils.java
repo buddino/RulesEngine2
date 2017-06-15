@@ -1,22 +1,23 @@
 package it.cnit.gaia.rulesengine.utils;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OConcurrentResultSet;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.*;
-import it.cnit.gaia.buildingdb.AreaDTO;
-import it.cnit.gaia.buildingdb.BuildingDTO;
-import it.cnit.gaia.buildingdb.BuildingDatabaseException;
 import it.cnit.gaia.buildingdb.BuildingDatabaseService;
+import it.cnit.gaia.buildingdb.dto.AreaDTO;
+import it.cnit.gaia.buildingdb.dto.BuildingDTO;
+import it.cnit.gaia.buildingdb.exceptions.BuildingDatabaseException;
+import it.cnit.gaia.rulesengine.model.Area;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Service
 public class BuildingUtils {
@@ -26,9 +27,9 @@ public class BuildingUtils {
 	@Autowired
 	BuildingDatabaseService bds;
 
-	final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
+	private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
-	public OrientVertex buildTreeFromBuildingDB(Long buildingId) throws BuildingDatabaseException, IllegalAccessException {
+	public OrientVertex buildTreeFromBuildingDB(Long buildingId) throws IllegalAccessException, BuildingDatabaseException {
 		BuildingDTO school = bds.getBuildingStructure(buildingId);
 		OrientGraph g = graphFactory.getTx();
 		//Check if a school with the same aid already exists
@@ -50,7 +51,7 @@ public class BuildingUtils {
 	}
 
 	private void traverseChildren(AreaDTO root, OrientVertex rootVertex) throws IllegalAccessException {
-		LOGGER.info(root.getChildren().toString());
+		LOGGER.debug(root.getChildren().toString());
 		Set<AreaDTO> children = root.getChildren();
 		OrientBaseGraph g = rootVertex.getGraph();
 		for (AreaDTO child : children) {
@@ -103,5 +104,22 @@ public class BuildingUtils {
 		OrientVertex v = (OrientVertex) result.iterator().next();
 		OCommandSQL command = new OCommandSQL("delete vertex from (traverse * from ?)");
 		command.execute(v.getIdentity());
+	}
+
+	public List<Area> getSubAreas(Long aid){
+		OrientGraphNoTx db = graphFactory.getNoTx();
+		OSQLSynchQuery query = new OSQLSynchQuery("select * from (traverse * from (select from Area where aid = ?)) where @class = \"Area\"");
+		query.execute(aid);
+		OConcurrentResultSet<ODocument> result = (OConcurrentResultSet<ODocument>) query.getResult();
+		List<Area> areas = new ArrayList<>();
+		for( ODocument d : result ){
+			Area area = new Area();
+			area.aid = aid;
+			area.name = d.field("name");
+			area.type = d.field("type");
+			area.rid = d.getIdentity().toString();
+			areas.add(area);
+		}
+		return areas;
 	}
 }

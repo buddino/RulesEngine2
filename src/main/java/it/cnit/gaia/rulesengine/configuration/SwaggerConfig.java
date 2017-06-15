@@ -3,31 +3,58 @@ package it.cnit.gaia.rulesengine.configuration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import springfox.documentation.builders.ApiInfoBuilder;
+import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
-import springfox.documentation.service.ApiInfo;
+import springfox.documentation.service.*;
 import springfox.documentation.spi.DocumentationType;
+import springfox.documentation.spi.service.contexts.SecurityContext;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
+import java.util.Arrays;
+import java.util.List;
+
 @Configuration
-@Profile("production")
 @EnableSwagger2
 public class SwaggerConfig {
 	@Bean
 	public Docket api() {
 		return new Docket(DocumentationType.SWAGGER_2).ignoredParameterTypes(ODocument.class)
-				.apiInfo(apiInfo())
-				.select().apis(RequestHandlerSelectors.basePackage("it.cnit.gaia.rulesengine.api"))
-				.build();
+													  .apiInfo(apiInfo())
+													  .securityContexts(Arrays.asList(securityContext()))
+													  .securitySchemes(Arrays.asList(securitySchema()))
+													  .select().apis(RequestHandlerSelectors
+						.basePackage("it.cnit.gaia.rulesengine.api"))
+													  .build();
 	}
 
 	private ApiInfo apiInfo() {
 		ApiInfoBuilder infoBuilder = new ApiInfoBuilder();
 		return infoBuilder.title("GAIA Recommendation Engine")
-				.description("API Description [UNDER DEVELOPMENT]")
-				.version("2.0")
-				.build();
+						  .description("Documentation of the API for accessing and managin the GAIA recommendation engine")
+						  .version("2.0").title("Recommendation Engine API docs")
+						  .build();
+	}
+
+	private OAuth securitySchema() {
+		AuthorizationScope authorizationScope = new AuthorizationScope("read", "read");
+		LoginEndpoint loginEndpoint = new LoginEndpoint("https://sso.sparkworks.net/aa/oauth/token");
+		GrantType grantType = new ClientCredentialsGrant(loginEndpoint.getUrl());
+		return new OAuth("oauth2", Arrays.asList(authorizationScope), Arrays.asList(grantType));
+	}
+
+	private SecurityContext securityContext() {
+		return SecurityContext.builder()
+							  .securityReferences(defaultAuth())
+							  .forPaths(PathSelectors.any())
+							  .build();
+	}
+
+	private List<SecurityReference> defaultAuth() {
+		AuthorizationScope authorizationScope = new AuthorizationScope("read", "read");
+		AuthorizationScope[] authorizationScopes = new AuthorizationScope[1];
+		authorizationScopes[0] = authorizationScope;
+		return Arrays.asList(new SecurityReference("oauth2", authorizationScopes));
 	}
 }

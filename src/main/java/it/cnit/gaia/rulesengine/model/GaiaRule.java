@@ -188,7 +188,7 @@ public abstract class GaiaRule implements Fireable {
 		GaiaEvent event = new GaiaEvent();
 		Map<String, Object> fieldsForEvent = getFieldsForEvent();
 		fieldsForEvent.put("suggestion", getSuggestion());
-		event.setTimestamp(new Date()).setRuleId(rid).setValues(fieldsForEvent);
+		event.setTimestamp(new Date()).setRule(rid).setValues(fieldsForEvent);
 		return event;
 	}
 

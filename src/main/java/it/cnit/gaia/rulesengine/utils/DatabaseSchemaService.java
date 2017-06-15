@@ -47,14 +47,14 @@ public class DatabaseSchemaService {
 		}
 	}
 
-	public void setDefaultForPropertyInClass(String classname, String propertyName, String defaultValue){
+	public void setDefaultForPropertyInClass(String classname, String propertyName, Object defaultValue){
 		OSchemaProxy schema = ogf.getDatabase().getMetadata().getSchema();
 		OProperty property = schema.getClass(classname).getProperty(propertyName);
-		property.setDefaultValue(defaultValue);
+		property.setDefaultValue(defaultValue.toString());
 	}
 
-	public Map<String,String> getDefaultForClass(String classname){
-		Map<String,String> defaults = new HashMap<>();
+	public Map<String,Object> getDefaultForClass(String classname){
+		Map<String,Object> defaults = new HashMap<>();
 		OSchemaProxy schema = ogf.getDatabase().getMetadata().getSchema();
 		schema.getClass(classname).properties().forEach(e -> defaults.put(e.getName(),e.getDefaultValue()));
 		return defaults;
