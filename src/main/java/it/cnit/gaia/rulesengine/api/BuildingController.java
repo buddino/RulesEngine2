@@ -1,18 +1,14 @@
 package it.cnit.gaia.rulesengine.api;
 
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OConcurrentResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import it.cnit.gaia.buildingdb.BuildingDatabaseException;
-import it.cnit.gaia.rulesengine.api.request.ErrorResponse;
+import io.swagger.annotations.*;
+import it.cnit.gaia.buildingdb.exceptions.BuildingDatabaseException;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
+import it.cnit.gaia.rulesengine.model.Area;
 import it.cnit.gaia.rulesengine.model.School;
-import it.cnit.gaia.rulesengine.model.exceptions.RulesLoaderException;
-import it.cnit.gaia.rulesengine.service.MeasurementRepository;
 import it.cnit.gaia.rulesengine.utils.BuildingUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,11 +17,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 @RestController
+@Api(tags = "Building",
+		authorizations = {@Authorization(value = "oauth2", scopes = {@AuthorizationScope(scope = "read", description = "read")})},
+		produces = MediaType.APPLICATION_JSON_VALUE)
 public class BuildingController {
 	private Logger LOGGER = Logger.getRootLogger();
 	private Gson g = new Gson();
@@ -35,51 +32,69 @@ public class BuildingController {
 	@Autowired
 	private RulesLoader rulesLoader;
 	@Autowired
-	private MeasurementRepository measurementRepository;
-	@Autowired
 	private BuildingUtils buildingUtils;
 
-
-	@ExceptionHandler(BuildingDatabaseException.class)
+	/*@ExceptionHandler(BuildingDatabaseException.class)
 	public ResponseEntity<ErrorResponse> exceptionHandler(Exception e) {
 		ErrorResponse error = new ErrorResponse(HttpStatus.CONFLICT.value(), e.getMessage());
 		return new ResponseEntity<>(error, HttpStatus.CONFLICT);
-	}
+	}*/
 
-	@RequestMapping(value="/building/{id}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody ResponseEntity<?> buildTreeFromBuildingDB(@PathVariable Long id) throws BuildingDatabaseException, IllegalAccessException {
-		OrientVertex vertex = buildingUtils.buildTreeFromBuildingDB(id);
-		return ResponseEntity.ok(vertex.getRecord().toJSON());
-	}
-
-	@RequestMapping(value="/building/{id}", method = RequestMethod.DELETE)
-	public @ResponseBody ResponseEntity<?> deleteBuildingTree(@PathVariable Long id) throws BuildingDatabaseException, IllegalAccessException {
-		buildingUtils.deleteBuildingTree(id);
-		return ResponseEntity.ok(null);
-	}
-
-	@RequestMapping(value = "/building", method = RequestMethod.GET)
+	@PutMapping(value = "/building/{id}")
+	@ApiOperation(
+			value = "Import building into rule database",
+			notes = "Import the building (indentified by id) from the building database replicating its structure")
 	public
 	@ResponseBody
-	Collection<School> getSchools() {
-		return rulesLoader.loadSchools().values();
+	ResponseEntity<Void> buildTreeFromBuildingDB(@ApiParam("ID of the building") @PathVariable Long id) throws IllegalAccessException, BuildingDatabaseException {
+		OrientVertex vertex = buildingUtils.buildTreeFromBuildingDB(id);
+		return ResponseEntity.status(HttpStatus.CREATED).build();
 	}
 
-	@RequestMapping(value = "/building/{sid}/area", method = RequestMethod.GET)
-	public ResponseEntity<Object> getAreas(@PathVariable Long sid) {
-		OrientGraphNoTx db = graphFactory.getNoTx();
-		OSQLSynchQuery query = new OSQLSynchQuery("select * from (traverse * from (select from BuildingBDB where aid = ?)) where @class = \"Area\"");
-		query.execute(sid);
-		OConcurrentResultSet<ODocument> result = (OConcurrentResultSet<ODocument>) query.getResult();
-		Map<String, String> areas = new HashMap<>();
-		result.forEach(r -> areas.put(r.field("uri"), r.getIdentity().toString()));
-		return ResponseEntity.status(HttpStatus.OK).body(areas);
-	}
-
+	@DeleteMapping(value = "/building/{id}")
+	@ApiOperation(
+			value = "Delete the building tree",
+			notes = "Delete the building (indentified by id) from the rule database including all the linked rules")
+	public
 	@ResponseBody
-	@RequestMapping(value = "/building/reload/{schoolId}", method = RequestMethod.GET)
-	public ResponseEntity<String> reloadSchoolTree(@PathVariable Long schoolId) throws RulesLoaderException {
-		if (!rulesLoader.reloadSchool(schoolId)) {
+	ResponseEntity<Void> deleteBuildingTree(@ApiParam("ID of the building") @PathVariable Long id) throws IllegalAccessException, BuildingDatabaseException {
+		buildingUtils.deleteBuildingTree(id);
+		return ResponseEntity.noContent().build();
+	}
+
+	@GetMapping(value = "/building/{id}")
+	@ApiOperation(
+			value = "Get the building tree",
+			notes = "Get the building (indentified by id) from the rule databas")
+	public
+	@ResponseBody
+	ResponseEntity<Area> getBuildingTree(@ApiParam("ID of the building") @PathVariable Long id) throws IllegalAccessException, BuildingDatabaseException {
+		School school = rulesLoader.loadSchools().get(id);
+		return ResponseEntity.ok(school);
+	}
+
+	@GetMapping(value = "/buildings")
+	@ApiOperation(value = "Get all buildings stored in the rule database", responseContainer = "List")
+	public
+	@ResponseBody
+	ResponseEntity<List<Area>> getSchools() {
+		return ResponseEntity.ok(Lists.newArrayList(rulesLoader.loadSchools().values()));
+	}
+
+	@GetMapping(value = "/building/{sid}/areas")
+	@ApiOperation(value = "Get all subareas of an area/building stored in the rule database")
+	public ResponseEntity<List<Area>> getAreas(@ApiParam("ID of the area") @PathVariable Long aid) {
+		List<Area> subAreas = buildingUtils.getSubAreas(aid);
+		return ResponseEntity.status(HttpStatus.OK).body(subAreas);
+	}
+
+	//------ RELOAD ------
+	/*
+	@ResponseBody
+	@ApiOperation(value = "Force reloaing of the rules tree of the building identified by aid", response = School.class, responseContainer = "List")
+	@RequestMapping(value = "/building/reload/{aid}", method = RequestMethod.GET)
+	public ResponseEntity<String> reloadSchoolTree(@PathVariable Long aid) throws RulesLoaderException {
+		if (!rulesLoader.reloadSchool(aid)) {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 		return new ResponseEntity<>(HttpStatus.OK);
@@ -91,11 +106,7 @@ public class BuildingController {
 		rulesLoader.reloadAllSchools();
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
+	*/
 
-	@GetMapping("/building/uris")
-	public
-	@ResponseBody ResponseEntity<Map<String, Long>> getUriMapping() {
-		return ResponseEntity.ok(measurementRepository.getMeterMap());
-	}
 
 }

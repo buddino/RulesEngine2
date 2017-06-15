@@ -1,23 +1,10 @@
 package it.cnit.gaia.rulesengine.api;
 
-import com.google.gson.Gson;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.client.ApiException;
-import it.cnit.gaia.rulesengine.api.request.CustomRuleException;
+import io.swagger.annotations.*;
 import it.cnit.gaia.rulesengine.api.request.ErrorResponse;
-import it.cnit.gaia.rulesengine.api.request.NewRule;
-import it.cnit.gaia.rulesengine.loader.RulesLoader;
-import it.cnit.gaia.rulesengine.model.GaiaRule;
-import it.cnit.gaia.rulesengine.service.MeasurementRepository;
-import it.cnit.gaia.rulesengine.utils.DatabaseSchemaService;
+import it.cnit.gaia.rulesengine.api.request.GaiaRuleException;
+import it.cnit.gaia.rulesengine.api.request.RuleDTO;
+import it.cnit.gaia.rulesengine.service.RuleDatabaseService;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -26,170 +13,78 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
-@Api(produces = MediaType.APPLICATION_JSON_VALUE, value = "PROVA")
+@Api(tags = "Rules",
+		authorizations = {@Authorization(value = "oauth2", scopes = {@AuthorizationScope(scope = "read", description = "read")})},
+		produces = MediaType.APPLICATION_JSON_VALUE)
 public class RulesController {
+
 	private Logger LOGGER = Logger.getRootLogger();
-	private Gson g = new Gson();
 
 	@Autowired
-	private OrientGraphFactory graphFactory;
-	@Autowired
-	private RulesLoader rulesLoader;
-	@Autowired
-	private MeasurementRepository measurementRepository;
-	@Autowired
-	private DatabaseSchemaService dbService;
+	private RuleDatabaseService ruleDatabaseService;
 
-	@ApiOperation(value = "Finds Pets by status",
-			notes = "Multiple status values can be provided with comma seperated strings",
-			response = ODocument.class,
+
+	@ApiOperation(value = "Get all the rules associated to the area identified by {id}",
 			responseContainer = "List")
-	@GetMapping(value = "/area/{id}/rules")
+	@GetMapping(value = "/area/{aid}/rules", produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
-	public ResponseEntity<List<ODocument>> getRuleOfArea(@PathVariable String id, @RequestParam(required = false, defaultValue = "false") Boolean traverse) throws CustomRuleException {
-		OrientGraphNoTx g = graphFactory.getNoTx();
-		Iterable<Vertex> result = g.getVertices("aid", id);
-		if (!result.iterator()
-				.hasNext()) {
-			throw new CustomRuleException(String.format("Area %d not found", id));
-		}
-		OrientVertex areaV = (OrientVertex) result.iterator()
-				.next();
-		String statement;
-		if (traverse)
-			statement = "select * from (traverse out() from ?) where @this instanceof 'GaiaRule'";
-		else
-			statement = "select * from (traverse out() from ?) where @this instanceof 'GaiaRule' and $depth==1";
-		OSQLSynchQuery query = new OSQLSynchQuery(statement);
-		List<ODocument> rulesOfArea = (List<ODocument>) query.execute(areaV.getIdentity());
+	public ResponseEntity<List<RuleDTO>> getRuleOfArea(
+			@ApiParam("ID of the area")
+			@PathVariable Long aid,
+			@ApiParam("If true also all the rules beloging to children areas of the area passed as parameter are shown")
+			@RequestParam(required = false, defaultValue = "false") Boolean traverse) throws GaiaRuleException {
+		List<RuleDTO> rulesOfArea = ruleDatabaseService.getRulesForArea(aid, traverse);
 		return ResponseEntity.ok(rulesOfArea);
-
 	}
 
+	@ApiOperation(value = "Delete the rule identified by {rid} only if this has been created by the user")
 	@DeleteMapping(value = "/rules/{rid}")
 	@ResponseBody
-	public ResponseEntity<String> deleteRule(@PathVariable String rid) {
-		OrientGraph tx = graphFactory.getTx();
-		OrientVertex v = tx.getVertex(rid);
-		if (!(Boolean) v.getProperty("custom")) {
-			return ResponseEntity.status(HttpStatus.FORBIDDEN)
-					.body(null);
-		}
-		v.remove();
-		tx.commit();
-		tx.shutdown();
-		return ResponseEntity.status(HttpStatus.NO_CONTENT)
-				.body(null);
+	public ResponseEntity<String> deleteRule(@ApiParam("Identifier of the rule") @PathVariable String rid) throws GaiaRuleException {
+		ruleDatabaseService.deleteRule(rid);
+		return ResponseEntity.noContent().build();
 	}
 
-	@RequestMapping(value = "/rules/{rid}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Modify the rule identified by {rid} according to the object passed in the body")
+	@PutMapping(value = "/rules/{rid}", produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
-	public ResponseEntity<Object> editRule(@PathVariable String rid, @RequestBody NewRule newRule) throws Exception {
-		OrientGraph tx = graphFactory.getTx();
-		OrientVertex ruleVertex = null;
-		Map<String, Object> fieldMap = newRule.rule;
-		try {
-			ruleVertex = tx.getVertex(rid);
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND)
-					.body(null);
-		}
-		if (!(Boolean) ruleVertex.getProperty("custom")) {
-			return ResponseEntity.status(HttpStatus.FORBIDDEN)
-					.body(null);
-		}
-
-		String uri = (String) newRule.rule.get("uri");
-		try {
-			measurementRepository.checkUri(uri);
-		} catch (ApiException e) {
-			tx.rollback();
-			throw new CustomRuleException(String.format("URI '%s' not found", uri));
-		}
-
-		ruleVertex.setProperties(fieldMap);
-
-		GaiaRule javaRule = rulesLoader.getRuleForTest(ruleVertex);
-		try {
-			javaRule.init();
-		} catch (Exception e) {
-			tx.rollback();
-			throw e;
-		}
-
-		tx.commit();
-		tx.shutdown();
-		return ResponseEntity.status(HttpStatus.OK)
-				.body(fieldMap);
+	public ResponseEntity<RuleDTO> editRule(@ApiParam("Identifier of the rule") @PathVariable String rid, @RequestBody RuleDTO ruleDTO) throws Exception {
+		ruleDatabaseService.editCustomRule(rid, ruleDTO);
+		return ResponseEntity.ok(ruleDTO);
 	}
 
-	@RequestMapping(value = "/rules", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Get the rule identified by {rid}")
+	@GetMapping(value = "/rules/{rid}", produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
-	public ResponseEntity<Object> addRule(@RequestBody NewRule newRule) throws Exception {
-		//Riguarda: molto codice
-		OrientGraph tx = graphFactory.getTx();
-		Iterable<Vertex> iterator;
-		iterator = tx.getVertices("aid", newRule.school);
-		OrientVertex school, areaVertex;
-		if (iterator.iterator()
-				.hasNext())
-			//Used only to check if school exists
-			school = (OrientVertex) iterator.iterator()
-					.next();
-		else {
-			tx.rollback();
-			throw new CustomRuleException(String.format("Building %d not found", newRule.school));
-		}
-		iterator = tx.getVertices("aid", newRule.area);
-		if (iterator.iterator()
-				.hasNext())
-			areaVertex = (OrientVertex) iterator.iterator()
-					.next();
-		else {
-			tx.rollback();
-			throw new CustomRuleException(String.format("Parent area %d not found", newRule.area));
-		}
-		//Check URI
-		String uri = (String) newRule.rule.get("uri");
-		try {
-			measurementRepository.checkUri(uri);
-		} catch (ApiException e) {
-			tx.rollback();
-			throw new CustomRuleException(String.format("URI '%s' not found", uri));
-		}
-
-		//Load rule
-		Map<String, Object> fieldMap = newRule.rule;
-		OrientVertex ruleVertex = tx.addVertex("class:" + fieldMap.get("@class")
-				.toString());
-		ruleVertex.setProperties(fieldMap);
-		ruleVertex.setProperty("custom", true);
-		ruleVertex.save();
-
-		GaiaRule javaRule = rulesLoader.getRuleForTest(ruleVertex);
-		try {
-			javaRule.init();
-		} catch (Exception e) {
-			tx.rollback();
-			throw e;
-		}
-
-		tx.addEdge(null, areaVertex, ruleVertex, "E");
-		tx.commit();
-		fieldMap.put("@rid", ruleVertex.getIdentity()
-				.toString());
-		tx.shutdown();
-		return ResponseEntity.status(HttpStatus.CREATED)
-				.body(fieldMap);
+	public ResponseEntity<RuleDTO> getRule(@ApiParam("Identifier of the rule") @PathVariable String rid) throws Exception {
+		RuleDTO rule = ruleDatabaseService.getRule(rid);
+		return ResponseEntity.ok(rule);
 	}
 
-	@ExceptionHandler(CustomRuleException.class)
-	public ResponseEntity<ErrorResponse> exceptionHandler(Exception e) {
-		ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage());
-		return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+
+	@ApiOperation(value = "Add a custom rule according to the object passed in the body")
+	@PostMapping(value = "/area/{aid}/rules", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ResponseBody
+	public ResponseEntity<RuleDTO> addRuleToArea(
+			@ApiParam("ID of the area")
+			@PathVariable Long aid,
+			@ApiParam(value = "JSON Object describing the rule")
+			@RequestBody RuleDTO ruleDTO) throws Exception {
+		ruleDTO = ruleDatabaseService.addCustomRuleToArea(aid, ruleDTO);
+		return ResponseEntity.status(HttpStatus.CREATED).body(ruleDTO);
 	}
+
+	@ExceptionHandler(GaiaRuleException.class)
+	public ResponseEntity<ErrorResponse> exceptionHandler(GaiaRuleException e) {
+		if (e.getStatus() == HttpStatus.INTERNAL_SERVER_ERROR) {
+			LOGGER.error(e);
+		}
+		ErrorResponse error = new ErrorResponse(e.getStatus().value(), e.getMessage());
+		ResponseEntity responseEntity = new ResponseEntity(error, null, e.getStatus());
+		return responseEntity;
+	}
+
 
 }
