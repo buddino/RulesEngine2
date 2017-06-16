@@ -1,4 +1,4 @@
-package it.cnit.gaia.rulesengine.api.request;
+package it.cnit.gaia.rulesengine.api.exception;
 
 import org.springframework.http.HttpStatus;
 

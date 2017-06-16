@@ -55,7 +55,6 @@ public class Scheduler {
 	public void scheduledMethod() {
 		//Riguarda
 		measurements.getMeasurementService().checkAuth();
-
 		LOGGER.info("Executing iteration");
 		//rulesLoader.reloadAllSchools();
 		schools = rulesLoader.loadSchools().values();

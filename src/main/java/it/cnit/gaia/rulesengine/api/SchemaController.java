@@ -1,8 +1,8 @@
 package it.cnit.gaia.rulesengine.api;
 
 import io.swagger.annotations.*;
-import it.cnit.gaia.rulesengine.api.request.ErrorResponse;
-import it.cnit.gaia.rulesengine.api.request.GaiaRuleException;
+import it.cnit.gaia.rulesengine.api.dto.ErrorResponse;
+import it.cnit.gaia.rulesengine.api.exception.GaiaRuleException;
 import it.cnit.gaia.rulesengine.utils.DatabaseSchemaService;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;

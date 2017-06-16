@@ -11,10 +11,11 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import io.swagger.client.ApiException;
-import it.cnit.gaia.rulesengine.api.request.GaiaRuleException;
-import it.cnit.gaia.rulesengine.api.request.RuleDTO;
+import it.cnit.gaia.rulesengine.api.exception.GaiaRuleException;
+import it.cnit.gaia.rulesengine.api.dto.RuleDTO;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
+import it.cnit.gaia.rulesengine.model.School;
 import it.cnit.gaia.rulesengine.model.exceptions.RuleInitializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -199,7 +200,7 @@ public class RuleDatabaseService {
 		tx.shutdown();
 	}
 
-	public RuleDTO getRule(String rid) throws GaiaRuleException {
+	public RuleDTO getRuleFromDb(String rid) throws GaiaRuleException {
 		OrientVertex vertex = ogf.getNoTx().getVertex(rid);
 		if (vertex == null)
 			throw new GaiaRuleException("Rule not found", HttpStatus.NOT_FOUND);
@@ -222,6 +223,14 @@ public class RuleDatabaseService {
 		fields.put("path",getRulePath(ruleDTO.getRid()));
 		ruleDTO.setFields(fields);
 		return ruleDTO;
+	}
+
+	public GaiaRule getRuleFromRuntime(String rid){
+		return rulesLoader.getGaiaRuleInstance(rid);
+	}
+
+	public School getSchool(Long aid){
+		return rulesLoader.loadSchools().get(aid);
 	}
 
 

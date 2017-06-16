@@ -41,6 +41,7 @@ public class RulesLoader {
 	@Autowired
 	private MeasurementRepository measurementRepository;
 	private Map<Long, School> schools = null;
+	private Map<String, GaiaRule> ruleMap;
 	private OrientGraph tx;
 
 	//TEST
@@ -56,6 +57,7 @@ public class RulesLoader {
 		if (schools != null) {
 			return schools;
 		}
+		ruleMap = new HashMap<>();
 		LOGGER.info("Reloading schools");
 		tx = graphFactory.getTx();
 		schools = new HashMap<>();
@@ -234,6 +236,10 @@ public class RulesLoader {
 		ov.setProperty("school", school.getRid());
 		ov.attach(tx);
 		ov.save();
+
+		//Add the rule to the rule map
+		ruleMap.put(rid.replace("#",""), (GaiaRule) rule);
+
 		return (Fireable) rule;
 	}
 
@@ -362,5 +368,13 @@ public class RulesLoader {
 				}
 			}
 		}
+	}
+
+	public GaiaRule getGaiaRuleInstance(String rid){
+		return ruleMap.get(rid);
+	}
+
+	public Map<String, GaiaRule> getRuleMap() {
+		return ruleMap;
 	}
 }

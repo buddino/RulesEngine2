@@ -1,6 +1,6 @@
 package it.cnit.gaia.rulesengine.rules;
 
-import it.cnit.gaia.rulesengine.api.request.EventDTO;
+import it.cnit.gaia.rulesengine.api.dto.EventDTO;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
 import it.cnit.gaia.rulesengine.model.annotation.LogMe;

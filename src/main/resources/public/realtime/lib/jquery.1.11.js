@@ -8703,7 +8703,7 @@ function ajaxExtend( target, src ) {
 	return target;
 }
 
-/* Handles responses to an ajax request:
+/* Handles responses to an ajax dto:
  * - finds the right dataType (mediates between content-type and expected dataType)
  * - returns the corresponding response
  */
@@ -8759,7 +8759,7 @@ function ajaxHandleResponses( s, jqXHR, responses ) {
 	}
 }
 
-/* Chain conversions given the request and the original response
+/* Chain conversions given the dto and the original response
  * Also sets the responseXXX fields on the jqXHR instance
  */
 function ajaxConvert( s, response, jqXHR, isSuccess ) {
@@ -8858,7 +8858,7 @@ jQuery.extend({
 	// Counter for holding the number of active queries
 	active: 0,
 
-	// Last-Modified header cache for next request
+	// Last-Modified header cache for next dto
 	lastModified: {},
 	etag: {},
 
@@ -9053,7 +9053,7 @@ jQuery.extend({
 					return this;
 				},
 
-				// Cancel the request
+				// Cancel the dto
 				abort: function( statusText ) {
 					var finalText = statusText || strAbort;
 					if ( transport ) {
@@ -9081,7 +9081,7 @@ jQuery.extend({
 		// Extract dataTypes list
 		s.dataTypes = jQuery.trim( s.dataType || "*" ).toLowerCase().match( rnotwhite ) || [ "" ];
 
-		// A cross-domain request is in order when we have a protocol:host:port mismatch
+		// A cross-domain dto is in order when we have a protocol:host:port mismatch
 		if ( s.crossDomain == null ) {
 			parts = rurl.exec( s.url.toLowerCase() );
 			s.crossDomain = !!( parts &&
@@ -9099,7 +9099,7 @@ jQuery.extend({
 		// Apply prefilters
 		inspectPrefiltersOrTransports( prefilters, s, options, jqXHR );
 
-		// If request was aborted inside a prefilter, stop there
+		// If dto was aborted inside a prefilter, stop there
 		if ( state === 2 ) {
 			return jqXHR;
 		}
@@ -9115,7 +9115,7 @@ jQuery.extend({
 		// Uppercase the type
 		s.type = s.type.toUpperCase();
 
-		// Determine if request has content
+		// Determine if dto has content
 		s.hasContent = !rnoContent.test( s.type );
 
 		// Save the URL in case we're toying with the If-Modified-Since
@@ -9568,7 +9568,7 @@ jQuery.fn.extend({
 });
 
 
-// Create the request object
+// Create the dto object
 // (This is still attached to ajaxSettings for backward compatibility)
 jQuery.ajaxSettings.xhr = window.ActiveXObject !== undefined ?
 	// Support: IE6+
@@ -9641,7 +9641,7 @@ if ( xhrSupported ) {
 					// X-Requested-With header
 					// For cross-domain requests, seeing as conditions for a preflight are
 					// akin to a jigsaw puzzle, we simply never set it to be sure.
-					// (it can always be set on a per-request basis or even using ajaxSetup)
+					// (it can always be set on a per-dto basis or even using ajaxSetup)
 					// For same-domain requests, won't change header if already provided.
 					if ( !options.crossDomain && !headers["X-Requested-With"] ) {
 						headers["X-Requested-With"] = "XMLHttpRequest";
@@ -9651,7 +9651,7 @@ if ( xhrSupported ) {
 					for ( i in headers ) {
 						// Support: IE<9
 						// IE's ActiveXObject throws a 'Type Mismatch' exception when setting
-						// request header to a null-value.
+						// dto header to a null-value.
 						//
 						// To keep consistent with other XHR implementations, cast the value
 						// to string and ignore `undefined`.
@@ -9660,7 +9660,7 @@ if ( xhrSupported ) {
 						}
 					}
 
-					// Do send the request
+					// Do send the dto
 					// This may raise an exception which is actually
 					// handled in jQuery.ajax (so no try/catch here)
 					xhr.send( ( options.hasContent && options.data ) || null );
@@ -9703,7 +9703,7 @@ if ( xhrSupported ) {
 
 								// Filter status for non standard behaviors
 
-								// If the request is local and we have data: assume a success
+								// If the dto is local and we have data: assume a success
 								// (success with no data won't get notified, that's the best we
 								// can do given current implementations)
 								if ( !status && options.isLocal && !options.crossDomain ) {
@@ -9997,7 +9997,7 @@ jQuery.fn.load = function( url, params, callback ) {
 		type = "POST";
 	}
 
-	// If we have elements to modify, make the request
+	// If we have elements to modify, make the dto
 	if ( self.length > 0 ) {
 		jQuery.ajax({
 			url: url,
@@ -10247,7 +10247,7 @@ jQuery.each( { Height: "height", Width: "width" }, function( name, type ) {
 
 				if ( jQuery.isWindow( elem ) ) {
 					// As of 5/8/2012 this will yield incorrect results for Mobile Safari, but there
-					// isn't a whole lot we can do. See pull request at this URL for discussion:
+					// isn't a whole lot we can do. See pull dto at this URL for discussion:
 					// https://github.com/jquery/jquery/pull/764
 					return elem.document.documentElement[ "client" + name ];
 				}

@@ -1,6 +1,5 @@
 package it.cnit.gaia.rulesengine.model;
 
-import com.google.gson.Gson;
 import io.swagger.client.ApiException;
 import it.cnit.gaia.buildingdb.BuildingDatabaseService;
 import it.cnit.gaia.rulesengine.configuration.ContextProvider;
@@ -232,9 +231,7 @@ public abstract class GaiaRule implements Fireable {
 		return map;
 	}
 
-	protected Map<String, Object> getAllFields() {
-		//TODO Remove Gson here
-		Gson G = new Gson();
+	public Map<String, Object> getAllFields() {
 		Map<String, Object> map = getFieldsForEvent();
 		map.putAll(getFieldsForNotification());
 		if (this instanceof ExpressionRule) {

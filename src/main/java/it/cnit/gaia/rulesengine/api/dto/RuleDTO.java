@@ -1,4 +1,4 @@
-package it.cnit.gaia.rulesengine.api.request;
+package it.cnit.gaia.rulesengine.api.dto;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;

@@ -1,4 +1,4 @@
-package it.cnit.gaia.rulesengine.api.request;
+package it.cnit.gaia.rulesengine.api.dto;
 
 public class ErrorResponse {
 	Integer code;

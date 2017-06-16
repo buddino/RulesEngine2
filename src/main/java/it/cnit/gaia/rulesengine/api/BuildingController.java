@@ -1,8 +1,6 @@
 package it.cnit.gaia.rulesengine.api;
 
 import com.google.common.collect.Lists;
-import com.google.gson.Gson;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import io.swagger.annotations.*;
 import it.cnit.gaia.buildingdb.exceptions.BuildingDatabaseException;
@@ -20,15 +18,14 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@Api(tags = "Building",
+@Api(tags = "Building API",
+		description = "API for managing the building trees replicated into the rules database. This API is used to maintain the sync with the building db.",
 		authorizations = {@Authorization(value = "oauth2", scopes = {@AuthorizationScope(scope = "read", description = "read")})},
 		produces = MediaType.APPLICATION_JSON_VALUE)
 public class BuildingController {
-	private Logger LOGGER = Logger.getRootLogger();
-	private Gson g = new Gson();
 
-	@Autowired
-	private OrientGraphFactory graphFactory;
+	private Logger LOGGER = Logger.getRootLogger();
+
 	@Autowired
 	private RulesLoader rulesLoader;
 	@Autowired
@@ -87,6 +84,7 @@ public class BuildingController {
 		List<Area> subAreas = buildingUtils.getSubAreas(bid);
 		return ResponseEntity.status(HttpStatus.OK).body(subAreas);
 	}
+
 
 	//------ RELOAD ------
 	/*

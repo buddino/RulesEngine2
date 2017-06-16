@@ -1,6 +1,6 @@
 package rules;
 
-import it.cnit.gaia.rulesengine.api.request.EventDTO;
+import it.cnit.gaia.rulesengine.api.dto.EventDTO;
 import it.cnit.gaia.rulesengine.model.event.GaiaEvent;
 import it.cnit.gaia.rulesengine.model.exceptions.RuleInitializationException;
 import it.cnit.gaia.rulesengine.model.notification.GAIANotification;

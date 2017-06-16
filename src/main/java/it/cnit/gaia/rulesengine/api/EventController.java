@@ -1,7 +1,7 @@
 package it.cnit.gaia.rulesengine.api;
 
 import io.swagger.annotations.*;
-import it.cnit.gaia.rulesengine.api.request.EventDTO;
+import it.cnit.gaia.rulesengine.api.dto.EventDTO;
 import it.cnit.gaia.rulesengine.service.EventService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;

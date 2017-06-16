@@ -1,13 +1,18 @@
 package it.cnit.gaia.rulesengine.api;
 
-import io.swagger.annotations.*;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.Authorization;
+import io.swagger.annotations.AuthorizationScope;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
-import it.cnit.gaia.rulesengine.model.School;
 import it.cnit.gaia.rulesengine.service.MeasurementRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -15,11 +20,12 @@ import java.io.FileReader;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/debug")
-@Api(tags = "Debug",
+@RequestMapping("/utils")
+@Api(tags = "Utility API",
+		description = "API for debugging or retrieve the status of the module",
 		authorizations = {@Authorization(value = "oauth2", scopes = {@AuthorizationScope(scope = "read", description = "read")})},
 		produces = MediaType.APPLICATION_JSON_VALUE)
-public class DebugController {
+public class UtilityController {
 
 	@Autowired
 	private RulesLoader rulesLoader;
@@ -27,13 +33,6 @@ public class DebugController {
 	@Autowired
 	MeasurementRepository measurementRepository;
 
-	@PutMapping(value = "/trigger/{id}")
-	@ApiOperation(value = "Force triggering of the rules for a building")
-	public ResponseEntity<?> triggerRuleOfSchool(@ApiParam("Building id") @PathVariable Long id) throws Exception {
-		School school = rulesLoader.getSchool(id);
-		school.fire();
-		return ResponseEntity.ok(null);
-	}
 	@ApiOperation(value = "Outputs the latest log of the recommendation engine")
 	@GetMapping(value = "/log", produces= MediaType.TEXT_PLAIN_VALUE)
 	public ResponseEntity<?> getLog() throws FileNotFoundException {
@@ -51,7 +50,5 @@ public class DebugController {
 	ResponseEntity<Map<String, Long>> getUriMapping() {
 		return ResponseEntity.ok(measurementRepository.getMeterMap());
 	}
-
-
 
 }

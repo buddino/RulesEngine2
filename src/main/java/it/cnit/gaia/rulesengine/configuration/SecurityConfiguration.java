@@ -34,7 +34,7 @@ public class SecurityConfiguration extends ResourceServerConfigurerAdapter {
 			.and().authorizeRequests().antMatchers("/docs/*").permitAll().and().authorizeRequests()		//Allows Swagger API
 			.antMatchers("/v2/api-docs").permitAll()													//Allows Swagger API
 			.and().authorizeRequests().antMatchers("/gs-guide-notification/**").permitAll();				//Allows web socket //Riguarda
-			//.and().authorizeRequests().antMatchers("/**").hasRole("USER");							//Block all other request except from user with ROLE.USER
+			//.and().authorizeRequests().antMatchers("/**").hasRole("USER");							//Block all other dto except from user with ROLE.USER
 	}
 
 }

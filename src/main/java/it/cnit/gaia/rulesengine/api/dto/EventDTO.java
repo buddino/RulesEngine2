@@ -1,4 +1,4 @@
-package it.cnit.gaia.rulesengine.api.request;
+package it.cnit.gaia.rulesengine.api.dto;
 
 import java.util.Date;
 import java.util.Map;
