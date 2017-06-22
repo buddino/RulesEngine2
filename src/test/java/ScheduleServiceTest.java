@@ -1,5 +1,5 @@
 import it.cnit.gaia.buildingdb.exceptions.BuildingDatabaseException;
-import it.cnit.gaia.rulesengine.configuration.BuildingDBConfiguration;
+import it.cnit.gaia.rulesengine.configuration.ExternalServicesConfiguration;
 import it.cnit.gaia.rulesengine.service.ScheduleService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -13,7 +13,7 @@ import java.text.ParseException;
 
 @SpringBootTest
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {BuildingDBConfiguration.class, ScheduleService.class})
+@ContextConfiguration(classes = {ExternalServicesConfiguration.class, ScheduleService.class})
 public class ScheduleServiceTest {
 
 	@Autowired
@@ -25,7 +25,5 @@ public class ScheduleServiceTest {
 		boolean occuipied = scheduleService.isOccuipied(47L);
 		System.out.println(occuipied);
 	}
-
-
 
 }

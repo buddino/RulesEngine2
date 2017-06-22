@@ -58,5 +58,11 @@ public class SparksServiceTest {
 		}
 	}
 
+	@Test
+	public void testTimeRange() throws ApiException {
+		sparksService.requestAccessToken();
+		sparksService.timeRangeQuery(155457L, 1497909600000L, 1497996000000L);
+	}
+
 
 }

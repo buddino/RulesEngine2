@@ -1,6 +1,7 @@
 package rules;
 
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
+import com.weatherlibrary.WeatherService;
 import it.cnit.gaia.buildingdb.BuildingDatabaseService;
 import it.cnit.gaia.rulesengine.configuration.ContextProvider;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
@@ -34,6 +35,8 @@ public class GenericRuleTest {
 	BuildingDatabaseService buildingDatabaseService;
 	@Mock
 	RuleDatabaseService ruleDatabaseService;
+	@Mock
+	WeatherService weatherService;
 
 
 	protected void setUpRule(GaiaRule rule){
@@ -45,6 +48,7 @@ public class GenericRuleTest {
 		rule.setEventService(eventService);
 		rule.setMeasurements(measurementRepository);
 		rule.setRuleDatabaseService(ruleDatabaseService);
+		rule.setWeatherService(weatherService);
 		rule.description = "description";
 		rule.suggestion = "suggestion";
 		rule.name = "name";

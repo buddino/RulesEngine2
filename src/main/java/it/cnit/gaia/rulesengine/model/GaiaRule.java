@@ -1,5 +1,6 @@
 package it.cnit.gaia.rulesengine.model;
 
+import com.weatherlibrary.WeatherService;
 import io.swagger.client.ApiException;
 import it.cnit.gaia.buildingdb.BuildingDatabaseService;
 import it.cnit.gaia.rulesengine.configuration.ContextProvider;
@@ -12,10 +13,12 @@ import it.cnit.gaia.rulesengine.model.notification.GAIANotification;
 import it.cnit.gaia.rulesengine.rules.ExpressionRule;
 import it.cnit.gaia.rulesengine.service.*;
 import org.apache.commons.lang.text.StrSubstitutor;
+import org.quartz.CronExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
+import java.text.ParseException;
 import java.util.*;
 
 public abstract class GaiaRule implements Fireable {
@@ -62,6 +65,12 @@ public abstract class GaiaRule implements Fireable {
 	public Date latestFireTime;
 
 	/**
+	 * The cron expression to limit the fire of the rule to a specific time
+	 */
+	public String cron;
+	protected CronExpression cronExpression;
+
+	/**
 	 * Services, manually loaded from the application context
 	 */
 	protected WebsocketService websocket = ContextProvider.getBean(WebsocketService.class);
@@ -70,6 +79,7 @@ public abstract class GaiaRule implements Fireable {
 	protected BuildingDatabaseService buildingDBService = ContextProvider.getBean(BuildingDatabaseService.class);
 	protected RuleDatabaseService ruleDatabaseService = ContextProvider.getBean(RuleDatabaseService.class);
 	protected ScheduleService scheduleService = ContextProvider.getBean(ScheduleService.class);
+	protected WeatherService weatherService = ContextProvider.getBean(WeatherService.class);
 
 	/**
 	 * Default fire() behavior is if( condition() ) then action()
@@ -92,14 +102,22 @@ public abstract class GaiaRule implements Fireable {
 	 *
 	 * @return true if the rule can be fired or false if it is not the time yet
 	 */
-	private boolean isTriggeringIntervalValid() {
-		if (intervalInSeconds == 0)        //There rule will be fires at every iteration
-			return true;
+	public boolean isTriggeringIntervalValid() {
 		Date now = new Date();
-		if (latestFireTime == null)        //The rule has never been fired before
-			return true;                    //return TRUE to fire
-		return now.getTime() - latestFireTime
-				.getTime() > intervalInSeconds * 1000;
+		boolean intervalValidity;
+		boolean cronValidity;
+
+		if (intervalInSeconds == 0 || latestFireTime == null)
+			intervalValidity = true;
+		else
+			intervalValidity = now.getTime() - latestFireTime.getTime() > intervalInSeconds * 1000;
+
+		if (cronExpression == null)
+			cronValidity = true;
+		else
+			cronValidity = cronExpression.isSatisfiedBy(now);
+
+		return cronValidity && intervalValidity;
 	}
 
 	/**
@@ -136,7 +154,7 @@ public abstract class GaiaRule implements Fireable {
 						if (f.isAnnotationPresent(URI.class)) {
 							//FIXME Checking by querying here, results in a double query and in a slow validation time
 							//Potrebbe essere un'idea fare il mapping non tutto insieme ma via via che si aggiungono uri (perdo parallel)
-							measurements.checkUri( (String) f.get(this) );
+							measurements.checkUri((String) f.get(this));
 						}
 					} catch (IllegalAccessException e) {
 						e.printStackTrace();
@@ -151,6 +169,14 @@ public abstract class GaiaRule implements Fireable {
 	}
 
 	public boolean init() throws RuleInitializationException {
+		//If a cron string is defined parse it int oa cron expression
+		if (cron != null) {
+			try {
+				cronExpression = new CronExpression(cron);
+			} catch (ParseException e) {
+				throw new RuleInitializationException("The specified cron expression is not valid - " +cron +"\n"+ e.getMessage());
+			}
+		}
 		return validateFields();
 	}
 
@@ -314,6 +340,11 @@ public abstract class GaiaRule implements Fireable {
 
 	public GaiaRule setScheduleService(ScheduleService scheduleService) {
 		this.scheduleService = scheduleService;
+		return this;
+	}
+
+	public GaiaRule setWeatherService(WeatherService weatherService) {
+		this.weatherService = weatherService;
 		return this;
 	}
 }

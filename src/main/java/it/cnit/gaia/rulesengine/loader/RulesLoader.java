@@ -42,6 +42,7 @@ public class RulesLoader {
 	private MeasurementRepository measurementRepository;
 	private Map<Long, School> schools = null;
 	private Map<String, GaiaRule> ruleMap;
+	private Map<Long, Area> areaMap;
 	private OrientGraph tx;
 
 	//TEST
@@ -58,6 +59,7 @@ public class RulesLoader {
 			return schools;
 		}
 		ruleMap = new HashMap<>();
+		areaMap = new HashMap<>();
 		LOGGER.info("Reloading schools");
 		tx = graphFactory.getTx();
 		schools = new HashMap<>();
@@ -306,6 +308,8 @@ public class RulesLoader {
 				}
 			}
 		}
+		if(school.aid != area.aid)
+			areaMap.put(area.aid,area);
 		return area;
 	}
 
@@ -376,5 +380,9 @@ public class RulesLoader {
 
 	public Map<String, GaiaRule> getRuleMap() {
 		return ruleMap;
+	}
+
+	public Map<Long, Area> getAreaMap(){
+		return areaMap;
 	}
 }

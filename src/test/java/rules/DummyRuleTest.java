@@ -33,12 +33,71 @@ public class DummyRuleTest extends GenericRuleTest {
 
 	@Test
 	public void testValidInitilialization() {
+		rule.intervalInSeconds=60L;
 		rule.threshold = 1.0;
 		try {
 			Assert.assertTrue(rule.init());
 		} catch (RuleInitializationException e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Test
+	public void testNoIntervalNoCron(){
+		rule.threshold = 1.0;
+		Assert.assertTrue(rule.isTriggeringIntervalValid());
+	}
+
+	@Test
+	public void testValidIntervalNoCron() throws RuleInitializationException {
+		rule.threshold = 1.0;
+		rule.intervalInSeconds = 60L;
+		rule.init();
+		Assert.assertTrue(rule.isTriggeringIntervalValid());
+	}
+
+	@Test
+	public void testInvalidIntervalNoCron() throws RuleInitializationException {
+		rule.threshold = 1.0;
+		rule.intervalInSeconds = 60L;
+		rule.init();
+		rule.fire();
+		Assert.assertFalse(rule.isTriggeringIntervalValid());
+	}
+
+	@Test
+	public void testNoIntervalInsideCron() throws RuleInitializationException {
+		rule.threshold = 1.0;
+		rule.cron = "* * * * * ? *";
+		rule.init();
+		rule.fire();
+		Assert.assertTrue(rule.isTriggeringIntervalValid());
+	}
+
+	@Test(expected = RuleInitializationException.class)
+	public void testNoIntervalInvalidCron() throws RuleInitializationException {
+		rule.threshold = 1.0;
+		rule.cron = "edfewfew";
+		rule.init();
+	}
+
+	@Test
+	public void testNoIntervalOutsideCron() throws RuleInitializationException {
+		rule.threshold = 1.0;
+		rule.cron = "1 * * * * ? 2010";
+		rule.init();
+		rule.fire();
+		Assert.assertFalse(rule.isTriggeringIntervalValid());
+	}
+
+	@Test
+	public void testInvialidIntervalInsideCron() throws RuleInitializationException {
+		rule.threshold = 1.0;
+		rule.intervalInSeconds = 60L;
+		rule.cron = "* * * * * ? *";
+		rule.init();
+		rule.fire();
+		Assert.assertFalse(rule.isTriggeringIntervalValid());
 	}
 
 	@Test
