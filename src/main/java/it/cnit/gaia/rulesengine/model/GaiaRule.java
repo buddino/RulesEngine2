@@ -30,14 +30,14 @@ public abstract class GaiaRule implements Fireable {
 	 * The name of the rule, mostly useful for heavily customized instances.
 	 * It is not required meaning a rule with no name can be instantiated
 	 */
-	@LoadMe(required = false)
+	@LoadMe
 	@LogMe(event = false)
 	public String name;
 
 	/**
-	 * The suggestion to sent to the client
+	 * The suggestion to be sent to the client
 	 */
-	@LoadMe(required = false)
+	@LoadMe
 	public String suggestion;
 
 	@LogMe(event = false, notification = false)
@@ -57,7 +57,7 @@ public abstract class GaiaRule implements Fireable {
 	 * Interval in seconds between 2 fires (e.g. 900 means at most one time every 15 minutes)
 	 */
 	@LoadMe(required = false)
-	public Long intervalInSeconds = 0L;
+	public Long fireInterval = 0L;
 
 	/**
 	 * The timestamp of the latest fire
@@ -67,7 +67,8 @@ public abstract class GaiaRule implements Fireable {
 	/**
 	 * The cron expression to limit the fire of the rule to a specific time
 	 */
-	public String cron;
+	@LoadMe(required = false)
+	public String fireCron;
 	protected CronExpression cronExpression;
 
 	/**
@@ -107,10 +108,10 @@ public abstract class GaiaRule implements Fireable {
 		boolean intervalValidity;
 		boolean cronValidity;
 
-		if (intervalInSeconds == 0 || latestFireTime == null)
+		if (fireInterval == 0 || latestFireTime == null)
 			intervalValidity = true;
 		else
-			intervalValidity = now.getTime() - latestFireTime.getTime() > intervalInSeconds * 1000;
+			intervalValidity = now.getTime() - latestFireTime.getTime() > fireInterval * 1000;
 
 		if (cronExpression == null)
 			cronValidity = true;
@@ -125,7 +126,7 @@ public abstract class GaiaRule implements Fireable {
 	 */
 	public void fire() {
 		if (!isTriggeringIntervalValid()) {
-			LOGGER.debug(String.format("Rule %s not triggered beacuse of the interval constraint", rid));
+			LOGGER.debug(String.format("Rule %s not triggered beacuse of the interval constraint / fireCron", rid));
 			return;
 		}
 		//Update the latest fire time. This is kept in memory only.
@@ -169,12 +170,12 @@ public abstract class GaiaRule implements Fireable {
 	}
 
 	public boolean init() throws RuleInitializationException {
-		//If a cron string is defined parse it int oa cron expression
-		if (cron != null) {
+		//If a fireCron string is defined parse it int oa fireCron expression
+		if (fireCron != null) {
 			try {
-				cronExpression = new CronExpression(cron);
+				cronExpression = new CronExpression(fireCron);
 			} catch (ParseException e) {
-				throw new RuleInitializationException("The specified cron expression is not valid - " +cron +"\n"+ e.getMessage());
+				throw new RuleInitializationException("The specified fireCron expression is not valid - " + fireCron +"\n"+ e.getMessage());
 			}
 		}
 		return validateFields();
@@ -269,44 +270,35 @@ public abstract class GaiaRule implements Fireable {
 	public String getName() {
 		return name;
 	}
-
 	public GaiaRule setName(String name) {
 		this.name = name;
 		return this;
 	}
-
 	public String getSuggestion() {
 		Map<String, Object> fields = getAllFields();
 		fields.put("school", school.getName());
-
 		//Add useful fields
 		//...
 		String replaced = StrSubstitutor.replace(suggestion, fields);
 		return replaced;
 	}
-
 	public String getDescription() {
 		return description;
 	}
-
 	public GaiaRule setDescription(String description) {
 		this.description = description;
 		return this;
 	}
-
 	public String getRid() {
 		return rid;
 	}
-
 	public School getSchool() {
 		return school;
 	}
-
 	public GaiaRule setSchool(School school) {
 		this.school = school;
 		return this;
 	}
-
 	public Long getParentAreaId() {
 		return ruleDatabaseService.getParentArea(rid);
 	}

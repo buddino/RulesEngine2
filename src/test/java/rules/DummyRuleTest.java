@@ -33,7 +33,7 @@ public class DummyRuleTest extends GenericRuleTest {
 
 	@Test
 	public void testValidInitilialization() {
-		rule.intervalInSeconds=60L;
+		rule.fireInterval =60L;
 		rule.threshold = 1.0;
 		try {
 			Assert.assertTrue(rule.init());
@@ -51,7 +51,7 @@ public class DummyRuleTest extends GenericRuleTest {
 	@Test
 	public void testValidIntervalNoCron() throws RuleInitializationException {
 		rule.threshold = 1.0;
-		rule.intervalInSeconds = 60L;
+		rule.fireInterval = 60L;
 		rule.init();
 		Assert.assertTrue(rule.isTriggeringIntervalValid());
 	}
@@ -59,7 +59,7 @@ public class DummyRuleTest extends GenericRuleTest {
 	@Test
 	public void testInvalidIntervalNoCron() throws RuleInitializationException {
 		rule.threshold = 1.0;
-		rule.intervalInSeconds = 60L;
+		rule.fireInterval = 60L;
 		rule.init();
 		rule.fire();
 		Assert.assertFalse(rule.isTriggeringIntervalValid());
@@ -68,7 +68,7 @@ public class DummyRuleTest extends GenericRuleTest {
 	@Test
 	public void testNoIntervalInsideCron() throws RuleInitializationException {
 		rule.threshold = 1.0;
-		rule.cron = "* * * * * ? *";
+		rule.fireCron = "* * * * * ? *";
 		rule.init();
 		rule.fire();
 		Assert.assertTrue(rule.isTriggeringIntervalValid());
@@ -77,14 +77,14 @@ public class DummyRuleTest extends GenericRuleTest {
 	@Test(expected = RuleInitializationException.class)
 	public void testNoIntervalInvalidCron() throws RuleInitializationException {
 		rule.threshold = 1.0;
-		rule.cron = "edfewfew";
+		rule.fireCron = "edfewfew";
 		rule.init();
 	}
 
 	@Test
 	public void testNoIntervalOutsideCron() throws RuleInitializationException {
 		rule.threshold = 1.0;
-		rule.cron = "1 * * * * ? 2010";
+		rule.fireCron = "1 * * * * ? 2010";
 		rule.init();
 		rule.fire();
 		Assert.assertFalse(rule.isTriggeringIntervalValid());
@@ -93,8 +93,8 @@ public class DummyRuleTest extends GenericRuleTest {
 	@Test
 	public void testInvialidIntervalInsideCron() throws RuleInitializationException {
 		rule.threshold = 1.0;
-		rule.intervalInSeconds = 60L;
-		rule.cron = "* * * * * ? *";
+		rule.fireInterval = 60L;
+		rule.fireCron = "* * * * * ? *";
 		rule.init();
 		rule.fire();
 		Assert.assertFalse(rule.isTriggeringIntervalValid());
@@ -124,7 +124,7 @@ public class DummyRuleTest extends GenericRuleTest {
 		Date timestamp = new Date(now.getTime() - 10000); //minus 10 seconds
 		rule.latestFireTime = timestamp;
 		rule.threshold = 1.0;
-		rule.intervalInSeconds = 100L;
+		rule.fireInterval = 100L;
 		rule.fire();
 		Collection<Invocation> invocations = Mockito.mockingDetails(websocketService).getInvocations();
 		Assert.assertEquals(invocations.size(),0);	}
@@ -135,7 +135,7 @@ public class DummyRuleTest extends GenericRuleTest {
 		Date timestamp = new Date(now.getTime() - 3600000); //minus 1 hour
 		rule.latestFireTime = timestamp;
 		rule.threshold = 1.0;
-		rule.intervalInSeconds = 100L;
+		rule.fireInterval = 100L;
 		rule.fire();
 		//FIXME Other interactions
 		Collection<Invocation> invocations = Mockito.mockingDetails(websocketService).getInvocations();

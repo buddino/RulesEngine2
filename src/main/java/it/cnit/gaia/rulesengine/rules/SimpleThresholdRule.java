@@ -28,8 +28,7 @@ public class SimpleThresholdRule extends GaiaRule {
 
 	@Override
 	public boolean condition() {
-		//TODO Get from measurementRepositorys
-		value = Math.random();
+		value = measurements.getLatestFor(uri).getReading();
 		switch (operator) {
 			case "==":
 				return Math.abs(value - threshold) < 0.001;

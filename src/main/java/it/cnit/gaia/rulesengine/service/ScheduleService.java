@@ -1,11 +1,11 @@
 package it.cnit.gaia.rulesengine.service;
 
 import it.cnit.gaia.buildingdb.BuildingDatabaseService;
-import it.cnit.gaia.buildingdb.dto.AreaScheduleDTO;
-import it.cnit.gaia.buildingdb.dto.BuildingCalendarDTO;
-import it.cnit.gaia.buildingdb.dto.CalendarStatus;
+import it.cnit.gaia.buildingdb.dto.*;
 import it.cnit.gaia.buildingdb.exceptions.BuildingDatabaseException;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.quartz.CronExpression;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,19 +17,17 @@ import java.text.ParseException;
 import java.util.*;
 
 @Service
-public class ScheduleService {
+public class ScheduleService { //TODO Rename
 
 	protected final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(this.getClass());
-
 	@Autowired
 	BuildingDatabaseService bds;
-
 	@Autowired
 	RulesLoader rulesLoader;
+	private ObjectMapper mapper = new ObjectMapper();
 
 	//@Autowired
 	//RulesLoader rulesLoader;
-
 	private Map<Long, List<CronExpression>> occupation = new HashMap<>();
 	private Map<Long, List<CronExpression>> schoolClosed = new HashMap<>();
 	private Map<Long, List<CronExpression>> schoolTeaching = new HashMap<>();
@@ -39,10 +37,10 @@ public class ScheduleService {
 	/**
 	 * Retrieve the schedule for an area
 	 * This should be done once during tree loading
-	 * Parse the cron expressions
+	 * Parse the fireCron expressions
 	 * <p>
 	 * Provide methods for:
-	 * - verify if a Date ( usually now() ) is verified by any of the cron expression for the specific area
+	 * - verify if a Date ( usually now() ) is verified by any of the fireCron expression for the specific area
 	 * - ...
 	 */
 
@@ -60,29 +58,53 @@ public class ScheduleService {
 			updateSchedules();
 		} catch (ParseException e) {
 			LOGGER.warn("Parsing error: " + e.getMessage());
-		} catch (IOException e) {
-			LOGGER.warn("IOExceptioon", e);
 		} catch (BuildingDatabaseException e) {
 			LOGGER.warn("Building database exception: " + e.getMessage());
 		} catch (HttpMessageNotReadableException e) {
-			LOGGER.warn("Message not readable: "+e.getMessage());
+			LOGGER.warn("Message not readable: " + e.getMessage());
 		}
 	}
 
-	public void updateSchedules() throws ParseException, BuildingDatabaseException, IOException {
+	public void updateSchedule(Long aid) throws BuildingDatabaseException, ParseException {
+		LOGGER.debug("Updating schedule for area: " + aid);
+		try {
+			occupation.put(aid, getCronExpressionsForArea(aid));
+		} catch (IOException e) {
+			LOGGER.warn("Error while loading schedule for area " + aid);
+		}
+	}
+
+	public void updateCalendar(Long sid) throws BuildingDatabaseException, ParseException {
+		LOGGER.debug("Updating schedule for area: " + sid);
+		try {
+			occupation.put(sid, getCronExpressionsForArea(sid));
+		} catch (IOException e) {
+			LOGGER.warn("Error while loading schedule for area " + sid);
+		}
+	}
+
+	public void updateSchedules() throws ParseException, BuildingDatabaseException {
 		for (Long aid : areas) {
 			LOGGER.debug("Updating schedule for area: " + aid);
-			occupation.put(aid, getCronExpressionsForArea(aid));
+			try {
+				occupation.put(aid, getCronExpressionsForArea(aid));
+			} catch (IOException e) {
+				LOGGER.warn("Error while loading schedule for area " + aid);
+			}
 		}
 	}
 
-	public void updateCalendars() throws ParseException, BuildingDatabaseException, IOException {
+	public void updateCalendars() throws ParseException, BuildingDatabaseException {
 		for (Long sid : buildings) {
 			LOGGER.debug("Updating calendar for building: " + sid);
-			List<CronExpression> calendarClosed = getCalendarForBuilding(sid, CalendarStatus.CLOSED);
-			List<CronExpression> calendarTeaching = getCalendarForBuilding(sid, CalendarStatus.TEACHING);
-			schoolClosed.put(sid, calendarClosed);
-			schoolTeaching.put(sid, calendarTeaching);
+			try {
+				List<CronExpression> calendarClosed = getCalendarForBuilding(sid, CalendarStatus.CLOSED);
+				List<CronExpression> calendarTeaching = getCalendarForBuilding(sid, CalendarStatus.TEACHING);
+				schoolClosed.put(sid, calendarClosed);
+				schoolTeaching.put(sid, calendarTeaching);
+			} catch (IOException e) {
+				LOGGER.warn("Error while loading calendar for school " + sid);
+			}
 		}
 	}
 
@@ -95,12 +117,12 @@ public class ScheduleService {
 	 * @throws BuildingDatabaseException
 	 * @throws ParseException
 	 */
-	public boolean isOccuipied(Long aid, Date date) throws ParseException, BuildingDatabaseException, IOException {
+	public boolean isOccupied(Long aid, Date date) {
 		List<CronExpression> cronexpr = occupation.get(aid);
 		if (cronexpr != null)
 			return cronexpr.stream().anyMatch(e -> e.isSatisfiedBy(date));
 		else
-			//TODO Throw exception, no cron expression in memory
+			//TODO Throw exception, no fireCron expression in memory
 			return false;
 	}
 
@@ -112,8 +134,8 @@ public class ScheduleService {
 	 * @throws BuildingDatabaseException
 	 * @throws ParseException
 	 */
-	public boolean isOccuipied(Long aid) throws BuildingDatabaseException, ParseException, IOException {
-		return isOccuipied(aid, new Date());
+	public boolean isOccupied(Long aid) {
+		return isOccupied(aid, new Date());
 	}
 
 	/**
@@ -125,8 +147,20 @@ public class ScheduleService {
 	 * @throws BuildingDatabaseException
 	 * @throws ParseException
 	 */
-	public boolean isClosed(Long sid, Date date) throws BuildingDatabaseException, ParseException {
+	public boolean isClosed(Long sid, Date date) throws BuildingDatabaseException {
 		List<CronExpression> cronexpr = schoolClosed.get(sid);
+		if (cronexpr == null) {
+			try {
+				updateCalendar(sid);
+			} catch (BuildingDatabaseException e) {
+				LOGGER.warn(e.getMessage());
+			} catch (ParseException e) {
+				LOGGER.warn(e.getMessage());
+			}
+			cronexpr = schoolClosed.get(sid);
+			if (cronexpr == null)
+				throw new BuildingDatabaseException("No schedule found for school " + sid);
+		}
 		return cronexpr.stream().anyMatch(e -> e.isSatisfiedBy(date));
 	}
 
@@ -138,20 +172,28 @@ public class ScheduleService {
 	 * @throws BuildingDatabaseException
 	 * @throws ParseException
 	 */
-	public boolean isClosed(Long sid) throws BuildingDatabaseException, ParseException {
+	public boolean isClosed(Long sid) throws BuildingDatabaseException {
 		return isClosed(sid, new Date());
 	}
 
-	public boolean isTeaching(Long sid, Date date) throws BuildingDatabaseException, ParseException {
+	public boolean isTeaching(Long sid, Date date) throws BuildingDatabaseException {
 		List<CronExpression> cronexpr = schoolTeaching.get(sid);
 		//FIXME Vengono richieste aree
-		if(cronexpr==null)
-			return false;
+		if (cronexpr == null) {
+			try {
+				updateSchedule(sid);
+			} catch (ParseException e) {
+				LOGGER.warn(e.getMessage());
+			}
+			cronexpr = schoolTeaching.get(sid);
+			if (cronexpr == null)
+				throw new BuildingDatabaseException("No schedule found for school " + sid);
+		}
 		return cronexpr.stream().anyMatch(e -> e.isSatisfiedBy(date));
 	}
 
-	public boolean isTeaching(Long sin) throws BuildingDatabaseException, ParseException {
-		return isTeaching(sin, new Date());
+	public boolean isTeaching(Long sid) throws BuildingDatabaseException {
+		return isTeaching(sid, new Date());
 	}
 
 
@@ -188,6 +230,18 @@ public class ScheduleService {
 		return cronexpr;
 	}
 
+	public JsonNode getJsonFieldForArea(Long aid, String field) throws BuildingDatabaseException, IOException {
+		AreaDTO area = bds.getAreaById(aid);
+		String json = area.getJson().toString();
+		return mapper.readTree(json).get(field);
+	}
+
+	public JsonNode getJsonFieldForbuilding(Long sid, String field) throws BuildingDatabaseException, IOException {
+		BuildingDTO building = bds.getBuildingById(sid);
+		String json = building.getJson().toString();
+		return mapper.readTree(json).get(field);
+	}
 	//TODO How long before the closest valid moment expressed by the CRON Expressions
+
 
 }

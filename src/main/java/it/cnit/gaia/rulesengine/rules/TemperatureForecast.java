@@ -4,11 +4,14 @@ import com.weatherlibrary.datamodel.Hour;
 import com.weatherlibrary.datamodel.Weather;
 import io.swagger.client.ApiException;
 import io.swagger.client.model.AnalyticsResourceDataResponseDTO;
+import it.cnit.gaia.buildingdb.exceptions.BuildingDatabaseException;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
 import it.cnit.gaia.rulesengine.model.annotation.LogMe;
 import it.cnit.gaia.rulesengine.model.annotation.URI;
+import it.cnit.gaia.rulesengine.model.exceptions.RuleInitializationException;
 
+import java.io.IOException;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 
@@ -30,8 +33,24 @@ public class TemperatureForecast extends GaiaRule {
 
 
 	//TODO Coordinates from school
-	private Double lat = 43.87;
-	private Double lon = 11.06;
+	private Double lat;
+	private Double lon;
+
+	@Override
+	public boolean init() throws RuleInitializationException {
+		try {
+			lat = scheduleService.getJsonFieldForbuilding(school.aid, "lat").asDouble();
+			lon = scheduleService.getJsonFieldForbuilding(school.aid, "lon").asDouble();
+		}
+		catch (BuildingDatabaseException e) {
+			LOGGER.warn("Error while retrieving coordinates: " +e.getMessage(),e);
+			return false;
+		} catch (IOException e) {
+			LOGGER.warn("Error while retrieving coordinates: " +e.getMessage(),e);
+			return false;
+		}
+		return super.init();
+	}
 
 	@Override
 	public boolean condition() {

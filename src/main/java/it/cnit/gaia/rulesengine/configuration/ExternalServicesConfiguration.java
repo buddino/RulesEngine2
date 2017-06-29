@@ -12,7 +12,7 @@ import org.springframework.context.annotation.PropertySource;
 
 public class ExternalServicesConfiguration {
 
-	@Value("${openweathermap.appid}")
+	@Value("${weatherservice.apikey}")
 	String appid;
 
 	@Bean

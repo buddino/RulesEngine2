@@ -12,6 +12,7 @@ import it.cnit.gaia.buildingdb.dto.AreaDTO;
 import it.cnit.gaia.buildingdb.dto.BuildingDTO;
 import it.cnit.gaia.buildingdb.exceptions.BuildingDatabaseException;
 import it.cnit.gaia.rulesengine.model.Area;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,13 +22,12 @@ import java.util.*;
 
 @Service
 public class BuildingUtils {
+	private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
+	ObjectMapper mapper = new ObjectMapper();
 	@Autowired
 	OrientGraphFactory graphFactory;
-
 	@Autowired
 	BuildingDatabaseService bds;
-
-	private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
 	public OrientVertex buildTreeFromBuildingDB(Long buildingId) throws IllegalAccessException, BuildingDatabaseException {
 		BuildingDTO school = bds.getBuildingStructure(buildingId);
@@ -106,13 +106,13 @@ public class BuildingUtils {
 		command.execute(v.getIdentity());
 	}
 
-	public List<Area> getSubAreas(Long aid){
+	public List<Area> getSubAreas(Long aid) {
 		OrientGraphNoTx db = graphFactory.getNoTx();
 		OSQLSynchQuery query = new OSQLSynchQuery("select * from (traverse * from (select from Area where aid = ?)) where @class = \"Area\"");
 		query.execute(aid);
 		OConcurrentResultSet<ODocument> result = (OConcurrentResultSet<ODocument>) query.getResult();
 		List<Area> areas = new ArrayList<>();
-		for( ODocument d : result ){
+		for (ODocument d : result) {
 			Area area = new Area();
 			area.aid = aid;
 			area.name = d.field("name");
@@ -122,4 +122,5 @@ public class BuildingUtils {
 		}
 		return areas;
 	}
+
 }

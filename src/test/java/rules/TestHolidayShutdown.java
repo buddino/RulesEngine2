@@ -4,7 +4,7 @@ import it.cnit.gaia.buildingdb.dto.AreaScheduleDTO;
 import it.cnit.gaia.buildingdb.exceptions.BuildingDatabaseException;
 import it.cnit.gaia.rulesengine.model.exceptions.RuleInitializationException;
 import it.cnit.gaia.rulesengine.model.notification.GAIANotification;
-import it.cnit.gaia.rulesengine.rules.ScheduleReminderRule;
+import it.cnit.gaia.rulesengine.rules.HolidayShutdown;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Rule;
@@ -25,16 +25,16 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class TestScheduleReminderRule extends GenericRuleTest {
+public class TestHolidayShutdown extends GenericRuleTest {
 	@Rule
 	public ExpectedException thrown = ExpectedException.none();
-	ScheduleReminderRule rule;
+	HolidayShutdown rule;
 	DateTime dateTime = DateTime.now();
 
 	@Before
 	public void setUp() {
 		MockitoAnnotations.initMocks(this);
-		rule = new ScheduleReminderRule();
+		rule = new HolidayShutdown();
 		setUpRule(rule);
 	}
 
@@ -142,7 +142,7 @@ public class TestScheduleReminderRule extends GenericRuleTest {
 		scheduleDTO.setCron("[\"* * * "+futureDate.getDayOfMonth()+" "+futureDate.getMonthOfYear()+" ? *\"]");
 		rule.timeBeforeInHours = 300L;
 		when(buildingDatabaseService.getScheduleForArea(anyLong())).thenReturn(Arrays.asList(scheduleDTO));
-		rule.intervalInSeconds = 100L;
+		rule.fireInterval = 100L;
 		rule.init();
 		rule.fire();
 		rule.fire();

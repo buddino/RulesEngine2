@@ -62,7 +62,7 @@ public class Scheduler {
 		//Riguarda
 		measurements.getMeasurementService().checkAuth();
 		LOGGER.info("Executing iteration");
-		//rulesLoader.reloadAllSchools();
+		rulesLoader.reloadAllSchools();
 		schools = rulesLoader.loadSchools().values();
 		measurements.updateLatest();
 		schools.forEach(s -> s.fire());

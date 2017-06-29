@@ -24,6 +24,10 @@ public class PowerFactor extends GaiaRule {
 
 	@LogMe
 	@LoadMe(required = false)
+	public Double pwf_lowerthreshold = 0.70;
+
+	@LogMe
+	@LoadMe(required = false)
 	public int windowLength = 10;
 
 	@LogMe
@@ -59,7 +63,7 @@ public class PowerFactor extends GaiaRule {
 	public void action() {
 		GAIANotification notification = getBaseNotification();
 		GaiaEvent event = getBaseEvent();
-		if (average < 0.7) {
+		if (average < pwf_lowerthreshold) {
 			notification.setSuggestion(String
 					.format("The power factor average value in the latest %d days is %.3f. This is a critical low value and the energy provider can force you to solve this issue.", windowLength, average));
 		} else {

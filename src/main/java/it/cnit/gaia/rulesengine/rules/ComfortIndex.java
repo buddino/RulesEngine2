@@ -4,14 +4,12 @@ import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
 import it.cnit.gaia.rulesengine.model.annotation.LogMe;
 import it.cnit.gaia.rulesengine.model.annotation.URI;
-import it.cnit.gaia.rulesengine.model.notification.GAIANotification;
-import it.cnit.gaia.rulesengine.model.notification.NotificationType;
 
 public class ComfortIndex extends GaiaRule {
 
 	//Thresholds
 	@LogMe
-	@LoadMe
+	@LoadMe(required = false)
 	public Double threshold = 30.0;
 
 	//URIs
@@ -34,6 +32,13 @@ public class ComfortIndex extends GaiaRule {
 
 	@Override
 	public boolean condition() {
+		try {
+			if (!(scheduleService.isTeaching(school.aid) && scheduleService.isOccupied(getParentAreaId())))
+				return false;
+		} catch (Exception e) {
+			LOGGER.warn("Error while retrieving schedule/calendar: "+ e.getMessage());
+		}
+
 		//Source: http://www.azosensors.com/article.aspx?ArticleID=487
 		temp = measurements.getLatestFor(temperature_uri).getReading();
 		humid = measurements.getLatestFor(humidity_uri).getReading();
@@ -45,36 +50,5 @@ public class ComfortIndex extends GaiaRule {
 		return index > threshold;
 	}
 
-	@Override
-	public void action() {
-		GAIANotification notification = getBaseNotification().setType(NotificationType.error);
-	}
-
-	public Double getThreshold() {
-		return threshold;
-	}
-
-	public ComfortIndex setThreshold(Double threshold) {
-		this.threshold = threshold;
-		return this;
-	}
-
-	public String getTempUri() {
-		return temperature_uri;
-	}
-
-	public ComfortIndex setTempUri(String tempUri) {
-		this.temperature_uri = tempUri;
-		return this;
-	}
-
-	public String getHumidUri() {
-		return humidity_uri;
-	}
-
-	public ComfortIndex setHumidUri(String humidUri) {
-		this.humidity_uri = humidUri;
-		return this;
-	}
 
 }

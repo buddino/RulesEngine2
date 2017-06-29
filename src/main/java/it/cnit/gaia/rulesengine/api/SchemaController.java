@@ -11,10 +11,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-
 @RestController
 @Api(tags = "Schema",
+		description = "API for retrieving information about rule classes",
 		authorizations = {@Authorization(value = "oauth2", scopes = {@AuthorizationScope(scope = "read", description = "read")})},
 		produces = MediaType.APPLICATION_JSON_VALUE)
 public class SchemaController {
@@ -24,8 +23,8 @@ public class SchemaController {
 	private DatabaseSchemaService dbService;
 
 
-
-	@ApiOperation(value = "Set the default settings for a rule", notes = "Example: { 'threshold': 35.5, 'key':'value', ...}")
+/*
+	@ApiOperation(value="SET DEFAULT",notes = "Set the default settings for a rule", notes = "Example: { 'threshold': 35.5, 'key':'value', ...}")
 	@PutMapping(value = "/schema/{classname}/default", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public ResponseEntity<Map<String, Object>> setDefault(
@@ -36,9 +35,11 @@ public class SchemaController {
 		}
 		return ResponseEntity.ok(dbService.getDefaultForClass(classname));
 	}
+*/
 
 	@ApiOperation(
-			value = "Get the default values for the rule class {classname}")
+			value = "GET defaults",
+			notes = "Get the default values for the rule class {classname}")
 	@GetMapping(value = "/schema/{classname}/default", produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public ResponseEntity<?> getDefault(@PathVariable String classname) {
@@ -46,7 +47,8 @@ public class SchemaController {
 	}
 
 	@ApiOperation(
-			value = "Get the rule class definition", notes = "Example: { 'power_threshold': {'regex': null,'default': null,'mandatory': true}, ... }")
+			value = "GET rule fields",
+			notes = "Get the rule class definition. <br> Example: { 'power_threshold': {'regex': null,'default': null,'mandatory': true}, ... }")
 	@GetMapping(value = "/schema/{classname}", produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public ResponseEntity<?> getClassSchema(@PathVariable String classname) {
@@ -54,7 +56,7 @@ public class SchemaController {
 	}
 
 	@ApiOperation(
-			value = "Create the rule class in the database schema",
+			value = "CREATE rule class in schema",
 			notes = "Create the appropriate class in the database schema corresponding to the java class whose name has been passed as path variable<br>" +
 					"Example: { 'power_threshold': {'regex': null,'default': null,'mandatory': true}, ... }")
 	@PostMapping(value = "/schema/{classname}", produces = MediaType.APPLICATION_JSON_VALUE)

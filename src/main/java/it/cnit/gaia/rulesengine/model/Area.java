@@ -9,19 +9,29 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import it.cnit.gaia.rulesengine.configuration.ContextProvider;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class Area implements Fireable {
 
+	public Long aid;
 	public String rid;
 	public String name;
 	public String uri;
 	public String type;
-	public Long aid;
+	/*
+	public String json;
+	public Double sqmt;
+	public Long people;
+	public String country;
+	*/
 	protected OrientGraphFactory graphFactory = ContextProvider.getBean(OrientGraphFactory.class);
 	@JsonIgnore
 	Set<Fireable> ruleSet = new HashSet<>();
+
 
 	//public void fire(){ ruleSet.parallelStream().forEach(f-> f.fire());}
 	public void fire() {
@@ -67,4 +77,6 @@ public class Area implements Fireable {
 	public Set<Fireable> getRuleSet() {
 		return Collections.unmodifiableSet(ruleSet);
 	}
+
+
 }

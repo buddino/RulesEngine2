@@ -6,13 +6,11 @@ import io.swagger.annotations.Authorization;
 import io.swagger.annotations.AuthorizationScope;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
 import it.cnit.gaia.rulesengine.service.MeasurementRepository;
+import it.cnit.gaia.rulesengine.service.ScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -28,18 +26,20 @@ import java.util.Map;
 public class UtilityController {
 
 	@Autowired
-	private RulesLoader rulesLoader;
-
-	@Autowired
 	MeasurementRepository measurementRepository;
+	@Autowired
+	private RulesLoader rulesLoader;
+	@Autowired
+	private ScheduleService scheduleService;
+
 
 	@ApiOperation(value = "Outputs the latest log of the recommendation engine")
-	@GetMapping(value = "/log", produces= MediaType.TEXT_PLAIN_VALUE)
+	@GetMapping(value = "/log", produces = MediaType.TEXT_PLAIN_VALUE)
 	public ResponseEntity<?> getLog() throws FileNotFoundException {
 		FileReader fr = new FileReader("./RulesEngine.log");
-		BufferedReader  br = new BufferedReader(fr);
+		BufferedReader br = new BufferedReader(fr);
 		StringBuffer bf = new StringBuffer();
-		br.lines().forEach(x->bf.append(x).append("\r\n"));
+		br.lines().forEach(x -> bf.append(x).append("\r\n"));
 		return ResponseEntity.ok(bf.toString());
 	}
 
@@ -49,6 +49,14 @@ public class UtilityController {
 	@ResponseBody
 	ResponseEntity<Map<String, Long>> getUriMapping() {
 		return ResponseEntity.ok(measurementRepository.getMeterMap());
+	}
+
+	@PutMapping("/schedules/update")
+	@ApiOperation("Sync the schedules / calendar with the building database")
+	public @ResponseBody
+	ResponseEntity updateSchedules() {
+		scheduleService.updateAll();
+		return ResponseEntity.noContent().build();
 	}
 
 }

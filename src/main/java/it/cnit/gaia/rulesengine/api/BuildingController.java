@@ -39,7 +39,7 @@ public class BuildingController {
 
 	@PutMapping(value = "/building/{id}")
 	@ApiOperation(
-			value = "Import building into rule database",
+			value = "IMPORT building structure",
 			notes = "Import the building (indentified by id) from the building database replicating its structure")
 	public
 	@ResponseBody
@@ -50,7 +50,7 @@ public class BuildingController {
 
 	@DeleteMapping(value = "/building/{id}")
 	@ApiOperation(
-			value = "Delete the building tree",
+			value = "DELETE building structure",
 			notes = "Delete the building (indentified by id) from the rule database including all the linked rules")
 	public
 	@ResponseBody
@@ -61,7 +61,7 @@ public class BuildingController {
 
 	@GetMapping(value = "/building/{id}")
 	@ApiOperation(
-			value = "Get the building tree",
+			value = "GET building information",
 			notes = "Get the building (indentified by id) from the rule databas")
 	public
 	@ResponseBody
@@ -71,7 +71,7 @@ public class BuildingController {
 	}
 
 	@GetMapping(value = "/buildings")
-	@ApiOperation(value = "Get all buildings stored in the rule database", responseContainer = "List")
+	@ApiOperation(value = "GET all the buildings", notes = "Get all the buildings stored in the rule database", responseContainer = "List")
 	public
 	@ResponseBody
 	ResponseEntity<List<Area>> getSchools() {
@@ -79,32 +79,12 @@ public class BuildingController {
 	}
 
 	@GetMapping(value = "/building/{bid}/areas")
-	@ApiOperation(value = "Get all subareas of an area/building stored in the rule database")
+	@ApiOperation(value = "GET subareas",
+	notes = "Get all subareas of an area/building stored in the rule database")
 	public ResponseEntity<List<Area>> getAreas(@ApiParam("ID of the building") @PathVariable Long bid) {
 		List<Area> subAreas = buildingUtils.getSubAreas(bid);
 		return ResponseEntity.status(HttpStatus.OK).body(subAreas);
 	}
-
-
-	//------ RELOAD ------
-	/*
-	@ResponseBody
-	@ApiOperation(value = "Force reloaing of the rules tree of the building identified by aid", response = School.class, responseContainer = "List")
-	@RequestMapping(value = "/building/reload/{aid}", method = RequestMethod.GET)
-	public ResponseEntity<String> reloadSchoolTree(@PathVariable Long aid) throws RulesLoaderException {
-		if (!rulesLoader.reloadSchool(aid)) {
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		}
-		return new ResponseEntity<>(HttpStatus.OK);
-	}
-
-	@ResponseBody
-	@GetMapping("/building/reload")
-	public ResponseEntity<String> reloadAllSchools() {
-		rulesLoader.reloadAllSchools();
-		return new ResponseEntity<>(HttpStatus.OK);
-	}
-	*/
 
 
 }

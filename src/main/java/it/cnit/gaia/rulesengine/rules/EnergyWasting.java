@@ -1,5 +1,6 @@
 package it.cnit.gaia.rulesengine.rules;
 
+import it.cnit.gaia.buildingdb.exceptions.BuildingDatabaseException;
 import it.cnit.gaia.rulesengine.api.dto.EventDTO;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
@@ -52,7 +53,7 @@ public class EnergyWasting extends GaiaRule {
 		if (power_value > on_threshold) {
 			//Device ON threshold
 			//Notify and Log the event, normal behaviour
-			suggestion = ""; //TODO
+			//suggestion = ""; //TODO
 			super.action();
 		} else {
 			//Some devices may be have left in standby
@@ -62,7 +63,7 @@ public class EnergyWasting extends GaiaRule {
 					.getLatestEventsForRule(rid, now.minusHours(interval).getMillis(), now.getMillis());
 			if (eventsForRule.size() > times) {
 				//Send notification only after times
-				suggestion = "";
+				//suggestion = "";
 				websocket.pushNotification(getBaseNotification());
 			}
 
@@ -70,15 +71,16 @@ public class EnergyWasting extends GaiaRule {
 		}
 	}
 
-
-	//TODO Extrapolate to an external service
 	private boolean isOccupied() {
 		if (occupancy_uri == null) {
-			//TODO Use the schedule
-			return true;
-		} else {
-			return measurements.getLatestFor(occupancy_uri).getReading() > HardCodedValues.occupancyThreshold;
+			try {
+				return !scheduleService.isClosed(school.aid) && scheduleService.isOccupied(getParentAreaId());
+			} catch (BuildingDatabaseException e) {
+				LOGGER.warn(e.getMessage());
+			}
 		}
+		return measurements.getLatestFor(occupancy_uri).getReading() > HardCodedValues.occupancyThreshold;
 	}
+
 
 }

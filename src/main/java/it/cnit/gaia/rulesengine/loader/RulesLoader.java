@@ -131,8 +131,7 @@ public class RulesLoader {
 		try {
 			ruleClass = Class.forName(rulesPackage + "." + classname);        //Get correspondant class
 		} catch (ClassNotFoundException e) {
-			LOGGER.error("Failed initializing " + classname);
-			LOGGER.error(e.toString());
+			LOGGER.error("Failed initializing " + classname, e);
 			return null;
 		}
 		Field[] fields = ruleClass.getFields();                //Get fields of the class
@@ -163,7 +162,7 @@ public class RulesLoader {
 						}
 						///
 					} catch (IllegalAccessException e) {
-						e.printStackTrace();
+						LOGGER.error(e.getMessage(),e);
 					}
 				} else {
 					if (annotation.required())
@@ -295,6 +294,12 @@ public class RulesLoader {
 		area.aid = ov.getProperty("aid");
 		area.name = ov.getProperty("name");
 		area.type = ov.getProperty("type");
+		/*
+		area.json = ov.getProperty("json");
+		area.sqmt = ov.getProperty("sqmt");
+		area.people = ov.getProperty("people");
+		area.country = ov.getProperty("country");
+        */
 
 		Iterable<Vertex> children = ov.getVertices(Direction.OUT);      //Get all the children
 		for (Vertex child : children) {
@@ -339,7 +344,7 @@ public class RulesLoader {
 				ruleSetField.set(rule, ruleSet);
 
 			} catch (IllegalAccessException e) {
-				LOGGER.error(e.getMessage());
+				LOGGER.error(e.getMessage(),e);
 			}
 		}
 	}

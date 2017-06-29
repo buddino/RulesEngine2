@@ -5,10 +5,10 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.*;
+import it.cnit.gaia.buildingdb.BuildingDatabaseService;
 import it.cnit.gaia.buildingdb.dto.AreaDTO;
 import it.cnit.gaia.buildingdb.dto.BuildingDTO;
 import it.cnit.gaia.buildingdb.exceptions.BuildingDatabaseException;
-import it.cnit.gaia.buildingdb.BuildingDatabaseService;
 import it.cnit.gaia.rulesengine.configuration.OrientConfiguration;
 import it.cnit.gaia.rulesengine.model.School;
 import org.joda.time.DateTime;
@@ -179,6 +179,10 @@ public class TestDB {
 			System.out.println(timestamp);
 		}
 
+	}
+
+	@Test
+	public void testEmbeddedList(){
 	}
 
 

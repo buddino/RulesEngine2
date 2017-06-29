@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @Api(tags = "Event log",
+		description = "API for retrieving the logged events",
 		authorizations = {@Authorization(value = "oauth2", scopes = {@AuthorizationScope(scope = "read", description = "read")})},
 		produces = MediaType.APPLICATION_JSON_VALUE)
 @RestController
@@ -22,7 +23,7 @@ public class EventController {
 	@Autowired
 	private EventService eventService;
 
-	@ApiOperation(value = "Get events", notes = "This API retrieves the events logged fot all the buildings")
+	@ApiOperation(value = "GET events", notes = "This API retrieves the events logged for all the buildings")
 	@GetMapping(value = "/events", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<List<EventDTO>> getEvents(
 			@ApiParam(value = "Name of the rule class which generated the events", example = "PowerFactor") @RequestParam(defaultValue = "", required = false) String ruleClass,
@@ -37,7 +38,7 @@ public class EventController {
 		return ResponseEntity.ok(eventService.getLatestEvents(limit));
 	}
 
-	@ApiOperation(value = "Get events for a specific building", notes = "This API retrieves the events logged fot all the buildings")
+	@ApiOperation(value = "GET events for building", notes = "This API retrieves the events logged for the specified building")
 	@GetMapping("/building/{bid}/events")
 	public ResponseEntity<List<EventDTO>> getEventsForSchool(
 			@ApiParam(value = "The ID of the building the events belong", required = true, example = "153453") @PathVariable Long bid,

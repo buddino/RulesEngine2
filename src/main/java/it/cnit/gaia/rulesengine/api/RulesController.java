@@ -20,6 +20,7 @@ import java.util.Map;
 
 @RestController
 @Api(tags = "Rules API",
+		description = "API for managing the rules",
 		authorizations = {@Authorization(value = "oauth2", scopes = {@AuthorizationScope(scope = "read", description = "read")})},
 		produces = MediaType.APPLICATION_JSON_VALUE)
 public class RulesController {
@@ -29,7 +30,8 @@ public class RulesController {
 	@Autowired
 	private RuleDatabaseService ruleDatabaseService;
 
-	@ApiOperation(value = "Get all the rules associated to the area identified by {id}",
+	@ApiOperation(value = "GET rules of area",
+			notes = "Get all the rules associated to the area identified by {id}",
 			responseContainer = "List")
 	@GetMapping(value = "/area/{aid}/rules", produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
@@ -42,7 +44,7 @@ public class RulesController {
 		return ResponseEntity.ok(rulesOfArea);
 	}
 
-	@ApiOperation(value = "Delete the rule identified by {rid} only if this has been created by the user")
+	@ApiOperation(value = "DELETE rule", notes = "Delete the rule identified by {rid} only if this has been created by the user")
 	@DeleteMapping(value = "/rules/{rid}")
 	@ResponseBody
 	public ResponseEntity<String> deleteRule(@ApiParam("Identifier of the rule") @PathVariable String rid) throws GaiaRuleException {
@@ -50,7 +52,7 @@ public class RulesController {
 		return ResponseEntity.noContent().build();
 	}
 
-	@ApiOperation(value = "Modify the rule identified by {rid} according to the object passed in the body")
+	@ApiOperation(value = "EDIT the rule", notes = "Modify the rule identified by {rid} according to the object passed in the body")
 	@PutMapping(value = "/rules/{rid}", produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public ResponseEntity<RuleDTO> editRule(@ApiParam("Identifier of the rule") @PathVariable String rid, @RequestBody RuleDTO ruleDTO) throws Exception {
@@ -58,7 +60,7 @@ public class RulesController {
 		return ResponseEntity.ok(ruleDTO);
 	}
 
-	@ApiOperation(value = "Get the rule identified by {rid}")
+	@ApiOperation(value = "GET rule",notes = "Get the rule identified by {rid}")
 	@GetMapping(value = "/rules/{rid}", produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public ResponseEntity<RuleDTO> getRule(@ApiParam("Identifier of the rule") @PathVariable String rid) throws GaiaRuleException {
@@ -66,7 +68,7 @@ public class RulesController {
 		return ResponseEntity.ok(rule);
 	}
 
-	@ApiOperation(value = "Evaluate the condition of a rule")
+	@ApiOperation(value = "EVALUATE rule's condition", notes = "Evaluate the condition of a rule")
 	@GetMapping(value = "/rules/{rid}/condition", produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public ResponseEntity<ConditionDTO> evalCondition(@ApiParam("Identifier of the rule") @PathVariable String rid){
@@ -80,8 +82,8 @@ public class RulesController {
 		return ResponseEntity.ok(condition);
 	}
 
-	@ApiOperation(value = "Force triggering of a rule")
-	@GetMapping(value = "/rules/{rid}/trigger", produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "FIRE rule", notes = "Force fire for the specified rule. There is no guarantee the action will be execute, it depends on the conditions.")
+	@GetMapping(value = "/rules/{rid}/fire", produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public ResponseEntity<RuleDTO> triggerRule(@ApiParam("Identifier of the rule") @PathVariable String rid){
 		GaiaRule rule = ruleDatabaseService.getRuleFromRuntime(rid);
@@ -93,7 +95,7 @@ public class RulesController {
 	}
 
 
-	@ApiOperation(value = "Add a custom rule according to the object passed in the body")
+	@ApiOperation(value = "ADD a rule" ,notes = "Add a custom rule according to the object passed in the body")
 	@PostMapping(value = "/area/{aid}/rules", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public ResponseEntity<RuleDTO> addRuleToArea(
@@ -105,8 +107,8 @@ public class RulesController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(ruleDTO);
 	}
 
-	@PutMapping(value = "/building/{id}/trigger")
-	@ApiOperation(value = "Force triggering of the rules for a building")
+	@PutMapping(value = "/building/{id}/fire")
+	@ApiOperation(value = "FIRE rules for building", notes = "Force firing of the rules for a building. There is no guarantee the action will be execute, it depends on the conditions.")
 	public ResponseEntity<Void> triggerRuleOfSchool(@ApiParam("Building id") @PathVariable Long id) throws Exception {
 		School school = ruleDatabaseService.getSchool(id);
 		school.fire();

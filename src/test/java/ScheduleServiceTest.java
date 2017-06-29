@@ -22,7 +22,7 @@ public class ScheduleServiceTest {
 	@Test
 	public void test0() throws ParseException, BuildingDatabaseException, IOException {
 		scheduleService.updateSchedules();
-		boolean occuipied = scheduleService.isOccuipied(47L);
+		boolean occuipied = scheduleService.isOccupied(47L);
 		System.out.println(occuipied);
 	}
 
