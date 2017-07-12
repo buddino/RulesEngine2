@@ -105,6 +105,8 @@ public abstract class GaiaRule implements Fireable {
 	 */
 	public boolean isTriggeringIntervalValid() {
 		Date now = new Date();
+		latestFireTime = ruleDatabaseService.getLatestFireTime(rid);
+
 		boolean intervalValidity;
 		boolean cronValidity;
 
@@ -132,6 +134,8 @@ public abstract class GaiaRule implements Fireable {
 		//Update the latest fire time. This is kept in memory only.
 		//In case of restart all the rules are fired again
 		latestFireTime = new Date();
+		ruleDatabaseService.setLatestFireTime(rid,latestFireTime);
+
 		try {
 			if (condition()) {
 				action();
@@ -338,5 +342,20 @@ public abstract class GaiaRule implements Fireable {
 	public GaiaRule setWeatherService(WeatherService weatherService) {
 		this.weatherService = weatherService;
 		return this;
+	}
+
+	protected void setSuggestion(String suggestion) {
+		if (this.suggestion == "" || this.suggestion == null) {
+			this.suggestion = suggestion;
+		}
+	}
+
+	protected void warn(String error){
+		String message = "[%s]\t%s";
+		LOGGER.warn(String.format(message,rid,error));
+	}
+	protected void error(String error){
+		String message = "[%s]\t%s";
+		LOGGER.error(String.format(message,rid,error));
 	}
 }
