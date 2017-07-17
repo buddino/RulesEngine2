@@ -32,8 +32,6 @@ public class Area implements Fireable {
 	@JsonIgnore
 	Set<Fireable> ruleSet = new HashSet<>();
 
-
-	//public void fire(){ ruleSet.parallelStream().forEach(f-> f.fire());}
 	public void fire() {
 		ruleSet.forEach(f -> f.fire());
 	}
@@ -63,6 +61,7 @@ public class Area implements Fireable {
 				.toString();
 	}
 
+	//FIXME Should not stay here
 	public String getPath() {
 		OrientGraphNoTx noTx = graphFactory.getNoTx();
 		ORID identity = noTx.getVertex(rid).getIdentity();

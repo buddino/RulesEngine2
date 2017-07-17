@@ -7,7 +7,7 @@ import io.swagger.client.ApiException;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
 import it.cnit.gaia.rulesengine.model.School;
 import it.cnit.gaia.rulesengine.service.MeasurementRepository;
-import it.cnit.gaia.rulesengine.service.ScheduleService;
+import it.cnit.gaia.rulesengine.service.MetadataService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +29,7 @@ public class Scheduler {
 	@Autowired
 	OrientGraphFactory ogf;
 	@Autowired
-	ScheduleService scheduleService;
+	MetadataService metadataService;
 
 	Collection<School> schools;
 
@@ -65,12 +65,14 @@ public class Scheduler {
 		rulesLoader.reloadAllSchools();
 		schools = rulesLoader.loadSchools().values();
 		measurements.updateLatest();
-		schools.forEach(s -> s.fire());
+		//schools.forEach(s -> s.fire());
 	}
 
 	@Scheduled(cron = "0 0 12 * * ?")
 	public void reloadSchedules() {
-		scheduleService.updateAll();
+		metadataService.updateAll();
 	}
+
+
 
 }

@@ -127,6 +127,7 @@ public class RulesLoader {
 
 	public GaiaRule getRuleForTest(OrientVertex ov) {
 		String classname = ov.getProperty("@class");
+
 		Class<?> ruleClass = null;
 		try {
 			ruleClass = Class.forName(rulesPackage + "." + classname);        //Get correspondant class
@@ -156,7 +157,7 @@ public class RulesLoader {
 				if (property != null && !property.equals("")) {
 					try {
 						f.set(rule, property);
-						//Populate the uri set
+						//Populate the power_uri set
 						if (f.isAnnotationPresent(URI.class)) {
 							measurementRepository.addUri((String) property);
 						}
@@ -170,6 +171,9 @@ public class RulesLoader {
 								.getProperty("@rid") + "]");
 				}
 			}
+		}
+		if(classname.equals(ExpressionRule.class.getSimpleName())){
+			buildExpressionRule(rule, ov);
 		}
 		return (GaiaRule) rule;
 	}
@@ -260,7 +264,7 @@ public class RulesLoader {
 				if (property != null && !property.equals("")) {
 					try {
 						f.set(rule, property);
-						//Populate the uri set
+						//Populate the power_uri set
 						if (f.isAnnotationPresent(URI.class)) {
 							measurementRepository.addUri((String) property);
 						}
@@ -349,7 +353,7 @@ public class RulesLoader {
 		}
 	}
 
-	private void buildExpressionRule(Object rule, OrientVertex ov) {
+	private GaiaRule buildExpressionRule(Object rule, OrientVertex ov) {
 		//The rule
 		ExpressionRule expressionRule = (ExpressionRule) rule;
 		//Matcher
@@ -357,8 +361,6 @@ public class RulesLoader {
 		Pattern pattern = Pattern.compile(uriPattern);
 		//Build the rule
 		Map<String, Object> properties = ov.getProperties();
-		String expression = properties.get("expression").toString();
-		expressionRule.expression = expression;
 		for (String key : properties.keySet()) {
 			Matcher m = pattern.matcher(key);
 			if (m.lookingAt()) {
@@ -377,6 +379,7 @@ public class RulesLoader {
 				}
 			}
 		}
+		return expressionRule;
 	}
 
 	public GaiaRule getGaiaRuleInstance(String rid){

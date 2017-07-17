@@ -16,8 +16,12 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.*;
 
+/**
+ * Provides the access to the metadata for the buildings / areas
+ * including: Schedules / Calendars / Additional fields in the json
+ */
 @Service
-public class ScheduleService { //TODO Rename
+public class MetadataService {
 
 	protected final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 	@Autowired
@@ -43,8 +47,6 @@ public class ScheduleService { //TODO Rename
 	 * - verify if a Date ( usually now() ) is verified by any of the fireCron expression for the specific area
 	 * - ...
 	 */
-
-
 	public void updateAll() {
 		//Riguarda
 		//Add schools
@@ -241,7 +243,4 @@ public class ScheduleService { //TODO Rename
 		String json = building.getJson().toString();
 		return mapper.readTree(json).get(field);
 	}
-	//TODO How long before the closest valid moment expressed by the CRON Expressions
-
-
 }

@@ -12,8 +12,13 @@ import it.cnit.gaia.rulesengine.model.annotation.URI;
 import it.cnit.gaia.rulesengine.model.exceptions.RuleInitializationException;
 
 import java.io.IOException;
-import java.time.*;
+import java.time.DayOfWeek;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+
+import static io.swagger.client.model.QueryTimeRangeResourceDataCriteriaDTO.GranularityEnum;
 
 public class TemperatureForecast extends GaiaRule {
 
@@ -39,8 +44,8 @@ public class TemperatureForecast extends GaiaRule {
 	@Override
 	public boolean init() throws RuleInitializationException {
 		try {
-			lat = scheduleService.getJsonFieldForbuilding(school.aid, "lat").asDouble();
-			lon = scheduleService.getJsonFieldForbuilding(school.aid, "lon").asDouble();
+			lat = metadataService.getJsonFieldForbuilding(school.aid, "lat").asDouble();
+			lon = metadataService.getJsonFieldForbuilding(school.aid, "lon").asDouble();
 		}
 		catch (BuildingDatabaseException e) {
 			LOGGER.warn("Error while retrieving coordinates: " +e.getMessage(),e);
@@ -76,7 +81,7 @@ public class TemperatureForecast extends GaiaRule {
 		//Check if the rule is fired before 10am
 		//Riguarda Is it useful?
 		if (LocalDateTime.now().getHour() < 10) {
-			LOGGER.debug(String.format("Rule [%s] not fired because it's too early (should be fired after 10am)", rid));
+			debug("Rule not fired because it's too early (should be fired after 10am)");
 			return false;
 		}
 
@@ -111,7 +116,7 @@ public class TemperatureForecast extends GaiaRule {
 			Long tenam = dayAtSpecificHour(LocalDateTime.now(), 10, timezoneOffset);
 			try {
 				AnalyticsResourceDataResponseDTO result = measurements.getMeasurementService()
-																	  .timeRangeQuery(ext_temp_id, eigtham, tenam);
+																	  .timeRangeQuery(ext_temp_id, eigtham, tenam, GranularityEnum.HOUR);
 				return result.getAverage();
 			} catch (ApiException e) {
 				LOGGER.warn(e.getMessage());

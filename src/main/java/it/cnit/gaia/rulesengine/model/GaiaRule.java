@@ -23,8 +23,6 @@ import java.util.*;
 
 public abstract class GaiaRule implements Fireable {
 
-	//Riguarda Questa classe ha troppe responsabilità
-
 	protected final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 	/**
 	 * The name of the rule, mostly useful for heavily customized instances.
@@ -36,8 +34,9 @@ public abstract class GaiaRule implements Fireable {
 
 	/**
 	 * The suggestion to be sent to the client
+	 * Some rules need more than one suggestion if this field (i.e. the main suggestion)
 	 */
-	@LoadMe
+	@LoadMe(required = false)
 	public String suggestion;
 
 	@LogMe(event = false, notification = false)
@@ -79,7 +78,7 @@ public abstract class GaiaRule implements Fireable {
 	protected MeasurementRepository measurements = ContextProvider.getBean(MeasurementRepository.class);
 	protected BuildingDatabaseService buildingDBService = ContextProvider.getBean(BuildingDatabaseService.class);
 	protected RuleDatabaseService ruleDatabaseService = ContextProvider.getBean(RuleDatabaseService.class);
-	protected ScheduleService scheduleService = ContextProvider.getBean(ScheduleService.class);
+	protected MetadataService metadataService = ContextProvider.getBean(MetadataService.class);
 	protected WeatherService weatherService = ContextProvider.getBean(WeatherService.class);
 
 	/**
@@ -134,7 +133,7 @@ public abstract class GaiaRule implements Fireable {
 		//Update the latest fire time. This is kept in memory only.
 		//In case of restart all the rules are fired again
 		latestFireTime = new Date();
-		ruleDatabaseService.setLatestFireTime(rid,latestFireTime);
+		ruleDatabaseService.setLatestFireTime(rid, latestFireTime);
 
 		try {
 			if (condition()) {
@@ -158,14 +157,14 @@ public abstract class GaiaRule implements Fireable {
 						}
 						if (f.isAnnotationPresent(URI.class)) {
 							//FIXME Checking by querying here, results in a double query and in a slow validation time
-							//Potrebbe essere un'idea fare il mapping non tutto insieme ma via via che si aggiungono uri (perdo parallel)
+							//Potrebbe essere un'idea fare il mapping non tutto insieme ma via via che si aggiungono power_uri (perdo parallel)
 							measurements.checkUri((String) f.get(this));
 						}
 					} catch (IllegalAccessException e) {
 						e.printStackTrace();
 					} catch (ApiException e) {
 						throw new RuleInitializationException(String
-								.format("Required uri not found in resource map (%s)", f.getName()));
+								.format("Required power_uri not found in resource map (%s)", f.getName()));
 					}
 				}
 			}
@@ -179,7 +178,8 @@ public abstract class GaiaRule implements Fireable {
 			try {
 				cronExpression = new CronExpression(fireCron);
 			} catch (ParseException e) {
-				throw new RuleInitializationException("The specified fireCron expression is not valid - " + fireCron +"\n"+ e.getMessage());
+				throw new RuleInitializationException("The specified fireCron expression is not valid - " + fireCron + "\n" + e
+						.getMessage());
 			}
 		}
 		return validateFields();
@@ -274,10 +274,12 @@ public abstract class GaiaRule implements Fireable {
 	public String getName() {
 		return name;
 	}
+
 	public GaiaRule setName(String name) {
 		this.name = name;
 		return this;
 	}
+
 	public String getSuggestion() {
 		Map<String, Object> fields = getAllFields();
 		fields.put("school", school.getName());
@@ -286,27 +288,36 @@ public abstract class GaiaRule implements Fireable {
 		String replaced = StrSubstitutor.replace(suggestion, fields);
 		return replaced;
 	}
+
+	protected void setSuggestion(String suggestion) {
+		this.suggestion = suggestion;
+	}
+
 	public String getDescription() {
 		return description;
 	}
+
 	public GaiaRule setDescription(String description) {
 		this.description = description;
 		return this;
 	}
+
 	public String getRid() {
 		return rid;
 	}
+
 	public School getSchool() {
 		return school;
 	}
+
 	public GaiaRule setSchool(School school) {
 		this.school = school;
 		return this;
 	}
+
 	public Long getParentAreaId() {
 		return ruleDatabaseService.getParentArea(rid);
 	}
-
 
 	// SETTER FOR SERVICES //
 	public GaiaRule setWebsocket(WebsocketService websocket) {
@@ -334,8 +345,8 @@ public abstract class GaiaRule implements Fireable {
 		return this;
 	}
 
-	public GaiaRule setScheduleService(ScheduleService scheduleService) {
-		this.scheduleService = scheduleService;
+	public GaiaRule setMetadataService(MetadataService metadataService) {
+		this.metadataService = metadataService;
 		return this;
 	}
 
@@ -344,18 +355,18 @@ public abstract class GaiaRule implements Fireable {
 		return this;
 	}
 
-	protected void setSuggestion(String suggestion) {
-		if (this.suggestion == "" || this.suggestion == null) {
-			this.suggestion = suggestion;
-		}
+	protected void warn(String error) {
+		String message = "[%s]\t%s";
+		LOGGER.warn(String.format(message, rid, error));
 	}
 
-	protected void warn(String error){
+	protected void error(String error) {
 		String message = "[%s]\t%s";
-		LOGGER.warn(String.format(message,rid,error));
+		LOGGER.error(String.format(message, rid, error));
 	}
-	protected void error(String error){
+
+	protected void debug(String error) {
 		String message = "[%s]\t%s";
-		LOGGER.error(String.format(message,rid,error));
+		LOGGER.debug(String.format(message, rid, error));
 	}
 }

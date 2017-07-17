@@ -43,9 +43,9 @@ public class SerializerODocument extends JsonSerializer<List<ODocument>> {
         "name": "Gramsci-Keynes",
         "type": "School",
         "aid": 155076,
-        "uri": "gaia-prato/gw1/"
+        "power_uri": "gaia-prato/gw1/"
       },
-      "uri": "Bla",
+      "power_uri": "Bla",
       "enabled": true
     },
     "values": {

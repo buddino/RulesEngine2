@@ -1,12 +1,15 @@
 package it.cnit.gaia.rulesengine.api;
 
 import io.swagger.annotations.*;
+import it.cnit.gaia.rulesengine.api.dto.CompositeDTO;
 import it.cnit.gaia.rulesengine.api.dto.ConditionDTO;
 import it.cnit.gaia.rulesengine.api.dto.ErrorResponse;
 import it.cnit.gaia.rulesengine.api.dto.RuleDTO;
 import it.cnit.gaia.rulesengine.api.exception.GaiaRuleException;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.School;
+import it.cnit.gaia.rulesengine.rules.AllCompositeRule;
+import it.cnit.gaia.rulesengine.rules.AnyCompositeRule;
 import it.cnit.gaia.rulesengine.service.RuleDatabaseService;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -44,6 +48,7 @@ public class RulesController {
 		return ResponseEntity.ok(rulesOfArea);
 	}
 
+
 	@ApiOperation(value = "DELETE rule", notes = "Delete the rule identified by {rid} only if this has been created by the user")
 	@DeleteMapping(value = "/rules/{rid}")
 	@ResponseBody
@@ -60,7 +65,7 @@ public class RulesController {
 		return ResponseEntity.ok(ruleDTO);
 	}
 
-	@ApiOperation(value = "GET rule",notes = "Get the rule identified by {rid}")
+	@ApiOperation(value = "GET rule", notes = "Get the rule identified by {rid}")
 	@GetMapping(value = "/rules/{rid}", produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public ResponseEntity<RuleDTO> getRule(@ApiParam("Identifier of the rule") @PathVariable String rid) throws GaiaRuleException {
@@ -71,8 +76,10 @@ public class RulesController {
 	@ApiOperation(value = "EVALUATE rule's condition", notes = "Evaluate the condition of a rule")
 	@GetMapping(value = "/rules/{rid}/condition", produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
-	public ResponseEntity<ConditionDTO> evalCondition(@ApiParam("Identifier of the rule") @PathVariable String rid){
+	public ResponseEntity<ConditionDTO> evalCondition(@ApiParam("Identifier of the rule") @PathVariable String rid) {
 		GaiaRule rule = ruleDatabaseService.getRuleFromRuntime(rid);
+		if (rule == null)
+			return ResponseEntity.notFound().build();
 		ConditionDTO condition = new ConditionDTO();
 		condition.setCondition(rule.condition());
 		Map<String, Object> allFields = rule.getAllFields();
@@ -85,8 +92,10 @@ public class RulesController {
 	@ApiOperation(value = "FIRE rule", notes = "Force fire for the specified rule. There is no guarantee the action will be execute, it depends on the conditions.")
 	@GetMapping(value = "/rules/{rid}/fire", produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
-	public ResponseEntity<RuleDTO> triggerRule(@ApiParam("Identifier of the rule") @PathVariable String rid){
+	public ResponseEntity<RuleDTO> triggerRule(@ApiParam("Identifier of the rule") @PathVariable String rid) {
 		GaiaRule rule = ruleDatabaseService.getRuleFromRuntime(rid);
+		if (rule == null)
+			return ResponseEntity.notFound().build();
 		rule.fire();
 		Map<String, Object> allFields = rule.getAllFields();
 		RuleDTO ruleDTO = new RuleDTO();
@@ -95,7 +104,7 @@ public class RulesController {
 	}
 
 
-	@ApiOperation(value = "ADD a rule" ,notes = "Add a custom rule according to the object passed in the body")
+	@ApiOperation(value = "ADD a rule to area", notes = "Add a custom rule according to the object passed in the body")
 	@PostMapping(value = "/area/{aid}/rules", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public ResponseEntity<RuleDTO> addRuleToArea(
@@ -104,6 +113,50 @@ public class RulesController {
 			@ApiParam(value = "JSON Object describing the rule")
 			@RequestBody RuleDTO ruleDTO) throws Exception {
 		ruleDTO = ruleDatabaseService.addCustomRuleToArea(aid, ruleDTO);
+		return ResponseEntity.status(HttpStatus.CREATED).body(ruleDTO);
+	}
+
+	@ApiOperation(value = "TODO", notes = "TODO")
+	@PostMapping(value = "/area/{aid}/rules/composite", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ResponseBody
+	public ResponseEntity<RuleDTO> addComposite(
+			@ApiParam("ID of the area")
+			@PathVariable Long aid,
+			@ApiParam(value = "JSON Object describing the composition")
+			@RequestBody CompositeDTO compositeDTO) throws Exception {
+
+		//TODO Move into service
+		RuleDTO composite = new RuleDTO();
+		Map<String,Object> compositeFields = new HashMap<>();
+
+		if(compositeDTO.getOperator().equals("OR")){
+			composite.setClazz(AnyCompositeRule.class.getSimpleName());
+		}
+		else if(compositeDTO.getOperator().equals("AND")){
+			composite.setClazz(AllCompositeRule.class.getSimpleName());
+		}
+		else {
+			throw new GaiaRuleException("Valid logical operators ar OR and AND");
+		}
+		compositeFields.put("name",compositeDTO.getName());
+		compositeFields.put("suggestion",compositeDTO.getSuggestion());
+		composite.setFields(compositeFields);
+		composite = ruleDatabaseService.addCustomRuleToArea(aid, composite);
+		for (RuleDTO rule : compositeDTO.getRules()) {
+			ruleDatabaseService.addCustomRuleToComposite(composite.getRid(),rule);
+		}
+		return ResponseEntity.status(HttpStatus.CREATED).body(composite);
+	}
+
+	@ApiOperation(value = "ADD a rule to composite", notes = "Add a custom rule to a compsoite rule according to the object passed in the body. The rid MUST identify a CompositeRule")
+	@PostMapping(value = "/rules/{rid}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ResponseBody
+	public ResponseEntity<RuleDTO> addRuleToComposite(
+			@ApiParam("ID of the composite rule")
+			@PathVariable String rid,
+			@ApiParam(value = "JSON Object describing the rule")
+			@RequestBody RuleDTO ruleDTO) throws Exception {
+		ruleDTO = ruleDatabaseService.addCustomRuleToComposite(rid, ruleDTO);
 		return ResponseEntity.status(HttpStatus.CREATED).body(ruleDTO);
 	}
 

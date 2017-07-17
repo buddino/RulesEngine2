@@ -12,7 +12,7 @@ public class RuleDTO {
 	@ApiModelProperty(readOnly = true, example = "25:6", value = "Unique identifier of the Rule")
 	private String rid;
 	@JsonProperty("class")
-	@ApiModelProperty(example = "CustomThresholdRule",value = "Must be the name of the class of one of the implemented rules, see documentation", required = true)
+	@ApiModelProperty(example = "SimpleThresholdRule",value = "Must be the name of the class of one of the implemented rules, see documentation", required = true)
 	private String clazz;
 	@JsonProperty("fields")
 	@ApiModelProperty(value = "A key:value json object containing the settings of the rule. Some fields are mandatory dpeending on the rule class, see rule documentation.", required = true)

@@ -119,11 +119,10 @@ public class TemperatureForecastRuleTest extends GenericRuleTest{
 	private void setCurrentTemperatureFromSensor(Double temp){
 		when(externalTemperatureResult.getAverage()).thenReturn(temp);
 		try {
-			when(sparksService.timeRangeQuery(anyLong(),anyLong(),anyLong())).thenReturn(externalTemperatureResult);
+			when(sparksService.timeRangeQueryHourly(anyLong(),anyLong(),anyLong())).thenReturn(externalTemperatureResult);
 		} catch (ApiException e) {
 			e.printStackTrace();
 		}
-
 	}
 
 	private void setCurrentTemperatureFromWebService(Double temp){

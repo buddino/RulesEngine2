@@ -6,7 +6,7 @@ import io.swagger.annotations.Authorization;
 import io.swagger.annotations.AuthorizationScope;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
 import it.cnit.gaia.rulesengine.service.MeasurementRepository;
-import it.cnit.gaia.rulesengine.service.ScheduleService;
+import it.cnit.gaia.rulesengine.service.MetadataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +30,7 @@ public class UtilityController {
 	@Autowired
 	private RulesLoader rulesLoader;
 	@Autowired
-	private ScheduleService scheduleService;
+	private MetadataService metadataService;
 
 
 	@ApiOperation(value = "Outputs the latest log of the recommendation engine")
@@ -55,7 +55,7 @@ public class UtilityController {
 	@ApiOperation("Sync the schedules / calendar with the building database")
 	public @ResponseBody
 	ResponseEntity updateSchedules() {
-		scheduleService.updateAll();
+		metadataService.updateAll();
 		return ResponseEntity.noContent().build();
 	}
 

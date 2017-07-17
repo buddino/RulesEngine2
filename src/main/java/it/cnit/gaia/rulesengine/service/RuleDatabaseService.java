@@ -11,8 +11,8 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import io.swagger.client.ApiException;
-import it.cnit.gaia.rulesengine.api.exception.GaiaRuleException;
 import it.cnit.gaia.rulesengine.api.dto.RuleDTO;
+import it.cnit.gaia.rulesengine.api.exception.GaiaRuleException;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.School;
@@ -124,6 +124,7 @@ public class RuleDatabaseService {
 	}
 
 	public void deleteRule(String rid) throws GaiaRuleException {
+		//FIXME Remove all the linked rules for composite rules
 		OrientGraph tx = ogf.getTx();
 		OrientVertex v = tx.getVertex(rid);
 		if (!(Boolean) v.getProperty("custom")) {
@@ -145,14 +146,20 @@ public class RuleDatabaseService {
 			tx.rollback();
 			throw new GaiaRuleException(String.format("Parent area %d not found", aid));
 		}
+
+
 		//Check URI
-		String uri = (String) ruleDTO.getFields().get("uri");
-		try {
-			measurementRepository.checkUri(uri);
-		} catch (ApiException e) {
-			tx.rollback();
-			throw new GaiaRuleException(String.format("URI '%s' not found", uri), HttpStatus.BAD_REQUEST.value());
+		//FIXME Maybe not required beacuse the next control with init
+		if (ruleDTO.getClazz().equals("SimpleThresholdRule")) {
+			String uri = (String) ruleDTO.getFields().get("power_uri");
+			try {
+				measurementRepository.checkUri(uri);
+			} catch (ApiException e) {
+				tx.rollback();
+				throw new GaiaRuleException(String.format("URI '%s' not found", uri), HttpStatus.BAD_REQUEST.value());
+			}
 		}
+
 
 		//Load rule
 		Map<String, Object> fieldMap = ruleDTO.getFields();
@@ -191,7 +198,7 @@ public class RuleDatabaseService {
 		if (!(Boolean) ruleVertex.getProperty("custom")) {
 			throw new GaiaRuleException("Not authorized", 403);
 		}
-		String uri = (String) ruleDTO.getFields().get("uri");
+		String uri = (String) ruleDTO.getFields().get("power_uri");
 		try {
 			measurementRepository.checkUri(uri);
 		} catch (ApiException e) {
@@ -217,7 +224,7 @@ public class RuleDatabaseService {
 		return convertODocument2RuleDTO(vertex.getRecord());
 	}
 
-	public RuleDTO convertODocument2RuleDTO( ODocument d ){
+	public RuleDTO convertODocument2RuleDTO(ODocument d) {
 		RuleDTO ruleDTO = new RuleDTO();
 		ruleDTO.setClazz(d.getClassName());
 		ruleDTO.setRid(d.getIdentity().toString());
@@ -230,20 +237,61 @@ public class RuleDatabaseService {
 				fields.put(key, o);
 			}
 		}
-		fields.put("path",getRulePath(ruleDTO.getRid()));
+		fields.put("path", getRulePath(ruleDTO.getRid()));
 		ruleDTO.setFields(fields);
 		return ruleDTO;
 	}
 
-	public GaiaRule getRuleFromRuntime(String rid){
+	public GaiaRule getRuleFromRuntime(String rid) {
 		return rulesLoader.getGaiaRuleInstance(rid);
 	}
 
-	public School getSchool(Long aid){
+	public void setLatestFireTime(String rid, Date date){
+		OrientVertex vertex = ogf.getNoTx().getVertex(rid);
+		vertex.setProperty("latestFireTime",date);
+		vertex.save();
+	}
+
+	public Date getLatestFireTime(String rid){
+		OrientVertex vertex = ogf.getNoTx().getVertex(rid);
+		Date latestFireTime = vertex.getProperty("latestFireTime");
+		return latestFireTime;
+	}
+
+	public School getSchool(Long aid) {
 		return rulesLoader.loadSchools().get(aid);
 	}
 
+	public RuleDTO addCustomRuleToComposite(String rid, RuleDTO ruleDTO) throws GaiaRuleException {
+		OrientGraph tx = ogf.getTx();
+		OrientVertex composite = tx.getVertex(rid);
+		if (composite == null)
+			throw new GaiaRuleException("Parent rule not found", HttpStatus.NOT_FOUND);
+		OSQLSynchQuery query = new OSQLSynchQuery("select * from CompositeRule where @rid=?");
+		List<ODocument> result = (List<ODocument>) query.execute(rid);
+		if (result.size() == 0)
+			throw new GaiaRuleException("The parent rule is not a CompsoiteRule", HttpStatus.NOT_FOUND);
 
+		Map<String, Object> fieldMap = ruleDTO.getFields();
+		OrientVertex ruleVertex = tx.addVertex("class:" + ruleDTO.getClazz());
+		ruleVertex.setProperties(fieldMap);
+		ruleVertex.setProperty("custom", true);
+		ruleVertex.save();
 
+		GaiaRule javaRule = rulesLoader.getRuleForTest(ruleVertex);
+		try {
+			javaRule.init();
+		} catch (RuleInitializationException e) {
+			tx.rollback();
+			throw new GaiaRuleException(e);
+		}
 
+		tx.addEdge(null, composite, ruleVertex, "E");
+		tx.commit();
+		fieldMap.put("@rid", ruleVertex.getIdentity()
+									   .toString());
+		ruleDTO.setRid(ruleVertex.getIdentity().toString());
+		tx.shutdown();
+		return ruleDTO;
+	}
 }

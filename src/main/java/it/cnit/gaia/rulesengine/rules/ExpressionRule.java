@@ -2,6 +2,7 @@ package it.cnit.gaia.rulesengine.rules;
 
 import io.swagger.client.model.ResourceDataDTO;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
+import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
 import it.cnit.gaia.rulesengine.model.annotation.LogMe;
 import it.cnit.gaia.rulesengine.utils.Exp4JOperators;
 import net.objecthunter.exp4j.Expression;
@@ -12,11 +13,27 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ExpressionRule extends GaiaRule{
+
+	/**
+	 * The textual expression
+	 */
+	@LoadMe
 	public String expression;
-	@LogMe(event = false)
-	public Map<String, String> variable2uri = new HashMap<String, String>();
+
+	/**
+	 * Mapping from variable name tu resource URI
+	 */
+	public Map<String, String> variable2uri = new HashMap<>();
+
+	/**
+	 * A Key-Value map containings all the numeric fields of the rule
+	 */
 	@LogMe
-	public Map<String, Double> fields = new HashMap<String, Double>();
+	public Map<String, Double> fields = new HashMap<>();
+
+	/**
+	 * The compiled expression
+	 */
 	private Expression expr;
 
 	@Override
@@ -38,13 +55,13 @@ public class ExpressionRule extends GaiaRule{
 			expr = eb.build();
 		}
 		catch (UnknownFunctionOrVariableException e){
-			System.err.println(e.getMessage());
+			warn(e.getMessage());
 			return false;
 		}
 		//expr.setVariables(fields);
 		if (expr.validate(false).isValid())
 			return true;
-		System.err.println(expr.validate().getErrors());
+		warn(expr.validate().getErrors().toString());
 		return false;
 	}
 
@@ -65,4 +82,6 @@ public class ExpressionRule extends GaiaRule{
 		expr.setVariables(fields);
 		return expr.evaluate() > 0.5;
 	}
+
+
 }

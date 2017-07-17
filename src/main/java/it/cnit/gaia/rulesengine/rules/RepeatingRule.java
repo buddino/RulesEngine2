@@ -12,6 +12,9 @@ public class RepeatingRule extends CompositeRule{
 
 	@Override
 	public boolean condition() {
+		if(!checkIfARuleIsLinked()) {
+			return false;
+		}
 		updateCounter();
 		return counter >= threshold;
 	}
@@ -19,6 +22,7 @@ public class RepeatingRule extends CompositeRule{
 	@Override
 	public void action() {
 		resetCounter();
+		rule.action();
 	}
 
 	protected void updateCounter(){
@@ -34,17 +38,14 @@ public class RepeatingRule extends CompositeRule{
 		ruleDatabaseService.resetRuleCounter(rid);
 	}
 
-	@Override
-	public boolean init(){
-		boolean result = true;
+	private boolean checkIfARuleIsLinked(){
 		if(ruleSet.size()!=0)
 			rule = ruleSet.iterator().next();
-
-		if(rule==null){
-			LOGGER.error("Rule not defined");
-			result = false;
+		else {
+			warn("Rule not defined, you need to link one rule to a RepeatingRule");
+			return false;
 		}
-		return result;
+		return true;
 	}
 
 }

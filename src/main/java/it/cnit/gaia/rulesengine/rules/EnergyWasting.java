@@ -74,7 +74,7 @@ public class EnergyWasting extends GaiaRule {
 	private boolean isOccupied() {
 		if (occupancy_uri == null) {
 			try {
-				return !scheduleService.isClosed(school.aid) && scheduleService.isOccupied(getParentAreaId());
+				return !metadataService.isClosed(school.aid) && metadataService.isOccupied(getParentAreaId());
 			} catch (BuildingDatabaseException e) {
 				LOGGER.warn(e.getMessage());
 			}

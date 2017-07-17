@@ -2,6 +2,7 @@ package rules;
 
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.weatherlibrary.WeatherService;
+import io.swagger.client.model.ResourceDataDTO;
 import it.cnit.gaia.buildingdb.BuildingDatabaseService;
 import it.cnit.gaia.rulesengine.configuration.ContextProvider;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
@@ -52,6 +53,12 @@ public class GenericRuleTest {
 		rule.description = "description";
 		rule.suggestion = "suggestion";
 		rule.name = "name";
+	}
+
+	protected void setMockValueForUri(String uri, Double value){
+		ResourceDataDTO resourceDataDTO = new ResourceDataDTO();
+		resourceDataDTO.setReading(value);
+		when(measurementRepository.getLatestFor(uri)).thenReturn(resourceDataDTO);
 	}
 
 }

@@ -1,6 +1,8 @@
 package rules;
 
 import it.cnit.gaia.buildingdb.dto.AreaScheduleDTO;
+import it.cnit.gaia.buildingdb.dto.BuildingCalendarDTO;
+import it.cnit.gaia.buildingdb.dto.CalendarStatus;
 import it.cnit.gaia.buildingdb.exceptions.BuildingDatabaseException;
 import it.cnit.gaia.rulesengine.model.exceptions.RuleInitializationException;
 import it.cnit.gaia.rulesengine.model.notification.GAIANotification;
@@ -21,9 +23,7 @@ import java.util.Collection;
 
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyObject;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class TestHolidayShutdown extends GenericRuleTest {
 	@Rule
@@ -147,6 +147,16 @@ public class TestHolidayShutdown extends GenericRuleTest {
 		rule.fire();
 		rule.fire();
 		verify(websocketService,times(1)).pushNotification((GAIANotification) anyObject());
+	}
+
+	//@Test
+	public void testPrato() throws BuildingDatabaseException, RuleInitializationException {
+		BuildingCalendarDTO calendarDTO = new BuildingCalendarDTO();
+		calendarDTO.setCron("[\"* * * ? * SAT,SUN *\",\"* * * 14-18 8 ? 2017\",\"* * * 13-17 8 ? 2018\"]");
+		rule.timeBeforeInHours = 26L;
+		when(buildingDatabaseService.getBuildingCalendar(anyLong(), any(CalendarStatus.class))).thenReturn(Arrays.asList(calendarDTO));
+		rule.init();
+		System.out.println(rule.condition());
 	}
 
 }

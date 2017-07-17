@@ -23,7 +23,7 @@ public class DummyRule extends GaiaRule {
 	public String toString() {
 		return "DummyRule:\t{" +
 				"pwf_threshold:" + threshold +
-				", uri:'" + uri + '\'' +
+				", power_uri:'" + uri + '\'' +
 				'}';
 	}
 

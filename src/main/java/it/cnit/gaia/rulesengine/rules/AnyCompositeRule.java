@@ -1,10 +1,27 @@
 package it.cnit.gaia.rulesengine.rules;
 
 import it.cnit.gaia.rulesengine.model.GaiaRule;
+import it.cnit.gaia.rulesengine.model.annotation.LogMe;
 
-public class AnyCompositeRule extends CompositeRule{
+import java.util.ArrayList;
+
+public class AnyCompositeRule extends CompositeRule {
+
+	@LogMe
+	public int trueCounter = 0;
+
 	@Override
 	public boolean condition() {
-		return ruleSet.stream().anyMatch(GaiaRule::condition);
+		if (ruleSet.size() == 0)
+			return false;
+		children = new ArrayList<>();
+		for (GaiaRule rule : ruleSet) {
+			if (rule.condition()) {
+				children.add(rule.getAllFields());
+				trueCounter++;
+			}
+		}
+		return trueCounter > 0;
+		//return ruleSet.stream().anyMatch(GaiaRule::condition);
 	}
 }
