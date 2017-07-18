@@ -118,7 +118,6 @@ public abstract class GaiaRule implements Fireable {
 			cronValidity = true;
 		else
 			cronValidity = cronExpression.isSatisfiedBy(now);
-
 		return cronValidity && intervalValidity;
 	}
 
@@ -176,6 +175,7 @@ public abstract class GaiaRule implements Fireable {
 		//If a fireCron string is defined parse it int oa fireCron expression
 		if (fireCron != null) {
 			try {
+				cronExpression.setTimeZone(getTimeZone());
 				cronExpression = new CronExpression(fireCron);
 			} catch (ParseException e) {
 				throw new RuleInitializationException("The specified fireCron expression is not valid - " + fireCron + "\n" + e
@@ -218,6 +218,7 @@ public abstract class GaiaRule implements Fireable {
 		GaiaEvent event = new GaiaEvent();
 		Map<String, Object> fieldsForEvent = getFieldsForEvent();
 		fieldsForEvent.put("suggestion", getSuggestion());
+		event.setAid(area.aid);
 		event.setTimestamp(new Date()).setRule(rid).setValues(fieldsForEvent);
 		return event;
 	}
@@ -368,5 +369,13 @@ public abstract class GaiaRule implements Fireable {
 	protected void debug(String error) {
 		String message = "[%s]\t%s";
 		LOGGER.debug(String.format(message, rid, error));
+	}
+
+	private TimeZone getTimeZone(){
+		String timezone = (String) school.getMetadata().get("timezone");
+		if(timezone==null)
+			return null;
+		else
+			return TimeZone.getTimeZone(timezone);
 	}
 }
