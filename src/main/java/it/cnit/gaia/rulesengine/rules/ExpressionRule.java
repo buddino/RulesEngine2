@@ -1,6 +1,6 @@
 package it.cnit.gaia.rulesengine.rules;
 
-import io.swagger.client.model.ResourceDataDTO;
+import io.swagger.client.model.SingleResourceMeasurementAPIModel;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
 import it.cnit.gaia.rulesengine.model.annotation.LogMe;
@@ -73,7 +73,7 @@ public class ExpressionRule extends GaiaRule{
 	private boolean evaluate() {
 		for (String var : variable2uri.keySet()) {
 			String uri = variable2uri.get(var);
-			ResourceDataDTO value = measurements.getLatestFor(uri);
+			SingleResourceMeasurementAPIModel value = measurements.getLatestFor(uri);
 			if(value!=null) {
 				Double measurement = value.getReading();
 				fields.put(var, measurement);

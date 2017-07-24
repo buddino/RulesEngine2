@@ -2,6 +2,7 @@ package rules;
 
 import io.swagger.client.ApiException;
 import it.cnit.gaia.rulesengine.api.exception.GaiaRuleException;
+import it.cnit.gaia.rulesengine.configuration.SparksTokenRequest;
 import it.cnit.gaia.rulesengine.model.School;
 import it.cnit.gaia.rulesengine.model.exceptions.RuleInitializationException;
 import it.cnit.gaia.rulesengine.rules.PeakDetectionRule;
@@ -23,12 +24,16 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {SparksService.class, MeasurementRepository.class})
+@ContextConfiguration(classes = {SparksService.class, MeasurementRepository.class, SparksTokenRequest.class})
 public class PeakDetectionRuleTest extends GenericRuleTest {
 	PeakDetectionRule rule;
 
 	@Autowired
 	SparksService sparksService;
+
+	@Autowired
+	SparksTokenRequest tokenRequest;
+
 	@Before
 	public void setUp() {
 		MockitoAnnotations.initMocks(this);
@@ -46,7 +51,7 @@ public class PeakDetectionRuleTest extends GenericRuleTest {
 		rule.suggestion = "suggestion";
 		rule.name = "name";
 		sparksService.getMeterMap().put("155405",155405L);
-		sparksService.requestAccessToken();
+		tokenRequest.renewAccessToken();
 	}
 
 	@Test

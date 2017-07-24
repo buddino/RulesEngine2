@@ -28,7 +28,7 @@ public class EventController {
 	public ResponseEntity<List<EventDTO>> getEvents(
 			@ApiParam(value = "Name of the rule class which generated the events", example = "PowerFactor") @RequestParam(defaultValue = "", required = false) String ruleClass,
 			@ApiParam(value = "Id of the rule which generated the events", example = "25:5") @RequestParam(defaultValue = "", required = false) String ruleId,
-			@ApiParam(value = "Limit for ther retrieved events", defaultValue = "10", example = "25") @RequestParam(defaultValue = "10", required = false) Integer limit) {
+			@ApiParam(value = "Limit the number of retrieved events", defaultValue = "10", example = "25") @RequestParam(defaultValue = "10", required = false) Integer limit) {
 		if (!ruleId.equals("")) {
 			return ResponseEntity.ok(eventService.getEventsForRule(ruleId, limit));
 		}
@@ -44,7 +44,7 @@ public class EventController {
 			@ApiParam(value = "The ID of the building the events belong", required = true, example = "153453") @PathVariable Long bid,
 			@ApiParam(value = "From time (timestamp)", example = "1492521504000") @RequestParam(required = false) Long from,
 			@ApiParam(value = "To time (timestamp)", example = "1492511304000") @RequestParam(required = false) Long to,
-			@ApiParam(value = "Limit for ther retrieved events", example = "10") @RequestParam(defaultValue = "10", required = false) Integer limit) {
+			@ApiParam(value = "Limit the number of retrieved events", example = "10") @RequestParam(defaultValue = "10", required = false) Integer limit) {
 		if (from == null || to == null)
 			return ResponseEntity.ok(eventService.getEventsForSchool(bid, limit));
 		else

@@ -1,5 +1,6 @@
 package it.cnit.gaia.rulesengine.utils;
 
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OConcurrentResultSet;
@@ -7,11 +8,14 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.*;
+import io.swagger.client.ApiException;
+import io.swagger.client.model.SiteAPIModel;
 import it.cnit.gaia.buildingdb.BuildingDatabaseService;
 import it.cnit.gaia.buildingdb.dto.AreaDTO;
 import it.cnit.gaia.buildingdb.dto.BuildingDTO;
 import it.cnit.gaia.buildingdb.exceptions.BuildingDatabaseException;
 import it.cnit.gaia.rulesengine.model.Area;
+import it.cnit.gaia.rulesengine.service.SparksService;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class BuildingUtils {
@@ -28,9 +33,15 @@ public class BuildingUtils {
 	OrientGraphFactory graphFactory;
 	@Autowired
 	BuildingDatabaseService bds;
+	@Autowired
+	SparksService sparksService;
 
-	public OrientVertex buildTreeFromBuildingDB(Long buildingId) throws IllegalAccessException, BuildingDatabaseException {
-		BuildingDTO school = bds.getBuildingStructure(buildingId);
+
+	public OrientVertex buildTreeFromBuildingDB(Long buildingId) throws IllegalAccessException, BuildingDatabaseException, ApiException {
+		//TODO Use service instead of API directly (LOW)
+		//TODO ApiException
+		SiteAPIModel school_site = sparksService.getSite(buildingId);
+		BuildingDTO school_meta = bds.getBuildingStructure(buildingId);
 		OrientGraph g = graphFactory.getTx();
 		//Check if a school with the same aid already exists
 		if (g.getVertices("aid", buildingId).iterator().hasNext()) {
@@ -38,33 +49,47 @@ public class BuildingUtils {
 		}
 		//Create the new school vertex
 		OrientVertex schoolVertex = g.addVertex("class:School");
-		schoolVertex.setProperty("name", school.getName());
-		schoolVertex.setProperty("people", school.getPeople());
-		schoolVertex.setProperty("sqmt", school.getSqmt());
-		schoolVertex.setProperty("country", school.getCountry());
-		schoolVertex.setProperty("aid", school.getId());
+		schoolVertex.setProperty("name", school_site.getName());
+		Map<String, Double> coordinates = new HashMap<>();
+		coordinates.put("lat", school_site.getLatitude());
+		coordinates.put("lon", school_site.getLongtitude());
+		schoolVertex.setProperty("coordinates", coordinates);
+		schoolVertex.setProperty("json", school_meta.getJson());
+		schoolVertex.setProperty("people", school_meta.getPeople());
+		schoolVertex.setProperty("sqmt", school_meta.getSqmt());
+		schoolVertex.setProperty("country", school_meta.getCountry());
+		schoolVertex.setProperty("aid", school_site.getId());
 		schoolVertex.save();
 		//Create the structure
-		traverseChildren(school, schoolVertex);
+		traverseChildren(school_site, schoolVertex);
 		g.commit();
 		return schoolVertex;
 	}
 
-	private void traverseChildren(AreaDTO root, OrientVertex rootVertex) throws IllegalAccessException {
-		LOGGER.debug(root.getChildren().toString());
-		Set<AreaDTO> children = root.getChildren();
+	private void traverseChildren(SiteAPIModel root, OrientVertex rootVertex) throws IllegalAccessException, ApiException {
+		//TODO ApiException
+		//Get subsites
+		List<SiteAPIModel> subareas = sparksService.getSubsites(root.getId());
 		OrientBaseGraph g = rootVertex.getGraph();
-		for (AreaDTO child : children) {
+		for (SiteAPIModel area_site : subareas) {
 			OrientVertex childVertex = g.addVertex("class:Area");
-			childVertex.setProperty("name", child.getName());
-			childVertex.setProperty("description", child.getDescription());
-			childVertex.setProperty("aid", child.getId());
-			childVertex.setProperty("type", child.getType());
-			childVertex.setProperty("json", child.getJson());
-			//childVertex.setProperty("json",child.getJson(), OType.EMBEDDEDMAP);
+			childVertex.setProperty("name", area_site.getName());
+			childVertex.setProperty("aid", area_site.getId());
+
+			//For each get metadata
+			try {
+				AreaDTO area_meta = bds.getAreaById(area_site.getId());
+				childVertex.setProperty("description", area_meta.getDescription());
+				childVertex.setProperty("type", area_meta.getType());
+				childVertex.setProperty("json", area_meta.getJson());
+				//childVertex.setProperty("json",child.getJson(), OType.EMBEDDEDMAP);
+			} catch (BuildingDatabaseException e) {
+				LOGGER.warn("Cannot find metadata for area: " + area_site.getId());
+			}
+
 			childVertex.save();
 			g.addEdge(null, rootVertex, childVertex, "E").save();
-			traverseChildren(child, childVertex);
+			traverseChildren(area_site, childVertex);
 		}
 	}
 
@@ -95,7 +120,18 @@ public class BuildingUtils {
 		return result;
 	}
 
-	public void deleteBuildingTree(Long id) throws BuildingDatabaseException {
+	public String getPath(String rid) {
+		OrientGraphNoTx noTx = graphFactory.getNoTx();
+		ORID identity = noTx.getVertex(rid).getIdentity();
+		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>("select unionall(name) as path from (traverse in() from ?)");
+		List<ODocument> execute = query.execute(identity);
+		List<String> path = execute.get(0).field("path");
+		Collections.reverse(path);
+		String uri = path.stream().collect(Collectors.joining("/"));
+		return uri;
+	}
+
+	public void deleteBuildingTreeIncludingTheRules(Long id) throws BuildingDatabaseException {
 		OrientGraph graph = graphFactory.getTx();
 		Iterable<Vertex> result = graph.getVertices("aid", id);
 		if (!result.iterator().hasNext()) {
@@ -107,7 +143,7 @@ public class BuildingUtils {
 	}
 
 	public List<Area> getSubAreas(Long aid) {
-		OrientGraphNoTx db = graphFactory.getNoTx();
+		OrientGraphNoTx db = graphFactory.getNoTx(); //Riguarda
 		OSQLSynchQuery query = new OSQLSynchQuery("select * from (traverse * from (select from Area where aid = ?)) where @class = \"Area\"");
 		query.execute(aid);
 		OConcurrentResultSet<ODocument> result = (OConcurrentResultSet<ODocument>) query.getResult();

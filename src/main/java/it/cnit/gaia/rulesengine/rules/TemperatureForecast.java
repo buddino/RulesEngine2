@@ -3,7 +3,8 @@ package it.cnit.gaia.rulesengine.rules;
 import com.weatherlibrary.datamodel.Hour;
 import com.weatherlibrary.datamodel.Weather;
 import io.swagger.client.ApiException;
-import io.swagger.client.model.AnalyticsResourceDataResponseDTO;
+import io.swagger.client.model.ResourceAnalyticsDataResponseAPIModel;
+import io.swagger.client.model.ResourceQueryCriteriaRequestWithinATimeframeAPIModel.GranularityEnum;
 import it.cnit.gaia.buildingdb.exceptions.BuildingDatabaseException;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
@@ -18,7 +19,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
-import static io.swagger.client.model.QueryTimeRangeResourceDataCriteriaDTO.GranularityEnum;
 
 public class TemperatureForecast extends GaiaRule {
 
@@ -60,9 +60,13 @@ public class TemperatureForecast extends GaiaRule {
 	@Override
 	public boolean condition() {
 		String timezone;
-
+		try {
+			if (metadataService.isClosed(school.aid))
+				return false;
+		} catch (BuildingDatabaseException e) {
+			error(e.getMessage());
+		}
 		//Retrieve the temperature forecast
-
 		if (LocalDateTime.now().getDayOfWeek() == DayOfWeek.FRIDAY) {
 			Weather weather = weatherService.getForecast(lat, lon, 3, 9);
 			timezone = weather.getLocation().getTz_id();
@@ -85,7 +89,7 @@ public class TemperatureForecast extends GaiaRule {
 			return false;
 		}
 
-		//Retrieve the average external temperature of today between 8am and 10am
+		//Retrieve the average_pwf external temperature of today between 8am and 10am
 		temp_today = getTodayTemperature(timezone);
 
 		//Check if null
@@ -115,8 +119,9 @@ public class TemperatureForecast extends GaiaRule {
 			Long eigtham = dayAtSpecificHour(LocalDateTime.now(), 7, timezoneOffset);
 			Long tenam = dayAtSpecificHour(LocalDateTime.now(), 10, timezoneOffset);
 			try {
-				AnalyticsResourceDataResponseDTO result = measurements.getMeasurementService()
-																	  .timeRangeQuery(ext_temp_id, eigtham, tenam, GranularityEnum.HOUR);
+				ResourceAnalyticsDataResponseAPIModel result = measurements
+						.getMeasurementService()
+						.timeRangeQuery(ext_temp_id, eigtham, tenam, GranularityEnum.HOUR);
 				return result.getAverage();
 			} catch (ApiException e) {
 				LOGGER.warn(e.getMessage());

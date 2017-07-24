@@ -8,6 +8,7 @@ import java.util.Map;
 public class GaiaEvent {
 	Date timestamp;
 	String rule;
+	Long aid;
 	Map<String, Object> values;
 
 	public GaiaEvent() {
@@ -43,6 +44,15 @@ public class GaiaEvent {
 
 	public GaiaEvent setValues(Map<String, Object> values) {
 		this.values = values;
+		return this;
+	}
+
+	public Long getAid() {
+		return aid;
+	}
+
+	public GaiaEvent setAid(Long aid) {
+		this.aid = aid;
 		return this;
 	}
 }

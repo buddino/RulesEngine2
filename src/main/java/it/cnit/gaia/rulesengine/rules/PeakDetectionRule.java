@@ -1,8 +1,8 @@
 package it.cnit.gaia.rulesengine.rules;
 
 import io.swagger.client.ApiException;
-import io.swagger.client.model.AnalyticsResourceDataResponseDTO;
-import io.swagger.client.model.ResourceDataDTO;
+import io.swagger.client.model.ResourceAnalyticsDataResponseAPIModel;
+import io.swagger.client.model.SingleResourceMeasurementAPIModel;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.annotation.LogMe;
 import it.cnit.gaia.rulesengine.model.annotation.URI;
@@ -14,7 +14,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
-import static io.swagger.client.model.QueryTimeRangeResourceDataCriteriaDTO.GranularityEnum;
+import static io.swagger.client.model.ResourceQueryCriteriaRequestWithinATimeframeAPIModel.GranularityEnum;
 
 public class PeakDetectionRule extends GaiaRule {
 	@URI
@@ -38,7 +38,7 @@ public class PeakDetectionRule extends GaiaRule {
 		Long from = yesterday.toInstant(ZoneOffset.ofHours(2)).toEpochMilli();
 		Long to = today.toInstant(ZoneOffset.ofHours(2)).toEpochMilli();
 		//Query the measurements with a 5 minutes granularity
-		AnalyticsResourceDataResponseDTO response = null;
+		ResourceAnalyticsDataResponseAPIModel response = null;
 		try {
 			response = measurements
 					.getTimeRange(power_uri, from, to, GranularityEnum._5MIN);
@@ -73,8 +73,8 @@ public class PeakDetectionRule extends GaiaRule {
 		*/
 	}
 
-	private double[] responseToDoubleArray(AnalyticsResourceDataResponseDTO response) {
-		List<ResourceDataDTO> data = response.getData();
+	private double[] responseToDoubleArray(ResourceAnalyticsDataResponseAPIModel response) {
+		List<SingleResourceMeasurementAPIModel> data = response.getData();
 		int size = data.size();
 		double[] out = new double[size];
 		for (int i = 0; i < size; i++) {

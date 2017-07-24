@@ -1,13 +1,13 @@
 package it.cnit.gaia.rulesengine.utils;
 
-import io.swagger.client.model.ResourceDataDTO;
+import io.swagger.client.model.SingleResourceMeasurementAPIModel;
 
 import java.util.Date;
 
 public class MeasurementsUtils {
 
-	public static ResourceDataDTO getResourceDTO(Double value){
-		ResourceDataDTO dto = new ResourceDataDTO();
+	public static SingleResourceMeasurementAPIModel getResourceDTO(Double value){
+		SingleResourceMeasurementAPIModel dto = new SingleResourceMeasurementAPIModel();
 		dto.setReading(value);
 		dto.setTimestamp(new Date().getTime());
 		return dto;

@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.Map;
 
 public class EventDTO {
+	String rid;
 	Date timestamp;
 	Map<String,Object> values;
 	RuleDTO rule;
@@ -32,6 +33,15 @@ public class EventDTO {
 
 	public EventDTO setRule(RuleDTO rule) {
 		this.rule = rule;
+		return this;
+	}
+
+	public String getRid() {
+		return rid;
+	}
+
+	public EventDTO setRid(String rid) {
+		this.rid = rid;
 		return this;
 	}
 }

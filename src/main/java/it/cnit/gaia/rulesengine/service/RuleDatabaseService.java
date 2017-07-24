@@ -57,16 +57,6 @@ public class RuleDatabaseService {
 		}
 	}
 
-	public String getParentAreaType(Long aid) {
-		return rulesLoader.getAreaMap().get(aid).type;
-	}
-
-	//Riguarda
-	public String getParentAreaType(String arid) {
-		Long aid = getParentArea(arid);
-		return rulesLoader.getAreaMap().get(aid).type;
-	}
-
 	public String getRulePath(String ruleId) {
 		OrientGraphNoTx noTx = ogf.getNoTx();
 		ORID identity = noTx.getVertex(ruleId).getIdentity();
@@ -229,6 +219,7 @@ public class RuleDatabaseService {
 		ruleDTO.setClazz(d.getClassName());
 		ruleDTO.setRid(d.getIdentity().toString());
 		Map<String, Object> fields = new HashMap<>();
+		fields.put("name",d.field("name"));
 		for (String key : d.fieldNames()) {
 			if (!skipFields.contains(key)) {
 				Object o = d.field(key);

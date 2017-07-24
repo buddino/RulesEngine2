@@ -16,12 +16,13 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Maven: io.swagger:swagger-java-client:1.0.0" level="project" />
-    <orderEntry type="library" name="Maven: io.swagger:swagger-annotations:1.5.8" level="project" />
+    <orderEntry type="library" name="Maven: it.cnit.gaia.api:metadata:1.0.0" level="project" />
+    <orderEntry type="library" name="Maven: io.swagger:swagger-annotations:1.5.9" level="project" />
     <orderEntry type="library" name="Maven: com.squareup.okhttp:okhttp:2.7.5" level="project" />
     <orderEntry type="library" name="Maven: com.squareup.okio:okio:1.6.0" level="project" />
     <orderEntry type="library" name="Maven: com.squareup.okhttp:logging-interceptor:2.7.5" level="project" />
     <orderEntry type="library" name="Maven: com.google.code.gson:gson:2.7" level="project" />
+    <orderEntry type="library" name="Maven: io.swagger:swagger-java-client:3.0.2" level="project" />
     <orderEntry type="library" name="Maven: io.springfox:springfox-swagger2:2.4.0" level="project" />
     <orderEntry type="library" name="Maven: io.swagger:swagger-models:1.5.6" level="project" />
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.8.5" level="project" />

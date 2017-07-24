@@ -3,6 +3,7 @@ package it.cnit.gaia.rulesengine.api;
 import com.google.common.collect.Lists;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import io.swagger.annotations.*;
+import io.swagger.client.ApiException;
 import it.cnit.gaia.buildingdb.exceptions.BuildingDatabaseException;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
 import it.cnit.gaia.rulesengine.model.Area;
@@ -43,7 +44,7 @@ public class BuildingController {
 			notes = "Import the building (indentified by id) from the building database replicating its structure")
 	public
 	@ResponseBody
-	ResponseEntity<Void> buildTreeFromBuildingDB(@ApiParam("ID of the building") @PathVariable Long id) throws IllegalAccessException, BuildingDatabaseException {
+	ResponseEntity<Void> buildTreeFromBuildingDB(@ApiParam("ID of the building") @PathVariable Long id) throws IllegalAccessException, BuildingDatabaseException, ApiException {
 		OrientVertex vertex = buildingUtils.buildTreeFromBuildingDB(id);
 		return ResponseEntity.status(HttpStatus.CREATED).build();
 	}
@@ -55,7 +56,7 @@ public class BuildingController {
 	public
 	@ResponseBody
 	ResponseEntity<Void> deleteBuildingTree(@ApiParam("ID of the building") @PathVariable Long id) throws IllegalAccessException, BuildingDatabaseException {
-		buildingUtils.deleteBuildingTree(id);
+		buildingUtils.deleteBuildingTreeIncludingTheRules(id);
 		return ResponseEntity.noContent().build();
 	}
 

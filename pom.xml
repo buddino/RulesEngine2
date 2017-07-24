@@ -21,13 +21,19 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
         <maven.build.timestamp.format>yyyy-MM-dd_hhmm</maven.build.timestamp.format>
+        <maven.build.timestamp.timezone>CEST</maven.build.timestamp.timezone>
     </properties>
 
     <dependencies>
         <dependency>
+            <groupId>it.cnit.gaia.api</groupId>
+            <artifactId>metadata</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
             <groupId>io.swagger</groupId>
             <artifactId>swagger-java-client</artifactId>
-            <version>1.0.0</version>
+            <version>3.0.2</version>
         </dependency>
         <dependency>
             <groupId>io.springfox</groupId>
@@ -115,7 +121,7 @@
             <version>5.0.0-M4</version>
         </dependency>
 
-       </dependencies>
+    </dependencies>
 
 
     <build>

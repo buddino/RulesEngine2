@@ -145,4 +145,5 @@ public class GAIANotification implements Serializable {
 		this.ruleId = ruleId;
 		return this;
 	}
+
 }

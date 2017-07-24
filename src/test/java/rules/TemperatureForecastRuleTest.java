@@ -3,7 +3,7 @@ package rules;
 
 import com.weatherlibrary.datamodel.*;
 import io.swagger.client.ApiException;
-import io.swagger.client.model.AnalyticsResourceDataResponseDTO;
+import io.swagger.client.model.ResourceAnalyticsDataResponseAPIModel;
 import it.cnit.gaia.rulesengine.model.exceptions.RuleInitializationException;
 import it.cnit.gaia.rulesengine.rules.TemperatureForecast;
 import it.cnit.gaia.rulesengine.service.SparksService;
@@ -25,7 +25,7 @@ public class TemperatureForecastRuleTest extends GenericRuleTest{
 	@Mock
 	SparksService sparksService;
 	@Mock
-	AnalyticsResourceDataResponseDTO externalTemperatureResult;
+	ResourceAnalyticsDataResponseAPIModel externalTemperatureResult;
 
 
 	@Before

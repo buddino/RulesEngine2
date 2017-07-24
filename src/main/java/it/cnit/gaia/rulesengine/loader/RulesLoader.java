@@ -1,5 +1,6 @@
 package it.cnit.gaia.rulesengine.loader;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -43,7 +44,8 @@ public class RulesLoader {
 	private Map<Long, School> schools = null;
 	private Map<String, GaiaRule> ruleMap;
 	private Map<Long, Area> areaMap;
-	private OrientGraph tx;
+	private OrientGraph tx; //Riguarda
+	private ObjectMapper mapper = new ObjectMapper();
 
 	//TEST
 	public void loadSchoolByRid(String rid) throws RulesLoaderException {
@@ -81,7 +83,6 @@ public class RulesLoader {
 		return schools;
 	}
 
-	//FIXME Fix general exceptions
 	public School getSchool(Long id) throws RulesLoaderException {
 		if (schools == null || schools.size() == 0) {
 			throw new RulesLoaderException("No school has been loaded. Try loading the school structure before gettin a school by id [loadSchools()]");
@@ -116,7 +117,10 @@ public class RulesLoader {
 		School school = new School();
 		school.setName(schoolVertex.getProperty("name"));
 		school.type = "School";
-		buildArea(schoolVertex,school,school);		//Resuse the build area method
+		school.sqmt = schoolVertex.getProperty("sqmt");
+		school.country = schoolVertex.getProperty("country");
+		school.people = schoolVertex.getProperty("people");
+		buildArea(schoolVertex, school, school);        //Resuse the build area method
 		return school;
 	}
 
@@ -127,7 +131,6 @@ public class RulesLoader {
 
 	public GaiaRule getRuleForTest(OrientVertex ov) {
 		String classname = ov.getProperty("@class");
-
 		Class<?> ruleClass = null;
 		try {
 			ruleClass = Class.forName(rulesPackage + "." + classname);        //Get correspondant class
@@ -163,7 +166,7 @@ public class RulesLoader {
 						}
 						///
 					} catch (IllegalAccessException e) {
-						LOGGER.error(e.getMessage(),e);
+						LOGGER.error(e.getMessage(), e);
 					}
 				} else {
 					if (annotation.required())
@@ -172,27 +175,15 @@ public class RulesLoader {
 				}
 			}
 		}
-		if(classname.equals(ExpressionRule.class.getSimpleName())){
-			buildExpressionRule(rule, ov);
+		if (classname.equals(ExpressionRule.class.getSimpleName())) {
+			Area tempArea = new Area();
+			tempArea.aid = -1L;
+			buildExpressionRule(rule, ov, tempArea);
 		}
 		return (GaiaRule) rule;
 	}
 
-	private Fireable traverse(OrientVertex ov, School school) {
-		//Check if the Fireable whatever the class is enabled
-		if (!(Boolean) ov.getProperty("enabled")) {
-			LOGGER.debug(ov.getIdentity().toString() + " DISABLED");
-			return null;
-		}
-		String classname = ov.getProperty("@class");
-
-		//If the Fireable is a container i.e. an Area
-		//return the built area
-		if (classname.equals(ruleContainerName)) {
-			return buildArea(ov, school);
-		}
-
-		//If the Fireable is a rule (GaiaRule)
+	private GaiaRule buildRule(OrientVertex ov, String classname, School school) {
 		Class<?> ruleClass;
 		try {
 			//Load the right class adding the package name to the classname
@@ -226,34 +217,51 @@ public class RulesLoader {
 		//with the values retrived from the database
 		fillOutRuleAttributes(ov, rule, fields);
 
+		//Set the school attribute of the rule and store it in the database
+		((GaiaRule) rule).setSchool(school);
+
+		ov.setProperty("school", school.getRid());
+		ov.attach(tx);
+		ov.save();
+		return (GaiaRule) rule;
+	}
+
+	private Fireable traverse(OrientVertex ov, School school, Area area) {
+		//Check if the Fireable is enabled
+		if (!(Boolean) ov.getProperty("enabled")) {
+			LOGGER.debug(ov.getIdentity().toString() + " DISABLED");
+			return null;
+		}
+		String classname = ov.getProperty("@class");
+		//If the Fireable is a container i.e. an Area
+		//return the built area
+		if (classname.equals(ruleContainerName)) {
+			return buildArea(ov, school);
+		}
+		//If the Fireable is a rule (GaiaRule)
+		GaiaRule rule = buildRule(ov, classname, school);
 		//Additional logic for: EXPRESSION RULE
 		if (rule instanceof ExpressionRule) {
-			buildExpressionRule(rule, ov);
+			buildExpressionRule(rule, ov, area);
 		}
 
 		//Additional logic for: COMPOSITE RULE
 		if (rule instanceof CompositeRule) {
-			buildCompositeRule(rule, ov, ruleClass, school);
+			buildCompositeRule(rule, ov, school, area);
 		}
-
-		//Set the school attribute of the rule and store it in the database
-		((GaiaRule) rule).setSchool(school);
-		ov.setProperty("school", school.getRid());
-		ov.attach(tx);
-		ov.save();
-
+		rule.setArea(area);
 		//Add the rule to the rule map
-		ruleMap.put(rid.replace("#",""), (GaiaRule) rule);
-
-		return (Fireable) rule;
+		ruleMap.put(rule.rid.replace("#", ""), rule);
+		return rule;
 	}
 
 	/**
 	 * Fill the Java rule object's fields (annotated with @LoadMe) retrieving the values from the database
 	 * If a field is annotated as @URI its value will be also added to the URIs collection
 	 * (to speedup the measurements gathering)
-	 * @param ov The OrientVertex associtaed with the instance of the rule
-	 * @param rule The instance of the rule to be filled
+	 *
+	 * @param ov     The OrientVertex associtaed with the instance of the rule
+	 * @param rule   The instance of the rule to be filled
 	 * @param fields The array of Fields of the rule's class
 	 */
 	private void fillOutRuleAttributes(OrientVertex ov, Object rule, Field[] fields) {
@@ -284,13 +292,15 @@ public class RulesLoader {
 	/**
 	 * Build the Area object by traversing, initializing and connecting all the children Fireables
 	 * This is done by calling recursively the traverse(OrientVertex, School) function
-	 * @param ov The OrientVertex associtaed with the instance of the rule
+	 *
+	 * @param ov     The OrientVertex associtaed with the instance of the rule
 	 * @param school The Java object associated with the School
 	 * @return The created Area object
 	 */
 	private Area buildArea(OrientVertex ov, School school) {
-		Area area = new Area();                                            //Instantiate a ruleSet
-		return buildArea(ov,school,area);
+		Area area = new Area();
+		//Create the area
+		return buildArea(ov, school, area);
 	}
 
 	private Area buildArea(OrientVertex ov, School school, Area area) {
@@ -298,37 +308,45 @@ public class RulesLoader {
 		area.aid = ov.getProperty("aid");
 		area.name = ov.getProperty("name");
 		area.type = ov.getProperty("type");
+		//TODO Json field
+		//Create a map from the json field
 		/*
-		area.json = ov.getProperty("json");
-		area.sqmt = ov.getProperty("sqmt");
-		area.people = ov.getProperty("people");
-		area.country = ov.getProperty("country");
-        */
+		try {
+			String json = ov.getProperty("json");
+			if (json != null) {
+				JsonNode jsonNode = mapper.readTree(json);
+				Map fields = mapper.convertValue(jsonNode, Map.class);
+				if(fields!=null)
+					area.metadata.putAll(fields);
+			}
 
+		} catch (IOException e) {
+			LOGGER.warn("Unreadable json field in area: " + area.aid);
+		}
+		*/
 		Iterable<Vertex> children = ov.getVertices(Direction.OUT);      //Get all the children
 		for (Vertex child : children) {
-			Fireable f = traverse((OrientVertex) child, school);
+			Fireable f = traverse((OrientVertex) child, school, area);
 			if (f != null) {
 				try {
 					if (f.init())
 						area.add(f);
 				} catch (Exception e) {
-					LOGGER.error(e.getMessage());
+					LOGGER.error(e.getMessage(), e);
 				}
 			}
 		}
-		if(school.aid != area.aid)
-			areaMap.put(area.aid,area);
+		if (school.aid != area.aid)
+			areaMap.put(area.aid, area);
 		return area;
 	}
 
-	private void buildCompositeRule(Object rule, OrientVertex ov, Class ruleClass, School school) {
+	private void buildCompositeRule(Object rule, OrientVertex ov, School school, Area area) {
 		Iterable<Vertex> rules = ov.getVertices(Direction.OUT);
-
 		//Create the rule set
 		Set<Fireable> ruleSet = new HashSet<>();
 		for (Vertex r : rules) {
-			Fireable f = traverse((OrientVertex) r, school);
+			Fireable f = traverse((OrientVertex) r, school, area);
 			if (f != null) {
 				try {
 					if (f.init())
@@ -342,20 +360,21 @@ public class RulesLoader {
 		}
 
 		//Inject the rule set into the CompositeRule
-		Field ruleSetField = ReflectionUtils.findField(ruleClass, "ruleSet");
+		Field ruleSetField = ReflectionUtils.findField(rule.getClass(), "ruleSet");
 		if (ruleSetField != null) {
 			try {
 				ruleSetField.set(rule, ruleSet);
 
 			} catch (IllegalAccessException e) {
-				LOGGER.error(e.getMessage(),e);
+				LOGGER.error(e.getMessage(), e);
 			}
 		}
 	}
 
-	private GaiaRule buildExpressionRule(Object rule, OrientVertex ov) {
+	private GaiaRule buildExpressionRule(Object rule, OrientVertex ov, Area area) {
 		//The rule
 		ExpressionRule expressionRule = (ExpressionRule) rule;
+		expressionRule.setArea(area);
 		//Matcher
 		String uriPattern = "(.*)_uri";
 		Pattern pattern = Pattern.compile(uriPattern);
@@ -382,7 +401,7 @@ public class RulesLoader {
 		return expressionRule;
 	}
 
-	public GaiaRule getGaiaRuleInstance(String rid){
+	public GaiaRule getGaiaRuleInstance(String rid) {
 		return ruleMap.get(rid);
 	}
 
@@ -390,7 +409,7 @@ public class RulesLoader {
 		return ruleMap;
 	}
 
-	public Map<Long, Area> getAreaMap(){
+	public Map<Long, Area> getAreaMap() {
 		return areaMap;
 	}
 }

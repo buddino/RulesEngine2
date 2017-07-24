@@ -2,7 +2,7 @@ package rules;
 
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.weatherlibrary.WeatherService;
-import io.swagger.client.model.ResourceDataDTO;
+import io.swagger.client.model.SingleResourceMeasurementAPIModel;
 import it.cnit.gaia.buildingdb.BuildingDatabaseService;
 import it.cnit.gaia.rulesengine.configuration.ContextProvider;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
@@ -56,7 +56,7 @@ public class GenericRuleTest {
 	}
 
 	protected void setMockValueForUri(String uri, Double value){
-		ResourceDataDTO resourceDataDTO = new ResourceDataDTO();
+		SingleResourceMeasurementAPIModel resourceDataDTO = new SingleResourceMeasurementAPIModel();
 		resourceDataDTO.setReading(value);
 		when(measurementRepository.getLatestFor(uri)).thenReturn(resourceDataDTO);
 	}

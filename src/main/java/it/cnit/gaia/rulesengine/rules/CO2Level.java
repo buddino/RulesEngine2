@@ -65,7 +65,7 @@ public class CO2Level extends GaiaRule {
 
 	@Override
 	public boolean init() throws RuleInitializationException {
-		if(suggestion!=null && suggestion.equals("")){
+		if(suggestion!=null && !suggestion.equals("")){
 			suggestion_base = suggestion;
 		}
 		return super.init();

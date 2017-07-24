@@ -122,6 +122,7 @@ public class EventService {
 		return ODocument2Events(result).get(0);
 	}
 
+	//TODO MOVE
 	public List<EventDTO> getLatestEventsForRule(String rid, Long from, Long to){
 		OrientGraphNoTx G = graphFactory.getNoTx();
 		OSQLSynchQuery query = new OSQLSynchQuery("select from GaiaEvent where rule = ? AND timestamp between ? and ? ORDER BY timestamp");
@@ -133,6 +134,7 @@ public class EventService {
 		List<EventDTO> events = new ArrayList<>();
 		documents.forEach(d -> {
 			EventDTO e = new EventDTO();
+			e.setRid(d.getIdentity().toString());
 			RuleDTO ruleDTO = ruleDatabaseService.convertODocument2RuleDTO(d.field("rule"));
 			e.setRule(ruleDTO);
 			Date timestamp = d.field("timestamp");

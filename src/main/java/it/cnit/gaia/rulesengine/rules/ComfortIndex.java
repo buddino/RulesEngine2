@@ -33,7 +33,7 @@ public class ComfortIndex extends GaiaRule {
 	@Override
 	public boolean condition() {
 		try {
-			if (!(metadataService.isTeaching(school.aid) && metadataService.isOccupied(getParentAreaId())))
+			if (!(metadataService.isTeaching(school.aid) && metadataService.isOccupied(area.aid)))
 				return false;
 		} catch (Exception e) {
 			LOGGER.warn("Error while retrieving schedule/calendar: "+ e.getMessage());

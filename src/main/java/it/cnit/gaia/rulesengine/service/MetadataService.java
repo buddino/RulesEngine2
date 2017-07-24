@@ -24,6 +24,9 @@ import java.util.*;
 public class MetadataService {
 
 	protected final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(this.getClass());
+
+
+
 	@Autowired
 	BuildingDatabaseService bds;
 	@Autowired

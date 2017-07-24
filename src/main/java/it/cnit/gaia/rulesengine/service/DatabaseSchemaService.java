@@ -1,4 +1,4 @@
-package it.cnit.gaia.rulesengine.utils;
+package it.cnit.gaia.rulesengine.service;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;

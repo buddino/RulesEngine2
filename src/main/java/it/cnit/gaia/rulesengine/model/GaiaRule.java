@@ -81,11 +81,13 @@ public abstract class GaiaRule implements Fireable {
 	protected MetadataService metadataService = ContextProvider.getBean(MetadataService.class);
 	protected WeatherService weatherService = ContextProvider.getBean(WeatherService.class);
 
+
 	/**
 	 * Default fire() behavior is if( condition() ) then action()
 	 * The condition() method is abstract and must be specified in the inheriting subclass
 	 */
 	public abstract boolean condition();
+
 
 	/**
 	 * The default behavior of the action() method is log the event using the event service and to send a notification through the websocket channel
@@ -96,6 +98,7 @@ public abstract class GaiaRule implements Fireable {
 		websocket.pushNotification(notification);
 		eventService.addEvent(event);
 	}
+
 
 	/**
 	 * Checks if the rule can be fired
@@ -172,11 +175,11 @@ public abstract class GaiaRule implements Fireable {
 	}
 
 	public boolean init() throws RuleInitializationException {
-		//If a fireCron string is defined parse it int oa fireCron expression
+		//If a fireCron string is defined parse it into oa fireCron expression
 		if (fireCron != null) {
 			try {
-				cronExpression.setTimeZone(getTimeZone());
 				cronExpression = new CronExpression(fireCron);
+				cronExpression.setTimeZone(getTimeZone());
 			} catch (ParseException e) {
 				throw new RuleInitializationException("The specified fireCron expression is not valid - " + fireCron + "\n" + e
 						.getMessage());
@@ -203,15 +206,24 @@ public abstract class GaiaRule implements Fireable {
 
 	protected GAIANotification getBaseNotification() {
 		GAIANotification notification = new GAIANotification();
-		//TODO Area
 		notification.setRuleClass(this.getClass().getSimpleName())
 					.setRuleName(name)
 					.setRuleId(rid)
+					.setArea(area)
 					.setDescription(description)
 					.setSuggestion(getSuggestion())
 					.setSchool(school)
 					.setValues(getFieldsForNotification());
 		return notification;
+	}
+
+	public Area getArea() {
+		return area;
+	}
+
+	public GaiaRule setArea(Area area) {
+		this.area = area;
+		return this;
 	}
 
 	protected GaiaEvent getBaseEvent() {
@@ -316,10 +328,6 @@ public abstract class GaiaRule implements Fireable {
 		return this;
 	}
 
-	public Long getParentAreaId() {
-		return ruleDatabaseService.getParentArea(rid);
-	}
-
 	// SETTER FOR SERVICES //
 	public GaiaRule setWebsocket(WebsocketService websocket) {
 		this.websocket = websocket;
@@ -371,11 +379,12 @@ public abstract class GaiaRule implements Fireable {
 		LOGGER.debug(String.format(message, rid, error));
 	}
 
-	private TimeZone getTimeZone(){
+	private TimeZone getTimeZone() {
 		String timezone = (String) school.getMetadata().get("timezone");
-		if(timezone==null)
-			return null;
-		else
-			return TimeZone.getTimeZone(timezone);
+		if (timezone == null) {
+			warn("Timezone not set for school: " + school.aid);
+			return TimeZone.getDefault();
+		}
+		return TimeZone.getTimeZone(timezone);
 	}
 }

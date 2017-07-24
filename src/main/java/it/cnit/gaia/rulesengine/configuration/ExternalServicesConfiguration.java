@@ -25,4 +25,5 @@ public class ExternalServicesConfiguration {
 		return new WeatherService(appid);
 	}
 
+
 }

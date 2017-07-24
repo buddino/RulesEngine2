@@ -1,19 +1,9 @@
 package it.cnit.gaia.rulesengine.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import it.cnit.gaia.rulesengine.configuration.ContextProvider;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
 public class Area implements Fireable {
 
@@ -22,31 +12,25 @@ public class Area implements Fireable {
 	public String name;
 	public String uri;
 	public String type;
-	/*
-	public String json;
-	public Double sqmt;
-	public Long people;
-	public String country;
-	*/
-	protected OrientGraphFactory graphFactory = ContextProvider.getBean(OrientGraphFactory.class);
+	public Map<String, Object> metadata = new HashMap<>();
 	@JsonIgnore
-	Set<Fireable> ruleSet = new HashSet<>();
-
-	public void fire() {
-		ruleSet.forEach(f -> f.fire());
-	}
+	Set<Fireable> children = new HashSet<>();
 
 	@Override
 	public boolean init() {
 		return true;
 	}
 
+	public void fire() {
+		children.forEach(f -> f.fire());
+	}
+
 	public boolean add(Fireable f) {
-		return ruleSet.add(f);
+		return children.add(f);
 	}
 
 	public boolean remove(Fireable f) {
-		return ruleSet.remove(f);
+		return children.remove(f);
 	}
 
 	public String getRid() {
@@ -57,25 +41,66 @@ public class Area implements Fireable {
 	public String toString() {
 		return new ToStringBuilder(this)
 				.append("id", rid)
-				.append("ruleSet", ruleSet)
+				.append("children", children)
 				.toString();
 	}
 
-	//FIXME Should not stay here
-	public String getPath() {
-		OrientGraphNoTx noTx = graphFactory.getNoTx();
-		ORID identity = noTx.getVertex(rid).getIdentity();
-		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>("select unionall(name) as path from (traverse in() from ?)");
-		List<ODocument> execute = query.execute(identity);
-		List<String> path = execute.get(0).field("path");
-		Collections.reverse(path);
-		String uri = path.stream().collect(Collectors.joining("/"));
+	public Set<Fireable> getChildren() {
+		return Collections.unmodifiableSet(children);
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public Long getAid() {
+		return aid;
+	}
+
+	public Area setAid(Long aid) {
+		this.aid = aid;
+		return this;
+	}
+
+	public Area setRid(String rid) {
+		this.rid = rid;
+		return this;
+	}
+
+	public String getUri() {
 		return uri;
 	}
 
-	public Set<Fireable> getRuleSet() {
-		return Collections.unmodifiableSet(ruleSet);
+	public Area setUri(String uri) {
+		this.uri = uri;
+		return this;
 	}
 
+	public String getType() {
+		return type;
+	}
 
+	public Area setType(String type) {
+		this.type = type;
+		return this;
+	}
+
+	public Map<String, Object> getMetadata() {
+		return metadata;
+	}
+
+	public Area setMetadata(Map<String, Object> metadata) {
+		this.metadata = metadata;
+		return this;
+	}
+
+	public Area setChildren(Set<Fireable> children) {
+		this.children = children;
+		return this;
+	}
+
+	public Area setName(String name) {
+		this.name = name;
+		return this;
+	}
 }

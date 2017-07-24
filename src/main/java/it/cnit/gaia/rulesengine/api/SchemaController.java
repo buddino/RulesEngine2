@@ -3,7 +3,7 @@ package it.cnit.gaia.rulesengine.api;
 import io.swagger.annotations.*;
 import it.cnit.gaia.rulesengine.api.dto.ErrorResponse;
 import it.cnit.gaia.rulesengine.api.exception.GaiaRuleException;
-import it.cnit.gaia.rulesengine.utils.DatabaseSchemaService;
+import it.cnit.gaia.rulesengine.service.DatabaseSchemaService;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -35,7 +35,7 @@ public class SchemaController {
 		}
 		return ResponseEntity.ok(dbService.getDefaultForClass(classname));
 	}
-*/
+
 
 	@ApiOperation(
 			value = "GET defaults",
@@ -45,7 +45,7 @@ public class SchemaController {
 	public ResponseEntity<?> getDefault(@PathVariable String classname) {
 		return ResponseEntity.ok(dbService.getDefaultForClass(classname));
 	}
-
+*/
 	@ApiOperation(
 			value = "GET rule fields",
 			notes = "Get the rule class definition. <br> Example: { 'power_threshold': {'regex': null,'default': null,'mandatory': true}, ... }")

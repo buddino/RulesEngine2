@@ -16,6 +16,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.io.IOException;
 import java.util.Collection;
 
 @Service
@@ -38,7 +39,7 @@ public class Scheduler {
 
 
 	@PostConstruct
-	public void init() throws ApiException {
+	public void init() throws ApiException, IOException {
 		LOGGER.info("RulesEngine Initialization");
 		LOGGER.info("Interval: " + schedulerInterval + "ms");
 		//Test connection to the database
@@ -53,19 +54,19 @@ public class Scheduler {
 		measurements.getMeasurementService().checkAuth();
 
 		LOGGER.info("Loading schedules");
-		reloadSchedules();
+		//reloadSchedules();
 
 	}
 
-	@Scheduled(fixedDelayString = "${scheduler.interval}")
-	public void scheduledMethod() {
+	//@Scheduled(fixedDelayString = "${scheduler.interval}")
+	public void scheduledMethod() throws IOException {
 		//Riguarda
 		measurements.getMeasurementService().checkAuth();
 		LOGGER.info("Executing iteration");
 		rulesLoader.reloadAllSchools();
 		schools = rulesLoader.loadSchools().values();
 		measurements.updateLatest();
-		//schools.forEach(s -> s.fire());
+		schools.forEach(s -> s.fire());
 	}
 
 	@Scheduled(cron = "0 0 12 * * ?")

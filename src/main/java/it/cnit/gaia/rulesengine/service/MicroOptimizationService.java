@@ -1,6 +1,6 @@
 package it.cnit.gaia.rulesengine.service;
 
-import io.swagger.client.model.ResourceDataDTO;
+import io.swagger.client.model.SingleResourceMeasurementAPIModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,16 +29,16 @@ public class MicroOptimizationService {
 	public void sensorCheck() {
 		Long threshold = 3600 * 1000L;
 		Date lastUpdate = measurements.getLastUpdate();
-		Map<String, ResourceDataDTO> latestReadings = measurements.getLatestReadings();
-		Map<String, ResourceDataDTO> sensorsWithOldData = latestReadings.entrySet()
-																		.stream()
-																		.filter(m -> (lastUpdate
+		Map<String, SingleResourceMeasurementAPIModel> latestReadings = measurements.getLatestReadings();
+		Map<String, SingleResourceMeasurementAPIModel> sensorsWithOldData = latestReadings.entrySet()
+																						  .stream()
+																						  .filter(m -> (lastUpdate
 																				.getTime() - m.getValue()
 																							  .getTimestamp()) > threshold)
-																		.collect(Collectors
+																						  .collect(Collectors
 																				.toMap(a -> a.getKey(), a -> a
 																						.getValue()));
-		for( Entry<String, ResourceDataDTO> entry : sensorsWithOldData.entrySet() ){
+		for( Entry<String, SingleResourceMeasurementAPIModel> entry : sensorsWithOldData.entrySet() ){
 			Long id = measurements.getMeterMap().get(entry.getKey());
 			StringBuilder stb = new StringBuilder();
 			Date now = new Date();

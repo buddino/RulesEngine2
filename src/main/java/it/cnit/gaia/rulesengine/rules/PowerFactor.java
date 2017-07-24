@@ -1,17 +1,19 @@
 package it.cnit.gaia.rulesengine.rules;
 
 import io.swagger.client.ApiException;
-import io.swagger.client.model.SummaryDTO;
+import io.swagger.client.model.TheResourceSummaryDataAPIModel;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
 import it.cnit.gaia.rulesengine.model.annotation.LogMe;
 import it.cnit.gaia.rulesengine.model.annotation.URI;
 import it.cnit.gaia.rulesengine.model.event.GaiaEvent;
+import it.cnit.gaia.rulesengine.model.exceptions.RuleInitializationException;
 import it.cnit.gaia.rulesengine.model.notification.GAIANotification;
 
 import java.util.OptionalDouble;
 
 public class PowerFactor extends GaiaRule {
+	//TODO Hard coded suggestions
 
 	@LogMe
 	@LoadMe
@@ -30,27 +32,45 @@ public class PowerFactor extends GaiaRule {
 	@LoadMe(required = false)
 	public int windowLength = 10;
 
-	@LogMe
-	public double average;
+	@LoadMe(required = false)
+	public String suggestion_low = "The power factor average value in the latest ${windowLength} days is ${average_pwf}. This is a critical low value and the energy provider can force you to solve this issue.";
 
+	@LoadMe(required = false)
+	public String suggestion_base = "The power factor average value in the latest ${windowLength} days is ${average_pwf}. Energy provider can add fees to you bill.";
+
+	@LogMe
+	public double average_pwf;
+
+
+	@Override
+	public boolean init() throws RuleInitializationException {
+		if(suggestion==null && !suggestion.equals("")){
+			suggestion_base = suggestion;
+		}
+		if(windowLength>40)
+			warn("Window length must be less or equal than 40. Set to 40.");
+			windowLength = 40;
+		return super.init();
+	}
 
 	@Override
 	public boolean condition() {
 		//If the resource ID is not present the rule is discarded, so you don't need null check
 		try {
-			SummaryDTO summary = measurements.getSummary(pwf_uri);
+			TheResourceSummaryDataAPIModel summary = measurements.getSummary(pwf_uri);
+			summary.getDay();
 			OptionalDouble optionalAverage = summary.getDay().stream()
 													.limit(windowLength)
 													.filter(d -> d > 0.0)
 													.mapToDouble(d -> d)
 													.average();
 			if (!optionalAverage.isPresent()) {
-				LOGGER.warn(String.format("[%s] Cannot compute the average beacuse there are no valid values.", rid));
+				LOGGER.warn(String.format("[%s] Cannot compute the average_pwf beacuse there are no valid values.", rid));
 				return false;
 			}
 
-			average = optionalAverage.getAsDouble();
-			if (average < pwf_threshold) {
+			average_pwf = optionalAverage.getAsDouble();
+			if (average_pwf < pwf_threshold) {
 				return true;
 			}
 		} catch (ApiException e) {
@@ -63,12 +83,10 @@ public class PowerFactor extends GaiaRule {
 	public void action() {
 		GAIANotification notification = getBaseNotification();
 		GaiaEvent event = getBaseEvent();
-		if (average < pwf_lowerthreshold) {
-			notification.setSuggestion(String
-					.format("The power factor average value in the latest %d days is %.3f. This is a critical low value and the energy provider can force you to solve this issue.", windowLength, average));
+		if (average_pwf < pwf_lowerthreshold) {
+			notification.setSuggestion(suggestion_low);
 		} else {
-			notification.setSuggestion(String
-					.format("The power factor average value in the latest %d days is %.3f. Energy provider can add fees to you bill.", windowLength, average));
+			notification.setSuggestion(suggestion_base);
 		}
 		websocket.pushNotification(notification);
 		eventService.addEvent(event);

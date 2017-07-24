@@ -45,9 +45,6 @@
             <li class="viewBtn active"><a id="websocketBtn" data-view="websocketView" href="#">Notifications <span
                     id="notificationCounter" class="badge pull-right">0</span> </a></li>
             <li class="viewBtn"><a id="logBtn" data-view="logView" href="#">Reports</a></li>
-            <li class="viewBtn"><a id="reloadBtn" data-view="#" href="#">Reload rules</a></li>
-            <li class="viewBtn"><a id="ruleTreeBtn" data-view="ruleTree" href="#"
-                                   style="text-decoration: line-through;">Rule tree</a></li>
         </ul>
     </div>
 
@@ -74,17 +71,46 @@
 
     <!--Event log-->
     <div id="logView" class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" hidden>
+        <p>Retrieve latest events for the selected school</p>
         <form id="eventsForm" class="form-inline" style="padding-bottom: 2em">
+
             <label for="limit">Limit:</label>
             <input class="form-control" value="10" id="limit" type="number" min="1">
+            <!--
             <label for="limit">From:</label>
             <input class="form-control" type="text">
             <label for="limit">To:</label>
             <input class="form-control" type="text">
+          -->
             <button type="submit" class="btn btn-default btn-sm">Query</button>
         </form>
+
         <ul id="eventList" class="list-group panel">
+
+            <div>
+                <div class="list-group-items" data-toggle="collapse" data-target="#{{rid}}">
+                    <a class="nostyle"><h4 class="list-group-items-heading">{{rule.name}}
+                        <span class="pull-right">{{timestamp}}</span></h4></a>
+                </div>
+                <div id="ss" class="collapse">
+                    <dl class="dl-horizontal">
+                        <dt>Rule:</dt>
+                        <dd>{{rule.rid}}</dd>
+                        <dt>Rule class:</dt>
+                        <dd>{{rule.class}}</dd>
+                    </dl>
+                    <dl class="dl-horizontal">
+                        {{#each values}}
+                        <dt>{{@key}}</dt>
+                        <dd>{{this}}</dd>
+                        {{/each}}
+                    </dl>
+                </div>
+            </div>
+
+
         </ul>
+
     </div>
 
     <!--TODO-->
@@ -102,17 +128,17 @@
 <script id="event-template" type="text/x-handlebars-template">
     <div>
         <div class="list-group-items" data-toggle="collapse" data-target="#{{rid}}">
-            <a class="nostyle"><h4 class="list-group-items-heading">{{fields.name}}<span
+            <a class="nostyle"><h4 class="list-group-items-heading">{{rule.fields.name}}<span
                     class="pull-right">{{timestamp}}</span></h4></a>
         </div>
         <div id="{{rid}}" class="collapse">
             <dl class="dl-horizontal">
                 <dt>Rule name:</dt>
-                <dd>{{fields.name}}</dd>
+                <dd>{{rule.fields.name}}</dd>
                 <dt>Suggestion</dt>
-                <dd>{{fields.suggestion}}</dd>
+                <dd>{{rule.fields.suggestion}}</dd>
                 <dt>Description:</dt>
-                <dd>{{fields.description}}</dd>
+                <dd>{{rule.fields.description}}</dd>
             </dl>
             <dl class="dl-horizontal">
                 {{#each values}}
@@ -134,7 +160,7 @@
             <dt>Timestamp</dt>
             <dd>{{timestamp}}</dd>
             <dt>Area</dt>
-            <dd>{{area.id}}</dd>
+            <dd>{{area}}</dd>
             <dt>Rule class:</dt>
             <dd>{{ruleClass}}</dd>
             <dt>Rule name:</dt>
