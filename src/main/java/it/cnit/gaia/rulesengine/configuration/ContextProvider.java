@@ -6,6 +6,11 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
+/**
+ * The context provider used to get beans for objects where the autowiring
+ * function cannot be used i.e. the GaiaRule because they are instantiated at runtime
+ * using Java Reflection
+ */
 @Component
 public class ContextProvider implements ApplicationContextAware {
 	private static ApplicationContext CONTEXT;
@@ -15,6 +20,12 @@ public class ContextProvider implements ApplicationContextAware {
 		CONTEXT = applicationContext;
 	}
 
+	/**
+	 * Get the bean by class
+	 * @param beanClass
+	 * @param <T>
+	 * @return
+	 */
 	public static <T> T getBean(Class<T> beanClass) {
 		try {
 			T bean = CONTEXT.getBean(beanClass);
@@ -25,6 +36,11 @@ public class ContextProvider implements ApplicationContextAware {
 		}
 	}
 
+	/**
+	 * Get the bean by classname
+	 * @param beanName
+	 * @return
+	 */
 	public static Object getBean(String beanName) {
 		try {
 			Object bean = CONTEXT.getBean(beanName);
