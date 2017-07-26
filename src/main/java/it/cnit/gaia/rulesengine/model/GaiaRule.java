@@ -78,7 +78,7 @@ public abstract class GaiaRule implements Fireable {
 	protected MeasurementRepository measurements = ContextProvider.getBean(MeasurementRepository.class);
 	protected BuildingDatabaseService buildingDBService = ContextProvider.getBean(BuildingDatabaseService.class);
 	protected RuleDatabaseService ruleDatabaseService = ContextProvider.getBean(RuleDatabaseService.class);
-	protected MetadataService metadataService = ContextProvider.getBean(MetadataService.class);
+	protected MetadataServiceOld metadataService = ContextProvider.getBean(MetadataServiceOld.class);
 	protected WeatherService weatherService = ContextProvider.getBean(WeatherService.class);
 
 
@@ -354,7 +354,7 @@ public abstract class GaiaRule implements Fireable {
 		return this;
 	}
 
-	public GaiaRule setMetadataService(MetadataService metadataService) {
+	public GaiaRule setMetadataService(MetadataServiceOld metadataService) {
 		this.metadataService = metadataService;
 		return this;
 	}

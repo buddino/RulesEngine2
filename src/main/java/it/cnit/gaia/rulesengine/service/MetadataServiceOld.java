@@ -21,7 +21,7 @@ import java.util.*;
  * including: Schedules / Calendars / Additional fields in the json
  */
 @Service
-public class MetadataService {
+public class MetadataServiceOld {
 
 	protected final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 

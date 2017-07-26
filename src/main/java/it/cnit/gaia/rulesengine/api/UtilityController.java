@@ -6,7 +6,7 @@ import io.swagger.annotations.Authorization;
 import io.swagger.annotations.AuthorizationScope;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
 import it.cnit.gaia.rulesengine.service.MeasurementRepository;
-import it.cnit.gaia.rulesengine.service.MetadataService;
+import it.cnit.gaia.rulesengine.service.MetadataServiceOld;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -30,10 +30,10 @@ public class UtilityController {
 	@Autowired
 	private RulesLoader rulesLoader;
 	@Autowired
-	private MetadataService metadataService;
+	private MetadataServiceOld metadataService;
 
 
-	@ApiOperation(value = "Outputs the latest log of the recommendation engine")
+	@ApiOperation(notes = "Outputs the latest log of the recommendation engine", value = "GET log")
 	@GetMapping(value = "/log", produces = MediaType.TEXT_PLAIN_VALUE)
 	public ResponseEntity<?> getLog() throws FileNotFoundException {
 		FileReader fr = new FileReader("./RulesEngine.log");
@@ -44,7 +44,7 @@ public class UtilityController {
 	}
 
 	@GetMapping("/metermap")
-	@ApiOperation("Returns the conversion map from URIs to numerical Resource IDs")
+	@ApiOperation(notes = "Returns the conversion map from URIs to numerical Resource IDs", value = "GET Uri2Id Map")
 	public
 	@ResponseBody
 	ResponseEntity<Map<String, Long>> getUriMapping() {
@@ -52,11 +52,13 @@ public class UtilityController {
 	}
 
 	@PutMapping("/schedules/update")
-	@ApiOperation("Sync the schedules / calendar with the building database")
+	@ApiOperation(notes = "Sync the schedules / calendar with the building database", value = "FORCE SYNC of sites metadata")
 	public @ResponseBody
 	ResponseEntity updateSchedules() {
 		metadataService.updateAll();
 		return ResponseEntity.noContent().build();
 	}
+
+
 
 }

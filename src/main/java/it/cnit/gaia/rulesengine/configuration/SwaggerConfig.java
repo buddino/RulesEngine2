@@ -15,9 +15,14 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Configuration class for the swagger documentation provider
+ */
 @Configuration
 @EnableSwagger2
 public class SwaggerConfig {
+
+	private final String PACKAGE_NAME = "it.cnit.gaia.rulesengine.api";
 	@Bean
 	public Docket api() {
 		return new Docket(DocumentationType.SWAGGER_2).ignoredParameterTypes(ODocument.class)
@@ -25,10 +30,14 @@ public class SwaggerConfig {
 													  .securityContexts(Arrays.asList(securityContext()))
 													  .securitySchemes(Arrays.asList(securitySchema()))
 													  .select().apis(RequestHandlerSelectors
-						.basePackage("it.cnit.gaia.rulesengine.api"))
+						.basePackage(PACKAGE_NAME))
 													  .build();
 	}
 
+	/**
+	 * Information settings
+	 * @return
+	 */
 	private ApiInfo apiInfo() {
 		ApiInfoBuilder infoBuilder = new ApiInfoBuilder();
 		return infoBuilder.title("GAIA Recommendation Engine")
@@ -37,6 +46,10 @@ public class SwaggerConfig {
 						  .build();
 	}
 
+	/**
+	 * Security schema
+	 * @return
+	 */
 	private OAuth securitySchema() {
 		AuthorizationScope authorizationScope = new AuthorizationScope("read", "read");
 		LoginEndpoint loginEndpoint = new LoginEndpoint("https://sso.sparkworks.net/aa/oauth/token");

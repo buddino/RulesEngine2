@@ -25,11 +25,13 @@
     </properties>
 
     <dependencies>
+        <!-- BKB (OVER) API -->
         <dependency>
             <groupId>it.cnit.gaia.api</groupId>
-            <artifactId>metadata</artifactId>
-            <version>1.0.0</version>
+            <artifactId>metadata-api</artifactId>
+            <version>2.1</version>
         </dependency>
+        <!-- SPARKS API -->
         <dependency>
             <groupId>io.swagger</groupId>
             <artifactId>swagger-java-client</artifactId>
@@ -119,6 +121,13 @@
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
             <version>5.0.0-M4</version>
+        </dependency>
+
+        <!-- HATEOS -->
+        <dependency>
+            <groupId>org.springframework.hateoas</groupId>
+            <artifactId>spring-hateoas</artifactId>
+            <version>0.20.0.RELEASE</version>
         </dependency>
 
     </dependencies>

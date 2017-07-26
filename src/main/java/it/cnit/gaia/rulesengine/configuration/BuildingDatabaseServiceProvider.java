@@ -1,29 +1,28 @@
 package it.cnit.gaia.rulesengine.configuration;
 
-import com.weatherlibrary.WeatherService;
+
+import it.cnit.gaia.api.MetaDataService;
 import it.cnit.gaia.buildingdb.BuildingDatabaseService;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 
+/**
+ * Provider for the Building Database Service
+ */
 @Configuration
 @PropertySource("file:application.properties")
+public class BuildingDatabaseServiceProvider {
 
-public class ExternalServicesConfiguration {
-
-	@Value("${weatherservice.apikey}")
-	String appid;
-
+	@Deprecated
 	@Bean
 	public BuildingDatabaseService buildingdb() {
 		return new BuildingDatabaseService();
 	}
 
 	@Bean
-	public WeatherService weatherService(){
-		return new WeatherService(appid);
+	public MetaDataService getMetaDataService(){
+		return new MetaDataService();
 	}
-
 
 }
