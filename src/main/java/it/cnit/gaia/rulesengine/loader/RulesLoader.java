@@ -115,6 +115,8 @@ public class RulesLoader {
 			throw new RulesLoaderException("The vertex is not of class \"School\"");
 		}
 		School school = new School();
+		school.lat = schoolVertex.getProperty("lat");
+		school.lon = schoolVertex.getProperty("lon");
 		school.setName(schoolVertex.getProperty("name"));
 		school.type = "School";
 		school.sqmt = schoolVertex.getProperty("sqmt");
@@ -228,7 +230,7 @@ public class RulesLoader {
 
 	private Fireable traverse(OrientVertex ov, School school, Area area) {
 		//Check if the Fireable is enabled
-		if (!(Boolean) ov.getProperty("enabled")) {
+		if (ov.getProperty("enabled")==null || !(Boolean) ov.getProperty("enabled")) {
 			LOGGER.debug(ov.getIdentity().toString() + " DISABLED");
 			return null;
 		}
