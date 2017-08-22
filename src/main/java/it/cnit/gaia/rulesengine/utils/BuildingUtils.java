@@ -8,22 +8,25 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.*;
-import io.swagger.client.ApiException;
-import io.swagger.client.model.SiteAPIModel;
+import io.swagger.sparks.ApiException;
+import io.swagger.sparks.model.SiteAPIModel;
+import it.cnit.gaia.api.model.SiteInfo;
 import it.cnit.gaia.buildingdb.BuildingDatabaseService;
 import it.cnit.gaia.buildingdb.dto.AreaDTO;
-import it.cnit.gaia.buildingdb.dto.BuildingDTO;
 import it.cnit.gaia.buildingdb.exceptions.BuildingDatabaseException;
 import it.cnit.gaia.rulesengine.model.Area;
+import it.cnit.gaia.rulesengine.service.MetadataService;
 import it.cnit.gaia.rulesengine.service.SparksService;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
 
 @Service
 public class BuildingUtils {
@@ -34,6 +37,8 @@ public class BuildingUtils {
 	@Autowired
 	BuildingDatabaseService bds;
 	@Autowired
+	MetadataService metadataService;
+	@Autowired
 	SparksService sparksService;
 
 
@@ -41,24 +46,32 @@ public class BuildingUtils {
 		//TODO Use service instead of API directly (LOW)
 		//TODO ApiException
 		SiteAPIModel school_site = sparksService.getSite(buildingId);
-		BuildingDTO school_meta = bds.getBuildingStructure(buildingId);
+		//BuildingDTO school_meta = bds.getBuildingStructure(buildingId);
 		OrientGraph g = graphFactory.getTx();
 		//Check if a school with the same aid already exists
 		if (g.getVertices("aid", buildingId).iterator().hasNext()) {
 			throw new BuildingDatabaseException("Building already exists");
 		}
-		//Create the new school vertex
 		OrientVertex schoolVertex = g.addVertex("class:School");
+		try {
+		//Create the new school vertex
 		schoolVertex.setProperty("name", school_site.getName());
-		Map<String, Double> coordinates = new HashMap<>();
-		coordinates.put("lat", school_site.getLatitude());
-		coordinates.put("lon", school_site.getLongtitude());
-		schoolVertex.setProperty("coordinates", coordinates);
-		schoolVertex.setProperty("json", school_meta.getJson());
-		schoolVertex.setProperty("people", school_meta.getPeople());
-		schoolVertex.setProperty("sqmt", school_meta.getSqmt());
-		schoolVertex.setProperty("country", school_meta.getCountry());
+		schoolVertex.setProperty("lat", school_site.getLatitude());
+		schoolVertex.setProperty("lon", school_site.getLongtitude());
 		schoolVertex.setProperty("aid", school_site.getId());
+		schoolVertex.setProperty("enabled", true);
+		SiteInfo siteInfo = metadataService.getSiteInfo(buildingId);
+		schoolVertex.setProperty("json", siteInfo.getJson());
+		schoolVertex.setProperty("type", siteInfo.getType());
+		schoolVertex.setProperty("country", siteInfo.getCountry());
+	}
+	catch (HttpClientErrorException e){
+		if(e.getStatusCode().is4xxClientError())
+			LOGGER.warn("No site info for building: "+buildingId);
+	}
+	catch (IllegalArgumentException e){
+		LOGGER.warn("Null property found");
+	}
 		schoolVertex.save();
 		//Create the structure
 		traverseChildren(school_site, schoolVertex);
@@ -73,11 +86,11 @@ public class BuildingUtils {
 		OrientBaseGraph g = rootVertex.getGraph();
 		for (SiteAPIModel area_site : subareas) {
 			OrientVertex childVertex = g.addVertex("class:Area");
-			childVertex.setProperty("name", area_site.getName());
-			childVertex.setProperty("aid", area_site.getId());
-
 			//For each get metadata
 			try {
+				childVertex.setProperty("name", area_site.getName());
+				childVertex.setProperty("aid", area_site.getId());
+				childVertex.setProperty("enabled", true);
 				AreaDTO area_meta = bds.getAreaById(area_site.getId());
 				childVertex.setProperty("description", area_meta.getDescription());
 				childVertex.setProperty("type", area_meta.getType());
@@ -85,6 +98,9 @@ public class BuildingUtils {
 				//childVertex.setProperty("json",child.getJson(), OType.EMBEDDEDMAP);
 			} catch (BuildingDatabaseException e) {
 				LOGGER.warn("Cannot find metadata for area: " + area_site.getId());
+			}
+			catch (IllegalArgumentException e){
+				LOGGER.warn("Null property found");
 			}
 
 			childVertex.save();
@@ -131,6 +147,7 @@ public class BuildingUtils {
 		return uri;
 	}
 
+
 	public void deleteBuildingTreeIncludingTheRules(Long id) throws BuildingDatabaseException {
 		OrientGraph graph = graphFactory.getTx();
 		Iterable<Vertex> result = graph.getVertices("aid", id);
@@ -150,7 +167,7 @@ public class BuildingUtils {
 		List<Area> areas = new ArrayList<>();
 		for (ODocument d : result) {
 			Area area = new Area();
-			area.aid = aid;
+			area.aid = d.field("aid");
 			area.name = d.field("name");
 			area.type = d.field("type");
 			area.rid = d.getIdentity().toString();
