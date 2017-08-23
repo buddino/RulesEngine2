@@ -1,6 +1,6 @@
 package it.cnit.gaia.rulesengine.service;
 
-import io.swagger.client.model.SingleResourceMeasurementAPIModel;
+import io.swagger.sparks.model.SingleResourceMeasurementAPIModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

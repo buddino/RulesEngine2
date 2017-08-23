@@ -1,6 +1,6 @@
 package rules;
 
-import io.swagger.client.model.SingleResourceMeasurementAPIModel;
+import io.swagger.sparks.model.SingleResourceMeasurementAPIModel;
 import it.cnit.gaia.rulesengine.rules.ExpressionRule;
 import org.junit.Before;
 import org.junit.Test;

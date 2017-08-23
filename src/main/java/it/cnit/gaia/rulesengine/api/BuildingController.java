@@ -3,7 +3,7 @@ package it.cnit.gaia.rulesengine.api;
 import com.google.common.collect.Lists;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import io.swagger.annotations.*;
-import io.swagger.client.ApiException;
+import io.swagger.sparks.ApiException;
 import it.cnit.gaia.buildingdb.exceptions.BuildingDatabaseException;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
 import it.cnit.gaia.rulesengine.model.Area;
@@ -38,7 +38,7 @@ public class BuildingController {
 		return new ResponseEntity<>(error, HttpStatus.CONFLICT);
 	}*/
 
-	@PutMapping(value = "/building/{id}")
+	@PutMapping(value = "building/{id}")
 	@ApiOperation(
 			value = "IMPORT building structure",
 			notes = "Import the building (indentified by id) from the building database replicating its structure")
@@ -49,7 +49,7 @@ public class BuildingController {
 		return ResponseEntity.status(HttpStatus.CREATED).build();
 	}
 
-	@DeleteMapping(value = "/building/{id}")
+	@DeleteMapping(value = "building/{id}")
 	@ApiOperation(
 			value = "DELETE building structure",
 			notes = "Delete the building (indentified by id) from the rule database including all the linked rules")
@@ -60,7 +60,7 @@ public class BuildingController {
 		return ResponseEntity.noContent().build();
 	}
 
-	@GetMapping(value = "/building/{id}")
+	@GetMapping(value = "building/{id}")
 	@ApiOperation(
 			value = "GET building information",
 			notes = "Get the building (indentified by id) from the rule databas")
@@ -71,7 +71,7 @@ public class BuildingController {
 		return ResponseEntity.ok(school);
 	}
 
-	@GetMapping(value = "/buildings")
+	@GetMapping(value = "buildings")
 	@ApiOperation(value = "GET all the buildings", notes = "Get all the buildings stored in the rule database", responseContainer = "List")
 	public
 	@ResponseBody
@@ -79,7 +79,7 @@ public class BuildingController {
 		return ResponseEntity.ok(Lists.newArrayList(rulesLoader.loadSchools().values()));
 	}
 
-	@GetMapping(value = "/building/{bid}/areas")
+	@GetMapping(value = "building/{bid}/areas")
 	@ApiOperation(value = "GET subareas",
 	notes = "Get all subareas of an area/building stored in the rule database")
 	public ResponseEntity<List<Area>> getAreas(@ApiParam("ID of the building") @PathVariable Long bid) {

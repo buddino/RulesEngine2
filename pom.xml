@@ -6,7 +6,7 @@
 
     <groupId>it.cnit.gaia</groupId>
     <artifactId>RulesEngine</artifactId>
-    <version>2.3-SNAPSHOT</version>
+    <version>2.4-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <parent>
@@ -29,13 +29,13 @@
         <dependency>
             <groupId>it.cnit.gaia.api</groupId>
             <artifactId>metadata-api</artifactId>
-            <version>2.1</version>
+            <version>1.0.2</version>
         </dependency>
         <!-- SPARKS API -->
         <dependency>
-            <groupId>io.swagger</groupId>
-            <artifactId>swagger-java-client</artifactId>
-            <version>3.0.2</version>
+            <groupId>io.swagger.sparks</groupId>
+            <artifactId>sparks</artifactId>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>io.springfox</groupId>
@@ -128,6 +128,10 @@
             <groupId>org.springframework.hateoas</groupId>
             <artifactId>spring-hateoas</artifactId>
             <version>0.20.0.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
         </dependency>
 
     </dependencies>

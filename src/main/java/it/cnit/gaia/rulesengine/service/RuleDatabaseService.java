@@ -10,7 +10,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import io.swagger.client.ApiException;
+import io.swagger.sparks.ApiException;
 import it.cnit.gaia.rulesengine.api.dto.RuleDTO;
 import it.cnit.gaia.rulesengine.api.exception.GaiaRuleException;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
@@ -141,7 +141,7 @@ public class RuleDatabaseService {
 		//Check URI
 		//FIXME Maybe not required beacuse the next control with init
 		if (ruleDTO.getClazz().equals("SimpleThresholdRule")) {
-			String uri = (String) ruleDTO.getFields().get("power_uri");
+			String uri = (String) ruleDTO.getFields().get("uri");
 			try {
 				measurementRepository.checkUri(uri);
 			} catch (ApiException e) {
@@ -156,6 +156,7 @@ public class RuleDatabaseService {
 		OrientVertex ruleVertex = tx.addVertex("class:" + ruleDTO.getClazz());
 		ruleVertex.setProperties(fieldMap);
 		ruleVertex.setProperty("custom", true);
+		ruleVertex.setProperty("enabled", true);
 		ruleVertex.save();
 
 		GaiaRule javaRule = rulesLoader.getRuleForTest(ruleVertex);
@@ -175,7 +176,7 @@ public class RuleDatabaseService {
 		return ruleDTO;
 	}
 
-	public void editCustomRule(String rid, RuleDTO ruleDTO) throws GaiaRuleException {
+	public RuleDTO editCustomRule(String rid, RuleDTO ruleDTO) throws GaiaRuleException {
 		//TODO API for changing Area
 		OrientGraph tx = ogf.getTx();
 		OrientVertex ruleVertex;
@@ -185,15 +186,11 @@ public class RuleDatabaseService {
 		} catch (Exception e) {
 			throw new GaiaRuleException("Not found", 404);
 		}
+		if(ruleVertex==null){
+			throw new GaiaRuleException("Not found",404);
+		}
 		if (!(Boolean) ruleVertex.getProperty("custom")) {
 			throw new GaiaRuleException("Not authorized", 403);
-		}
-		String uri = (String) ruleDTO.getFields().get("power_uri");
-		try {
-			measurementRepository.checkUri(uri);
-		} catch (ApiException e) {
-			tx.rollback();
-			throw new GaiaRuleException(String.format("URI '%s' not found", uri));
 		}
 		ruleVertex.setProperties(fieldMap);
 		GaiaRule javaRule = rulesLoader.getRuleForTest(ruleVertex);
@@ -203,8 +200,10 @@ public class RuleDatabaseService {
 			tx.rollback();
 			throw new GaiaRuleException("Initialization error", HttpStatus.BAD_REQUEST);
 		}
+		ruleDTO.setRid(ruleVertex.getIdentity().toString());
 		tx.commit();
 		tx.shutdown();
+		return ruleDTO;
 	}
 
 	public RuleDTO getRuleFromDb(String rid) throws GaiaRuleException {

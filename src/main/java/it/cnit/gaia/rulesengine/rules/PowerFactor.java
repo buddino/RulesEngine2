@@ -1,7 +1,7 @@
 package it.cnit.gaia.rulesengine.rules;
 
-import io.swagger.client.ApiException;
-import io.swagger.client.model.TheResourceSummaryDataAPIModel;
+import io.swagger.sparks.ApiException;
+import io.swagger.sparks.model.TheResourceSummaryDataAPIModel;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
 import it.cnit.gaia.rulesengine.model.annotation.LogMe;
@@ -44,7 +44,7 @@ public class PowerFactor extends GaiaRule {
 
 	@Override
 	public boolean init() throws RuleInitializationException {
-		if(suggestion==null && !suggestion.equals("")){
+		if(suggestion!=null && !suggestion.equals("")){
 			suggestion_base = suggestion;
 		}
 		if(windowLength>40)

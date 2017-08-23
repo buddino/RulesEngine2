@@ -1,6 +1,6 @@
 package it.cnit.gaia.rulesengine.service;
 
-import it.cnit.gaia.api.MetaDataService;
+import it.cnit.gaia.api.MetadataAPI;
 import it.cnit.gaia.api.model.Schedule;
 import it.cnit.gaia.api.model.Site;
 import it.cnit.gaia.api.model.SiteInfo;
@@ -19,14 +19,16 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-public class MetadataService2 implements SparksAAAService {
+public class MetadataService implements SparksAAAService {
 	private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
+
 	@Autowired
-	SparksTokenRequest tokenRequest;
+	private SparksTokenRequest tokenRequest;
 	@Autowired
-	MetaDataService metaDataService;
+	private RulesLoader rulesLoader;
 	@Autowired
-	RulesLoader rulesLoader;
+	private MetadataAPI metadataAPI;
+
 	private Map<Long, List<CronExpression>> occupation = new HashMap<>();
 	private Map<Long, List<CronExpression>> schoolClosed = new HashMap<>();
 	private Map<Long, List<CronExpression>> schoolTeaching = new HashMap<>();
@@ -39,19 +41,31 @@ public class MetadataService2 implements SparksAAAService {
 	}
 
 	public Collection<Site> getSites() {
-		return metaDataService.getSites().stream().map(x -> x.getSite()).collect(Collectors.toList());
+		return metadataAPI.getSites().stream().map(x -> x.getSite()).collect(Collectors.toList());
 	}
 
 	public Collection<SiteInfo> getSiteInfos() {
-		return metaDataService.getSites().stream().map(x -> x.getSiteInfo()).collect(Collectors.toList());
+		return metadataAPI.getSites().stream().map(x -> x.getSiteInfo()).collect(Collectors.toList());
 	}
 
 	public SiteInfo getSiteInfo(Long id) {
-		return metaDataService.getSiteInfo(id);
+		return metadataAPI.getSiteInfo(id);
 	}
 
 	public Collection<Schedule> getSchedules(Long id) {
-		return metaDataService.getScheduleForSite(id);
+		return metadataAPI.getScheduleForSite(id);
+	}
+
+	public List<CronExpression> getClosed(Long id){
+		return schoolClosed.get(id);
+	}
+
+	public List<CronExpression> getOccupied(Long id){
+		return occupation.get(id);
+	}
+
+	public List<CronExpression> getTeaching(Long id){
+		return schoolTeaching.get(id);
 	}
 
 	public void updateAll() {
@@ -73,7 +87,7 @@ public class MetadataService2 implements SparksAAAService {
 	}
 
 	public void updateSchedule(Long aid) {
-		Collection<Schedule> scheduleForSite = metaDataService.getScheduleForSite(aid);
+		Collection<Schedule> scheduleForSite = metadataAPI.getScheduleForSite(aid);
 		List<String> cronStrings = scheduleForSite.stream().flatMap(l -> l.getCronDefinitions().stream())
 												  .collect(Collectors.toList());
 		List<CronExpression> cronExpressions = toExpressionList(cronStrings);
@@ -87,10 +101,10 @@ public class MetadataService2 implements SparksAAAService {
 	}
 
 	public void updateCalendar(Long bid) {
-		Collection<Schedule> scheduleForSite = metaDataService.getScheduleForSite(bid);
+		Collection<Schedule> scheduleForSite = metadataAPI.getScheduleForSite(bid);
 		List<Schedule> closed = scheduleForSite.stream().filter(s -> s.getType().equals("CLOSED"))
 											   .collect(Collectors.toList());
-		List<Schedule> teaching = scheduleForSite.stream().filter(s -> s.getType().equals("TEACHING"))
+		List<Schedule> teaching = scheduleForSite.stream().filter(s -> s.getType().equals("OPEN_ONGOING_ACTIVITIES"))
 												 .collect(Collectors.toList());
 
 		List<String> closedStrings = closed.stream().flatMap(l -> l.getCronDefinitions().stream())
@@ -102,10 +116,10 @@ public class MetadataService2 implements SparksAAAService {
 	}
 
 	public boolean isOccupied(Long id, Date date) throws BuildingDatabaseException {
-		List<CronExpression> cronexpr = schoolClosed.get(id);
+		List<CronExpression> cronexpr = occupation.get(id);
 		if (cronexpr == null) {
-			updateCalendar(id);
-			cronexpr = schoolClosed.get(id);
+			updateSchedule(id);
+			cronexpr = occupation.get(id);
 			if (cronexpr == null)
 				throw new BuildingDatabaseException("No schedule found for school " + id);
 		}
@@ -126,7 +140,7 @@ public class MetadataService2 implements SparksAAAService {
 	public boolean isTeaching(Long aid, Date date) throws BuildingDatabaseException {
 		List<CronExpression> cronexpr = schoolTeaching.get(aid);
 		if (cronexpr == null) {
-			updateSchedule(aid);
+			updateCalendar(aid);
 			cronexpr = schoolTeaching.get(aid);
 			if (cronexpr == null)
 				throw new BuildingDatabaseException("No schedule found for school " + aid);
@@ -151,7 +165,7 @@ public class MetadataService2 implements SparksAAAService {
 	}
 
 	public void setToken(String token) {
-		metaDataService.setToken(token);
+		metadataAPI.setToken(token);
 	}
 
 	private List<CronExpression> toExpressionList(Collection<String> strings) {

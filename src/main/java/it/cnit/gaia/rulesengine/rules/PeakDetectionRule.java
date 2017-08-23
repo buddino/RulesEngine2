@@ -1,8 +1,8 @@
 package it.cnit.gaia.rulesengine.rules;
 
-import io.swagger.client.ApiException;
-import io.swagger.client.model.ResourceAnalyticsDataResponseAPIModel;
-import io.swagger.client.model.SingleResourceMeasurementAPIModel;
+import io.swagger.sparks.ApiException;
+import io.swagger.sparks.model.ResourceAnalyticsDataResponseAPIModel;
+import io.swagger.sparks.model.SingleResourceMeasurementAPIModel;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.annotation.LogMe;
 import it.cnit.gaia.rulesengine.model.annotation.URI;
@@ -14,7 +14,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
-import static io.swagger.client.model.ResourceQueryCriteriaRequestWithinATimeframeAPIModel.GranularityEnum;
+import static io.swagger.sparks.model.ResourceQueryCriteriaRequestWithinATimeframeAPIModel.GranularityEnum;
 
 public class PeakDetectionRule extends GaiaRule {
 	@URI

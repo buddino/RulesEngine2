@@ -24,7 +24,7 @@ public class EventController {
 	private EventService eventService;
 
 	@ApiOperation(value = "GET events", notes = "This API retrieves the events logged for all the buildings")
-	@GetMapping(value = "/events", produces = MediaType.APPLICATION_JSON_VALUE)
+	@GetMapping(value = "events", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<List<EventDTO>> getEvents(
 			@ApiParam(value = "Name of the rule class which generated the events", example = "PowerFactor") @RequestParam(defaultValue = "", required = false) String ruleClass,
 			@ApiParam(value = "Id of the rule which generated the events", example = "25:5") @RequestParam(defaultValue = "", required = false) String ruleId,
@@ -39,7 +39,7 @@ public class EventController {
 	}
 
 	@ApiOperation(value = "GET events for building", notes = "This API retrieves the events logged for the specified building")
-	@GetMapping("/building/{bid}/events")
+	@GetMapping("building/{bid}/events")
 	public ResponseEntity<List<EventDTO>> getEventsForSchool(
 			@ApiParam(value = "The ID of the building the events belong", required = true, example = "153453") @PathVariable Long bid,
 			@ApiParam(value = "From time (timestamp)", example = "1492521504000") @RequestParam(required = false) Long from,

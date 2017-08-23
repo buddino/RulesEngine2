@@ -2,7 +2,7 @@ package rules;
 
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.weatherlibrary.WeatherService;
-import io.swagger.client.model.SingleResourceMeasurementAPIModel;
+import io.swagger.sparks.model.SingleResourceMeasurementAPIModel;
 import it.cnit.gaia.buildingdb.BuildingDatabaseService;
 import it.cnit.gaia.rulesengine.configuration.ContextProvider;
 import it.cnit.gaia.rulesengine.model.GaiaRule;

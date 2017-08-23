@@ -1,6 +1,7 @@
 package it.cnit.gaia.rulesengine.utils;
 
-import io.swagger.client.model.SingleResourceMeasurementAPIModel;
+
+import io.swagger.sparks.model.SingleResourceMeasurementAPIModel;
 
 import java.util.Date;
 

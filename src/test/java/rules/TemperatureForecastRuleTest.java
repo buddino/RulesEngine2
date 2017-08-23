@@ -2,8 +2,8 @@ package rules;
 
 
 import com.weatherlibrary.datamodel.*;
-import io.swagger.client.ApiException;
-import io.swagger.client.model.ResourceAnalyticsDataResponseAPIModel;
+import io.swagger.sparks.ApiException;
+import io.swagger.sparks.model.ResourceAnalyticsDataResponseAPIModel;
 import it.cnit.gaia.rulesengine.model.exceptions.RuleInitializationException;
 import it.cnit.gaia.rulesengine.rules.TemperatureForecast;
 import it.cnit.gaia.rulesengine.service.SparksService;

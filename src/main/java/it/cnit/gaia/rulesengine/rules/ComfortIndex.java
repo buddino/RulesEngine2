@@ -1,9 +1,12 @@
 package it.cnit.gaia.rulesengine.rules;
 
+import it.cnit.gaia.buildingdb.exceptions.BuildingDatabaseException;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
 import it.cnit.gaia.rulesengine.model.annotation.LogMe;
 import it.cnit.gaia.rulesengine.model.annotation.URI;
+import it.cnit.gaia.rulesengine.utils.HardCodedValues;
+import org.springframework.web.client.HttpClientErrorException;
 
 public class ComfortIndex extends GaiaRule {
 
@@ -22,6 +25,11 @@ public class ComfortIndex extends GaiaRule {
 	@URI
 	public String humidity_uri;
 
+	@LogMe
+	@LoadMe(required = false)
+	@URI
+	public String occupancy_uri;
+
 	//Values
 	@LogMe
 	public Double index;
@@ -30,14 +38,27 @@ public class ComfortIndex extends GaiaRule {
 	@LogMe
 	public Double humid;
 
+
+	private boolean isOccupied() {
+		if (occupancy_uri == null) {
+			try {
+				if (!(metadataService.isTeaching(school.aid) && metadataService.isOccupied(area.aid)))
+					return false;
+			} catch (HttpClientErrorException | BuildingDatabaseException e) {
+				warn("Error while retrieving schedule/calendar: " + e.getMessage());
+				return false;
+			}
+			return true;
+		}
+		else {
+			return measurements.getLatestFor(occupancy_uri).getReading() > HardCodedValues.occupancyThreshold;
+		}
+	}
+
 	@Override
 	public boolean condition() {
-		try {
-			if (!(metadataService.isTeaching(school.aid) && metadataService.isOccupied(area.aid)))
-				return false;
-		} catch (Exception e) {
-			LOGGER.warn("Error while retrieving schedule/calendar: "+ e.getMessage());
-		}
+		if (!isOccupied())
+			return false;
 
 		//Source: http://www.azosensors.com/article.aspx?ArticleID=487
 		temp = measurements.getLatestFor(temperature_uri).getReading();

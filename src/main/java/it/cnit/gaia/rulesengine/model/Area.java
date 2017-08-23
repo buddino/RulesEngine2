@@ -1,6 +1,7 @@
 package it.cnit.gaia.rulesengine.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
 import java.util.*;
@@ -12,6 +13,7 @@ public class Area implements Fireable {
 	public String name;
 	public String uri;
 	public String type;
+	@JsonProperty("json")
 	public Map<String, Object> metadata = new HashMap<>();
 	@JsonIgnore
 	Set<Fireable> children = new HashSet<>();

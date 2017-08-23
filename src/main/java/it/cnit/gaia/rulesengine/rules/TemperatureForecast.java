@@ -2,9 +2,9 @@ package it.cnit.gaia.rulesengine.rules;
 
 import com.weatherlibrary.datamodel.Hour;
 import com.weatherlibrary.datamodel.Weather;
-import io.swagger.client.ApiException;
-import io.swagger.client.model.ResourceAnalyticsDataResponseAPIModel;
-import io.swagger.client.model.ResourceQueryCriteriaRequestWithinATimeframeAPIModel.GranularityEnum;
+import io.swagger.sparks.ApiException;
+import io.swagger.sparks.model.ResourceAnalyticsDataResponseAPIModel;
+import io.swagger.sparks.model.ResourceQueryCriteriaRequestWithinATimeframeAPIModel;
 import it.cnit.gaia.buildingdb.exceptions.BuildingDatabaseException;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
@@ -12,7 +12,6 @@ import it.cnit.gaia.rulesengine.model.annotation.LogMe;
 import it.cnit.gaia.rulesengine.model.annotation.URI;
 import it.cnit.gaia.rulesengine.model.exceptions.RuleInitializationException;
 
-import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -43,17 +42,9 @@ public class TemperatureForecast extends GaiaRule {
 
 	@Override
 	public boolean init() throws RuleInitializationException {
-		try {
-			lat = metadataService.getJsonFieldForbuilding(school.aid, "lat").asDouble();
-			lon = metadataService.getJsonFieldForbuilding(school.aid, "lon").asDouble();
-		}
-		catch (BuildingDatabaseException e) {
-			LOGGER.warn("Error while retrieving coordinates: " +e.getMessage(),e);
-			return false;
-		} catch (IOException e) {
-			LOGGER.warn("Error while retrieving coordinates: " +e.getMessage(),e);
-			return false;
-		}
+		//TODO Remove local variables
+		lat = school.lat;
+		lon = school.lon;
 		return super.init();
 	}
 
@@ -112,7 +103,6 @@ public class TemperatureForecast extends GaiaRule {
 
 	private Double getTodayTemperature(String timezone) {
 		//If the external temperature sensor is available
-		//TODO Timezone
 		ZoneId timezoneOffset = ZoneId.of(timezone);
 		if (ext_temp_uri != null) {
 			Long ext_temp_id = measurements.getMeterMap().get(ext_temp_uri);
@@ -121,7 +111,7 @@ public class TemperatureForecast extends GaiaRule {
 			try {
 				ResourceAnalyticsDataResponseAPIModel result = measurements
 						.getMeasurementService()
-						.timeRangeQuery(ext_temp_id, eigtham, tenam, GranularityEnum.HOUR);
+						.timeRangeQuery(ext_temp_id, eigtham, tenam, ResourceQueryCriteriaRequestWithinATimeframeAPIModel.GranularityEnum.HOUR);
 				return result.getAverage();
 			} catch (ApiException e) {
 				LOGGER.warn(e.getMessage());

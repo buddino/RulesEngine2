@@ -3,11 +3,11 @@ package it.cnit.gaia.rulesengine;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import io.swagger.client.ApiException;
+import io.swagger.sparks.ApiException;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
 import it.cnit.gaia.rulesengine.model.School;
 import it.cnit.gaia.rulesengine.service.MeasurementRepository;
-import it.cnit.gaia.rulesengine.service.MetadataServiceOld;
+import it.cnit.gaia.rulesengine.service.MetadataService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +30,7 @@ public class Scheduler {
 	@Autowired
 	OrientGraphFactory ogf;
 	@Autowired
-	MetadataServiceOld metadataService;
+	MetadataService metadataService;
 
 	Collection<School> schools;
 
@@ -58,7 +58,7 @@ public class Scheduler {
 
 	}
 
-	//@Scheduled(fixedDelayString = "${scheduler.interval}")
+	@Scheduled(fixedDelayString = "${scheduler.interval}")
 	public void scheduledMethod() throws IOException {
 		//Riguarda
 		measurements.getMeasurementService().checkAuth();
@@ -73,7 +73,6 @@ public class Scheduler {
 	public void reloadSchedules() {
 		metadataService.updateAll();
 	}
-
 
 
 }

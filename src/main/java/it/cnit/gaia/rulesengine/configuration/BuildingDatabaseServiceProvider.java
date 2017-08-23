@@ -1,7 +1,7 @@
 package it.cnit.gaia.rulesengine.configuration;
 
 
-import it.cnit.gaia.api.MetaDataService;
+import it.cnit.gaia.api.MetadataAPI;
 import it.cnit.gaia.buildingdb.BuildingDatabaseService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,8 +21,8 @@ public class BuildingDatabaseServiceProvider {
 	}
 
 	@Bean
-	public MetaDataService getMetaDataService(){
-		return new MetaDataService();
+	public MetadataAPI getMetaDataService(){
+		return new MetadataAPI();
 	}
 
 }

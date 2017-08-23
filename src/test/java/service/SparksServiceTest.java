@@ -1,8 +1,8 @@
 package service;
 
-import io.swagger.client.ApiException;
-import io.swagger.client.api.SiteAPIApi;
-import io.swagger.client.model.SiteAPIModel;
+import io.swagger.sparks.ApiException;
+import io.swagger.sparks.api.SiteAPIApi;
+import io.swagger.sparks.model.SiteAPIModel;
 import it.cnit.gaia.rulesengine.configuration.SparksTokenRequest;
 import it.cnit.gaia.rulesengine.service.SparksService;
 import org.junit.Before;

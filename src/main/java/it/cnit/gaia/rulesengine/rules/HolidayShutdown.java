@@ -1,15 +1,10 @@
 package it.cnit.gaia.rulesengine.rules;
 
-import it.cnit.gaia.buildingdb.dto.BuildingCalendarDTO;
-import it.cnit.gaia.buildingdb.dto.CalendarStatus;
-import it.cnit.gaia.buildingdb.exceptions.BuildingDatabaseException;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
 import it.cnit.gaia.rulesengine.model.exceptions.RuleInitializationException;
 import org.quartz.CronExpression;
 
-import java.io.IOException;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -35,30 +30,7 @@ public class HolidayShutdown extends GaiaRule {
 
 	@Override
 	public boolean init() throws RuleInitializationException {
-		try {
-			//Get schedule
-			List<BuildingCalendarDTO> schedulesForArea = buildingDBService.getBuildingCalendar(school.aid, CalendarStatus.CLOSED);
-			if (schedulesForArea == null)
-				throw new RuleInitializationException("Error retrieving calendar for school " + school.aid);
-			for( BuildingCalendarDTO buildingCalendarDTO : schedulesForArea ){
-				if (buildingCalendarDTO == null)
-					throw new RuleInitializationException("Error retrieving calendar for school " + school.aid);
-				List<String> cronStrings = buildingCalendarDTO.getCronStrings();
-				if( cronStrings.size() == 0)
-					throw new RuleInitializationException("The CRON expressions collection is empty");
-				for (String s : cronStrings) {
-					//Create CRON expressions (and validate)
-					cronexps.add(new CronExpression(s));
-				}
-			}
-		} catch (BuildingDatabaseException e) {
-			LOGGER.error(e.getMessage());
-			return false;
-		} catch (ParseException e) {
-			throw new RuleInitializationException("Cron expression not valid: " + e.getMessage());
-		} catch (IOException e) {
-			throw new RuleInitializationException("JSON Array parsing error: " + e.getMessage());
-		}
+		cronexps = metadataService.getClosed(155076L);
 		validateFields();
 		return true;
 	}

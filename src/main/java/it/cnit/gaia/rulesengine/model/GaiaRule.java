@@ -1,7 +1,7 @@
 package it.cnit.gaia.rulesengine.model;
 
 import com.weatherlibrary.WeatherService;
-import io.swagger.client.ApiException;
+import io.swagger.sparks.ApiException;
 import it.cnit.gaia.buildingdb.BuildingDatabaseService;
 import it.cnit.gaia.rulesengine.configuration.ContextProvider;
 import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
@@ -78,7 +78,7 @@ public abstract class GaiaRule implements Fireable {
 	protected MeasurementRepository measurements = ContextProvider.getBean(MeasurementRepository.class);
 	protected BuildingDatabaseService buildingDBService = ContextProvider.getBean(BuildingDatabaseService.class);
 	protected RuleDatabaseService ruleDatabaseService = ContextProvider.getBean(RuleDatabaseService.class);
-	protected MetadataServiceOld metadataService = ContextProvider.getBean(MetadataServiceOld.class);
+	protected MetadataService metadataService = ContextProvider.getBean(MetadataService.class);
 	protected WeatherService weatherService = ContextProvider.getBean(WeatherService.class);
 
 
@@ -166,7 +166,7 @@ public abstract class GaiaRule implements Fireable {
 						e.printStackTrace();
 					} catch (ApiException e) {
 						throw new RuleInitializationException(String
-								.format("Required power_uri not found in resource map (%s)", f.getName()));
+								.format("Required uri not found in resource map (%s)", f.getName()));
 					}
 				}
 			}
@@ -182,7 +182,7 @@ public abstract class GaiaRule implements Fireable {
 				cronExpression.setTimeZone(getTimeZone());
 			} catch (ParseException e) {
 				throw new RuleInitializationException("The specified fireCron expression is not valid - " + fireCron + "\n" + e
-						.getMessage());
+						.getMessage(),this.rid);
 			}
 		}
 		return validateFields();
@@ -354,7 +354,7 @@ public abstract class GaiaRule implements Fireable {
 		return this;
 	}
 
-	public GaiaRule setMetadataService(MetadataServiceOld metadataService) {
+	public GaiaRule setMetadataService(MetadataService metadataService) {
 		this.metadataService = metadataService;
 		return this;
 	}

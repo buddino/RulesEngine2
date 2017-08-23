@@ -1,6 +1,6 @@
 package it.cnit.gaia.rulesengine.rules;
 
-import io.swagger.client.model.SingleResourceMeasurementAPIModel;
+import io.swagger.sparks.model.SingleResourceMeasurementAPIModel;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
 import it.cnit.gaia.rulesengine.model.annotation.LogMe;

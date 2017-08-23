@@ -1,6 +1,6 @@
 package rules;
 
-import io.swagger.client.ApiException;
+import io.swagger.sparks.ApiException;
 import it.cnit.gaia.rulesengine.api.exception.GaiaRuleException;
 import it.cnit.gaia.rulesengine.configuration.SparksTokenRequest;
 import it.cnit.gaia.rulesengine.model.School;
