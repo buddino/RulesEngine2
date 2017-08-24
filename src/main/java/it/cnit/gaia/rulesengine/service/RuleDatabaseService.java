@@ -177,17 +177,56 @@ public class RuleDatabaseService {
 	}
 
 	public RuleDTO editCustomRule(String rid, RuleDTO ruleDTO) throws GaiaRuleException {
-		//TODO API for changing Area
 		OrientGraph tx = ogf.getTx();
 		OrientVertex ruleVertex;
 		Map<String, Object> fieldMap = ruleDTO.getFields();
+
 		try {
 			ruleVertex = tx.getVertex(rid);
 		} catch (Exception e) {
 			throw new GaiaRuleException("Not found", 404);
 		}
-		if(ruleVertex==null){
-			throw new GaiaRuleException("Not found",404);
+		if (ruleVertex == null) {
+			throw new GaiaRuleException("Not found", 404);
+		}
+		if (!ruleVertex.getProperties().containsKey("custom")) {
+			throw new GaiaRuleException("Not authorized", 403);
+		}
+		if (!(Boolean) ruleVertex.getProperty("custom")) {
+			throw new GaiaRuleException("Not authorized", 403);
+		}
+		Set<String> propertyKeys = ruleVertex.getPropertyKeys();
+		propertyKeys.forEach(key -> ruleVertex.removeProperty(key));
+		ruleVertex.setProperties(fieldMap);
+		GaiaRule javaRule = rulesLoader.getRuleForTest(ruleVertex);
+		try {
+			javaRule.init();
+		} catch (Exception e) {
+			tx.rollback();
+			throw new GaiaRuleException("Initialization error", HttpStatus.BAD_REQUEST);
+		}
+		ruleDTO.setRid(ruleVertex.getIdentity().toString());
+		tx.commit();
+		tx.shutdown();
+		return ruleDTO;
+	}
+
+	public RuleDTO patchCustomRule(String rid, RuleDTO ruleDTO) throws GaiaRuleException {
+		//TODO API for changing Area
+		OrientGraph tx = ogf.getTx();
+		OrientVertex ruleVertex;
+		Map<String, Object> fieldMap = ruleDTO.getFields();
+
+		try {
+			ruleVertex = tx.getVertex(rid);
+		} catch (Exception e) {
+			throw new GaiaRuleException("Not found", 404);
+		}
+		if (ruleVertex == null) {
+			throw new GaiaRuleException("Not found", 404);
+		}
+		if (!ruleVertex.getProperties().containsKey("custom")) {
+			throw new GaiaRuleException("Not authorized", 403);
 		}
 		if (!(Boolean) ruleVertex.getProperty("custom")) {
 			throw new GaiaRuleException("Not authorized", 403);
@@ -218,7 +257,7 @@ public class RuleDatabaseService {
 		ruleDTO.setClazz(d.getClassName());
 		ruleDTO.setRid(d.getIdentity().toString());
 		Map<String, Object> fields = new HashMap<>();
-		fields.put("name",d.field("name"));
+		fields.put("name", d.field("name"));
 		for (String key : d.fieldNames()) {
 			if (!skipFields.contains(key)) {
 				Object o = d.field(key);
@@ -236,16 +275,22 @@ public class RuleDatabaseService {
 		return rulesLoader.getGaiaRuleInstance(rid);
 	}
 
-	public void setLatestFireTime(String rid, Date date){
+	public void setLatestFireTime(String rid, Date date) {
 		OrientVertex vertex = ogf.getNoTx().getVertex(rid);
-		vertex.setProperty("latestFireTime",date);
+		vertex.setProperty("latestFireTime", date);
 		vertex.save();
 	}
 
-	public Date getLatestFireTime(String rid){
+	public Date getLatestFireTime(String rid) {
 		OrientVertex vertex = ogf.getNoTx().getVertex(rid);
-		Date latestFireTime = vertex.getProperty("latestFireTime");
-		return latestFireTime;
+		try {
+			Date latestFireTime = vertex.getProperty("latestFireDateTime");
+			return latestFireTime;
+		}
+		catch (ClassCastException e){
+			Date latestFireTime = new Date(vertex.getProperty("latestFireDateTime"));
+			return latestFireTime;
+		}
 	}
 
 	public School getSchool(Long aid) {

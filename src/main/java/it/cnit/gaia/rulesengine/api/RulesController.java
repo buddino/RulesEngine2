@@ -58,9 +58,17 @@ public class RulesController {
 	}
 
 	@ApiOperation(value = "EDIT the rule", notes = "Modify the rule identified by {rid} according to the object passed in the body")
+	@PatchMapping(value = "rules/{rid}", produces = MediaType.APPLICATION_JSON_VALUE)
+	@ResponseBody
+	public ResponseEntity<RuleDTO> patchRule(@ApiParam("Identifier of the rule") @PathVariable String rid, @RequestBody RuleDTO ruleDTO) throws GaiaRuleException {
+		ruleDTO = ruleDatabaseService.patchCustomRule(rid, ruleDTO);
+		return ResponseEntity.ok(ruleDTO);
+	}
+
+	@ApiOperation(value = "EDIT the rule", notes = "Modify the rule identified by {rid} according to the object passed in the body")
 	@PutMapping(value = "rules/{rid}", produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
-	public ResponseEntity<RuleDTO> editRule(@ApiParam("Identifier of the rule") @PathVariable String rid, @RequestBody RuleDTO ruleDTO) throws Exception {
+	public ResponseEntity<RuleDTO> editRule(@ApiParam("Identifier of the rule") @PathVariable String rid, @RequestBody RuleDTO ruleDTO) throws GaiaRuleException {
 		ruleDTO = ruleDatabaseService.editCustomRule(rid, ruleDTO);
 		return ResponseEntity.ok(ruleDTO);
 	}
