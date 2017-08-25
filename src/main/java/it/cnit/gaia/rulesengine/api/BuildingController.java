@@ -68,6 +68,8 @@ public class BuildingController {
 	@ResponseBody
 	ResponseEntity<Area> getBuildingTree(@ApiParam("ID of the building") @PathVariable Long id) throws IllegalAccessException, BuildingDatabaseException {
 		School school = rulesLoader.loadSchools().get(id);
+		if(school == null)
+			return ResponseEntity.notFound().build();
 		return ResponseEntity.ok(school);
 	}
 
