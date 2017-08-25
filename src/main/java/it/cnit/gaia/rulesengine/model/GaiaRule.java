@@ -281,6 +281,7 @@ public abstract class GaiaRule implements Fireable {
 		if (this instanceof ExpressionRule) {
 			map.putAll(((ExpressionRule) this).fields);
 		}
+		map.put("rid",rid);
 		return map;
 	}
 
