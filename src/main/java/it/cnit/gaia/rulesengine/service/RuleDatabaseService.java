@@ -284,11 +284,11 @@ public class RuleDatabaseService {
 	public Date getLatestFireTime(String rid) {
 		OrientVertex vertex = ogf.getNoTx().getVertex(rid);
 		try {
-			Date latestFireTime = vertex.getProperty("latestFireDateTime");
+			Date latestFireTime = vertex.getProperty("latestFireTime");
 			return latestFireTime;
 		}
 		catch (ClassCastException e){
-			Date latestFireTime = new Date(vertex.getProperty("latestFireDateTime"));
+			Date latestFireTime = new Date((Long)vertex.getProperty("latestFireTime"));
 			return latestFireTime;
 		}
 	}
