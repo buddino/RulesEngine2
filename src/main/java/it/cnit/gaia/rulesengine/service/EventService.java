@@ -67,7 +67,7 @@ public class EventService {
 		ODatabaseDocumentTx db = graphFactory.getNoTx().getRawGraph();
 		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("SELECT * FROM GaiaEvent WHERE rule = ? order by timestamp DESC FETCHPLAN rule:1");
 		query.setLimit(limit);
-		List<ODocument> result = db.command(query).execute(ruleId);
+		List<ODocument> result = db.command(query).execute(RIDformatter(ruleId));
 		return ODocument2Events(result);
 
 	}
@@ -115,7 +115,7 @@ public class EventService {
 	public EventDTO getLatestEventForRule(String rid){
 		OrientGraphNoTx G = graphFactory.getNoTx();
 		OSQLSynchQuery query = new OSQLSynchQuery("select from GaiaEvent where rule=? ORDER BY timestamp DESC LIMIT 1");
-		List<ODocument> result = (List<ODocument>) query.execute(G.getVertex(rid).getIdentity());
+		List<ODocument> result = (List<ODocument>) query.execute(RIDformatter(rid));
 		if (result.size() == 0 || result == null) {
 			return null;
 		}
@@ -126,7 +126,7 @@ public class EventService {
 	public List<EventDTO> getLatestEventsForRule(String rid, Long from, Long to){
 		OrientGraphNoTx G = graphFactory.getNoTx();
 		OSQLSynchQuery query = new OSQLSynchQuery("select from GaiaEvent where rule = ? AND timestamp between ? and ? ORDER BY timestamp");
-		List<ODocument> result = (List<ODocument>) query.execute(G.getVertex(rid).getIdentity(), from, to);
+		List<ODocument> result = (List<ODocument>) query.execute(RIDformatter(rid), from, to);
 		return ODocument2Events(result);
 	}
 
@@ -144,5 +144,11 @@ public class EventService {
 			events.add(e);
 		});
 		return events;
+	}
+
+	private String RIDformatter(String ruleId){
+		if(ruleId.charAt(0)!='#')
+			ruleId = '#'+ruleId;
+		return ruleId;
 	}
 }

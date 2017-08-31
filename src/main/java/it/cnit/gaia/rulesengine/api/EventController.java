@@ -50,4 +50,7 @@ public class EventController {
 		else
 			return ResponseEntity.ok(eventService.getEventsForSchoolTimeRange(bid, from, to, limit));
 	}
+
+
+
 }

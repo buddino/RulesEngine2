@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 
 import javax.annotation.PostConstruct;
 import java.text.ParseException;
@@ -56,15 +57,15 @@ public class MetadataService implements SparksAAAService {
 		return metadataAPI.getScheduleForSite(id);
 	}
 
-	public List<CronExpression> getClosed(Long id){
+	public List<CronExpression> getClosed(Long id) {
 		return schoolClosed.get(id);
 	}
 
-	public List<CronExpression> getOccupied(Long id){
+	public List<CronExpression> getOccupied(Long id) {
 		return occupation.get(id);
 	}
 
-	public List<CronExpression> getTeaching(Long id){
+	public List<CronExpression> getTeaching(Long id) {
 		return schoolTeaching.get(id);
 	}
 
@@ -87,11 +88,16 @@ public class MetadataService implements SparksAAAService {
 	}
 
 	public void updateSchedule(Long aid) {
-		Collection<Schedule> scheduleForSite = metadataAPI.getScheduleForSite(aid);
-		List<String> cronStrings = scheduleForSite.stream().flatMap(l -> l.getCronDefinitions().stream())
-												  .collect(Collectors.toList());
-		List<CronExpression> cronExpressions = toExpressionList(cronStrings);
-		occupation.put(aid, cronExpressions);
+		try {
+			Collection<Schedule> scheduleForSite = metadataAPI.getScheduleForSite(aid);
+			List<String> cronStrings = scheduleForSite.stream().flatMap(l -> l.getCronDefinitions().stream())
+													  .collect(Collectors.toList());
+			List<CronExpression> cronExpressions = toExpressionList(cronStrings);
+			occupation.put(aid, cronExpressions);
+		}
+		catch (HttpStatusCodeException e){
+			LOGGER.warn("Error while updating schedule for: "+aid+". Error: "+e.getStatusText());
+		}
 	}
 
 	public void updateCalendars() {
@@ -101,18 +107,24 @@ public class MetadataService implements SparksAAAService {
 	}
 
 	public void updateCalendar(Long bid) {
-		Collection<Schedule> scheduleForSite = metadataAPI.getScheduleForSite(bid);
-		List<Schedule> closed = scheduleForSite.stream().filter(s -> s.getType().equals("CLOSED"))
-											   .collect(Collectors.toList());
-		List<Schedule> teaching = scheduleForSite.stream().filter(s -> s.getType().equals("OPEN_ONGOING_ACTIVITIES"))
-												 .collect(Collectors.toList());
+		try {
+			Collection<Schedule> scheduleForSite = metadataAPI.getScheduleForSite(bid);
+			List<Schedule> closed = scheduleForSite.stream().filter(s -> s.getType().equals("CLOSED"))
+												   .collect(Collectors.toList());
+			List<Schedule> teaching = scheduleForSite.stream()
+													 .filter(s -> s.getType().equals("OPEN_ONGOING_ACTIVITIES"))
+													 .collect(Collectors.toList());
 
-		List<String> closedStrings = closed.stream().flatMap(l -> l.getCronDefinitions().stream())
-										   .collect(Collectors.toList());
-		List<String> teachingStrings = teaching.stream().flatMap(l -> l.getCronDefinitions().stream())
+			List<String> closedStrings = closed.stream().flatMap(l -> l.getCronDefinitions().stream())
 											   .collect(Collectors.toList());
-		schoolClosed.put(bid, toExpressionList(closedStrings));
-		schoolTeaching.put(bid, toExpressionList(teachingStrings));
+			List<String> teachingStrings = teaching.stream().flatMap(l -> l.getCronDefinitions().stream())
+												   .collect(Collectors.toList());
+			schoolClosed.put(bid, toExpressionList(closedStrings));
+			schoolTeaching.put(bid, toExpressionList(teachingStrings));
+		}
+		catch (HttpStatusCodeException e){
+			LOGGER.warn("Error while updating schedule for: "+bid+". Error: "+e.getStatusText());
+		}
 	}
 
 	public boolean isOccupied(Long id, Date date) throws BuildingDatabaseException {
@@ -157,7 +169,7 @@ public class MetadataService implements SparksAAAService {
 	}
 
 	public boolean isOccupied(Long id) throws BuildingDatabaseException {
-		return isOccupied(id,new Date());
+		return isOccupied(id, new Date());
 	}
 
 	public void forceTokenRefresh() {

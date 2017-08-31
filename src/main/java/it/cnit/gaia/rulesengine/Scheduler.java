@@ -54,7 +54,7 @@ public class Scheduler {
 		measurements.getMeasurementService().checkAuth();
 
 		LOGGER.info("Loading schedules");
-		//reloadSchedules();
+		reloadSchedules();
 
 	}
 
@@ -69,10 +69,14 @@ public class Scheduler {
 		schools.forEach(s -> s.fire());
 	}
 
+	//@Scheduled(fixedDelay = 3600 * 1000)
+	public void reloadSchools() {
+		rulesLoader.reloadAllSchools();
+	}
+
 	@Scheduled(cron = "0 0 12 * * ?")
 	public void reloadSchedules() {
 		metadataService.updateAll();
 	}
-
 
 }

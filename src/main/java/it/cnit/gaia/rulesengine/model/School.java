@@ -6,5 +6,4 @@ public class School extends Area {
 	public Double sqmt;
 	public Double lat, lon;
 
-
 }

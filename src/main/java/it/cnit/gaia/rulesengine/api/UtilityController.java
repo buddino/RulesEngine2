@@ -4,6 +4,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.AuthorizationScope;
+import io.swagger.sparks.model.SingleResourceMeasurementAPIModel;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
 import it.cnit.gaia.rulesengine.service.MeasurementRepository;
 import it.cnit.gaia.rulesengine.service.MetadataService;
@@ -49,6 +50,14 @@ public class UtilityController {
 	@ResponseBody
 	ResponseEntity<Map<String, Long>> getUriMapping() {
 		return ResponseEntity.ok(measurementRepository.getMeterMap());
+	}
+
+	@GetMapping("measurements/latest")
+	@ApiOperation(notes = "Returns the conversion map from URIs to numerical Resource IDs", value = "GET Uri2Id Map")
+	public
+	@ResponseBody
+	ResponseEntity<Map<String, SingleResourceMeasurementAPIModel>> getLatestMeasurements() {
+		return ResponseEntity.ok(measurementRepository.getLatestReadings());
 	}
 
 	@PutMapping("schedules/update")

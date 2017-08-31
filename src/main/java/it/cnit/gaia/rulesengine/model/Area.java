@@ -39,6 +39,11 @@ public class Area implements Fireable {
 		return rid;
 	}
 
+	public Area setRid(String rid) {
+		this.rid = rid;
+		return this;
+	}
+
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
@@ -51,8 +56,18 @@ public class Area implements Fireable {
 		return Collections.unmodifiableSet(children);
 	}
 
+	public Area setChildren(Set<Fireable> children) {
+		this.children = children;
+		return this;
+	}
+
 	public String getName() {
 		return name;
+	}
+
+	public Area setName(String name) {
+		this.name = name;
+		return this;
 	}
 
 	public Long getAid() {
@@ -61,11 +76,6 @@ public class Area implements Fireable {
 
 	public Area setAid(Long aid) {
 		this.aid = aid;
-		return this;
-	}
-
-	public Area setRid(String rid) {
-		this.rid = rid;
 		return this;
 	}
 
@@ -93,16 +103,6 @@ public class Area implements Fireable {
 
 	public Area setMetadata(Map<String, Object> metadata) {
 		this.metadata = metadata;
-		return this;
-	}
-
-	public Area setChildren(Set<Fireable> children) {
-		this.children = children;
-		return this;
-	}
-
-	public Area setName(String name) {
-		this.name = name;
 		return this;
 	}
 }

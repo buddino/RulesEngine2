@@ -6,8 +6,11 @@ import it.cnit.gaia.rulesengine.api.dto.ConditionDTO;
 import it.cnit.gaia.rulesengine.api.dto.ErrorResponse;
 import it.cnit.gaia.rulesengine.api.dto.RuleDTO;
 import it.cnit.gaia.rulesengine.api.exception.GaiaRuleException;
+import it.cnit.gaia.rulesengine.loader.RulesLoader;
+import it.cnit.gaia.rulesengine.model.AreaDepth;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.School;
+import it.cnit.gaia.rulesengine.model.exceptions.RulesLoaderException;
 import it.cnit.gaia.rulesengine.rules.AllCompositeRule;
 import it.cnit.gaia.rulesengine.rules.AnyCompositeRule;
 import it.cnit.gaia.rulesengine.service.RuleDatabaseService;
@@ -33,6 +36,8 @@ public class RulesController {
 
 	@Autowired
 	private RuleDatabaseService ruleDatabaseService;
+	@Autowired
+	private RulesLoader rulesLoader;
 
 	@ApiOperation(value = "GET rules of area",
 			notes = "Get all the rules associated to the area identified by {id}",
@@ -46,6 +51,24 @@ public class RulesController {
 			@RequestParam(required = false, defaultValue = "false") Boolean traverse) throws GaiaRuleException {
 		List<RuleDTO> rulesOfArea = ruleDatabaseService.getRulesForArea(aid, traverse);
 		return ResponseEntity.ok(rulesOfArea);
+	}
+
+	@ApiOperation(value = "GET rules of building",
+			notes = "Get all the rules associated to the area identified by {id}",
+			responseContainer = "List")
+	@GetMapping(value = "building/{aid}/rules", produces = MediaType.APPLICATION_JSON_VALUE)
+	@ResponseBody
+	public ResponseEntity<AreaDepth> getRuleOfBuilding(
+			@ApiParam("ID of the area")
+			@PathVariable Long aid) throws GaiaRuleException {
+		try {
+			School school = rulesLoader.getSchool(aid);
+			AreaDepth areaDepth = new AreaDepth(school);
+			return ResponseEntity.ok(areaDepth);
+
+		} catch (RulesLoaderException e) {
+			return ResponseEntity.notFound().build();
+		}
 	}
 
 
@@ -135,23 +158,21 @@ public class RulesController {
 
 		//TODO Move into service
 		RuleDTO composite = new RuleDTO();
-		Map<String,Object> compositeFields = new HashMap<>();
+		Map<String, Object> compositeFields = new HashMap<>();
 
-		if(compositeDTO.getOperator().equals("OR")){
+		if (compositeDTO.getOperator().equals("OR")) {
 			composite.setClazz(AnyCompositeRule.class.getSimpleName());
-		}
-		else if(compositeDTO.getOperator().equals("AND")){
+		} else if (compositeDTO.getOperator().equals("AND")) {
 			composite.setClazz(AllCompositeRule.class.getSimpleName());
-		}
-		else {
+		} else {
 			throw new GaiaRuleException("Valid logical operators ar OR and AND");
 		}
-		compositeFields.put("name",compositeDTO.getName());
-		compositeFields.put("suggestion",compositeDTO.getSuggestion());
+		compositeFields.put("name", compositeDTO.getName());
+		compositeFields.put("suggestion", compositeDTO.getSuggestion());
 		composite.setFields(compositeFields);
 		composite = ruleDatabaseService.addCustomRuleToArea(aid, composite);
 		for (RuleDTO rule : compositeDTO.getRules()) {
-			ruleDatabaseService.addCustomRuleToComposite(composite.getRid(),rule);
+			ruleDatabaseService.addCustomRuleToComposite(composite.getRid(), rule);
 		}
 		return ResponseEntity.status(HttpStatus.CREATED).body(composite);
 	}
@@ -174,6 +195,13 @@ public class RulesController {
 		School school = ruleDatabaseService.getSchool(id);
 		school.fire();
 		return ResponseEntity.ok(null);
+	}
+
+	@GetMapping("reload")
+	@ApiOperation(value = "RELOAD all rules", notes = "Force rules reloading for all buildings.")
+	public ResponseEntity<Void> reloadRules(@RequestParam(defaultValue = "false", required = false) Boolean reloadnow) {
+		ruleDatabaseService.reloadAllSchools(reloadnow);
+		return ResponseEntity.noContent().build();
 	}
 
 	@ExceptionHandler(GaiaRuleException.class)

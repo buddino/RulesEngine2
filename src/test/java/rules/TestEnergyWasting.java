@@ -12,7 +12,6 @@ import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.junit.rules.ExpectedException;
 import org.mockito.MockitoAnnotations;
-import org.springframework.util.Assert;
 
 import java.util.List;
 
@@ -45,7 +44,7 @@ public class TestEnergyWasting extends GenericRuleTest {
 		rule.occupancy_uri = "123";
 		rule.standby_threshold = SB_TH;
 		rule.on_threshold = ON_TH;
-		Assert.isTrue(rule.init());
+		Assertions.assertTrue(rule.init());
 	}
 
 	@Test
@@ -54,7 +53,7 @@ public class TestEnergyWasting extends GenericRuleTest {
 		//rule.occupancy_uri = "123";
 		rule.standby_threshold = SB_TH;
 		rule.on_threshold = ON_TH;
-		Assert.isTrue(rule.init());
+		Assertions.assertTrue(rule.init());
 	}
 
 	@Test
@@ -84,7 +83,7 @@ public class TestEnergyWasting extends GenericRuleTest {
 		rule.occupancy_uri = "123";
 		rule.standby_threshold = SB_TH;
 		rule.on_threshold = ON_TH;
-		Assert.isTrue(rule.init());
+		Assertions.assertTrue(rule.init());
 	}
 
 

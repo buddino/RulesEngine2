@@ -41,6 +41,12 @@ public class RuleDatabaseService {
 	@Autowired
 	private RulesLoader rulesLoader;
 
+	public void reloadAllSchools(Boolean reloadnow){
+		rulesLoader.reloadAllSchools();
+		if(reloadnow)
+			rulesLoader.loadSchools();
+	}
+
 	public Long getParentArea(String ruleId) {
 		OrientVertex ruleVertex = ogf.getNoTx().getVertex(ruleId);
 		try {
@@ -84,10 +90,14 @@ public class RuleDatabaseService {
 
 	public long incrementCounter(String ruleId) {
 		OrientGraph orientdb = ogf.getTx();
-		long counter = orientdb.getVertex(ruleId).getProperty("counter");
-		orientdb.getVertex(ruleId).setProperty("counter", ++counter);
-		orientdb.commit();
-		return counter;
+		try {
+			long counter = orientdb.getVertex(ruleId).getProperty("counter");
+			orientdb.getVertex(ruleId).setProperty("counter", ++counter);
+			return counter;
+		}
+		finally {
+			orientdb.shutdown();
+		}
 	}
 
 	public List<RuleDTO> getRulesForArea(Long aid, Boolean traverse) throws GaiaRuleException {
@@ -276,9 +286,14 @@ public class RuleDatabaseService {
 	}
 
 	public void setLatestFireTime(String rid, Date date) {
-		OrientVertex vertex = ogf.getNoTx().getVertex(rid);
-		vertex.setProperty("latestFireTime", date);
-		vertex.save();
+		OrientGraph tx = ogf.getTx();
+		try {
+			OrientVertex vertex = tx.getVertex(rid);
+			vertex.setProperty("latestFireTime", date);
+		}
+		finally {
+			tx.shutdown();
+		}
 	}
 
 	public Date getLatestFireTime(String rid) {

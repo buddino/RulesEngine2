@@ -5,6 +5,8 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import io.swagger.annotations.*;
 import io.swagger.sparks.ApiException;
 import it.cnit.gaia.buildingdb.exceptions.BuildingDatabaseException;
+import it.cnit.gaia.rulesengine.api.dto.ErrorResponse;
+import it.cnit.gaia.rulesengine.api.exception.GaiaRuleException;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
 import it.cnit.gaia.rulesengine.model.Area;
 import it.cnit.gaia.rulesengine.model.School;
@@ -63,7 +65,7 @@ public class BuildingController {
 	@GetMapping(value = "building/{id}")
 	@ApiOperation(
 			value = "GET building information",
-			notes = "Get the building (indentified by id) from the rule databas")
+			notes = "Get the building (indentified by id) from the rule database")
 	public
 	@ResponseBody
 	ResponseEntity<Area> getBuildingTree(@ApiParam("ID of the building") @PathVariable Long id) throws IllegalAccessException, BuildingDatabaseException {
@@ -89,5 +91,13 @@ public class BuildingController {
 		return ResponseEntity.status(HttpStatus.OK).body(subAreas);
 	}
 
-
+	@ExceptionHandler(BuildingDatabaseException.class)
+	public ResponseEntity<ErrorResponse> exceptionHandler(GaiaRuleException e) {
+		if (e.getStatus() == HttpStatus.INTERNAL_SERVER_ERROR) {
+			LOGGER.error(e);
+		}
+		ErrorResponse error = new ErrorResponse(e.getStatus().value(), e.getMessage());
+		ResponseEntity responseEntity = new ResponseEntity(error, null, e.getStatus());
+		return responseEntity;
+	}
 }

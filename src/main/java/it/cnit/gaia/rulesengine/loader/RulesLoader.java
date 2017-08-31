@@ -46,6 +46,7 @@ public class RulesLoader {
 	private Map<Long, Area> areaMap;
 	private OrientGraph tx; //Riguarda
 	private ObjectMapper mapper = new ObjectMapper();
+	private Boolean isLoading, reloadFlag = false;
 
 	//TEST
 	public void loadSchoolByRid(String rid) throws RulesLoaderException {
@@ -74,10 +75,17 @@ public class RulesLoader {
 				} catch (RulesLoaderException e) {
 					e.printStackTrace();
 				}
-				schools.put(school.aid, school);
-				tx.commit();
+				//If the schools variable in nulled before complte loading
+				if (schools != null)
+					schools.put(school.aid, school);
+				else {
+					LOGGER.warn("Forced reloading while loading");
+					tx.rollback();
+					return loadSchools();
+				}
 			}
 		}
+		tx.commit();
 		tx.shutdown();
 		measurementRepository.updateMeterMap();
 		return schools;
@@ -230,7 +238,7 @@ public class RulesLoader {
 
 	private Fireable traverse(OrientVertex ov, School school, Area area) {
 		//Check if the Fireable is enabled
-		if (ov.getProperty("enabled")==null || !(Boolean) ov.getProperty("enabled")) {
+		if (ov.getProperty("enabled") == null || !(Boolean) ov.getProperty("enabled")) {
 			LOGGER.debug(ov.getIdentity().toString() + " DISABLED");
 			return null;
 		}

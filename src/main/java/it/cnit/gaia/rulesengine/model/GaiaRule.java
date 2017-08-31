@@ -1,5 +1,7 @@
 package it.cnit.gaia.rulesengine.model;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import com.weatherlibrary.WeatherService;
 import io.swagger.sparks.ApiException;
 import it.cnit.gaia.buildingdb.BuildingDatabaseService;
@@ -49,7 +51,9 @@ public abstract class GaiaRule implements Fireable {
 	/**
 	 * The School object associated with the rule, linked during loading
 	 */
+	@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "aid")
 	public School school;
+	@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "aid")
 	public Area area;
 
 	/**

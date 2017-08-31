@@ -16,7 +16,6 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.Invocation;
-import org.springframework.util.Assert;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -70,7 +69,7 @@ public class TestHolidayShutdown extends GenericRuleTest {
 		rule.timeBeforeInHours = 96L;
 		when(buildingDatabaseService.getScheduleForArea(anyLong())).thenReturn(Arrays.asList(scheduleDTO));
 		rule.init();
-		Assert.isTrue(rule.condition());
+		Assertions.assertTrue(rule.condition());
 	}
 
 	@Test

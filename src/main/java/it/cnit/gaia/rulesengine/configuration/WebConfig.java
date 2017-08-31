@@ -12,5 +12,6 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 	public void addViewControllers(ViewControllerRegistry registry) {
 		registry.addViewController("/demo/").setViewName("forward:index.html");
 		registry.addViewController("/docs/").setViewName("forward:index.html");
+		registry.addViewController("/dashboard/").setViewName("forward:index.html");
 	}
 }
