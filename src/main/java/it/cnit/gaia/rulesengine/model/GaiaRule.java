@@ -1,6 +1,9 @@
 package it.cnit.gaia.rulesengine.model;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import com.weatherlibrary.WeatherService;
 import io.swagger.sparks.ApiException;
 import it.cnit.gaia.buildingdb.BuildingDatabaseService;
@@ -86,7 +89,7 @@ public abstract class GaiaRule implements Fireable {
 	protected RuleDatabaseService ruleDatabaseService = ContextProvider.getBean(RuleDatabaseService.class);
 	protected MetadataService metadataService = ContextProvider.getBean(MetadataService.class);
 	protected WeatherService weatherService = ContextProvider.getBean(WeatherService.class);
-
+	protected MailService mailService = ContextProvider.getBean(MailService.class);
 
 	/**
 	 * Default fire() behavior is if( condition() ) then action()
@@ -103,6 +106,11 @@ public abstract class GaiaRule implements Fireable {
 		GaiaEvent event = getBaseEvent();
 		websocket.pushNotification(notification);
 		eventService.addEvent(event);
+		///// Send email
+		List<String> email = ruleDatabaseService.getEmail(rid);
+		if(email!=null){
+			email.forEach(addr -> mailService.sendMailNotification(notification,addr));
+		}
 	}
 
 
@@ -368,6 +376,11 @@ public abstract class GaiaRule implements Fireable {
 
 	public GaiaRule setWeatherService(WeatherService weatherService) {
 		this.weatherService = weatherService;
+		return this;
+	}
+
+	public GaiaRule setMailService(MailService mailService) {
+		this.mailService = mailService;
 		return this;
 	}
 

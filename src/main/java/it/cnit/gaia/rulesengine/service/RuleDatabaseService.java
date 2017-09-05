@@ -48,6 +48,22 @@ public class RuleDatabaseService {
 			rulesLoader.loadSchools();
 	}
 
+	public List<String> getEmail(String rid) {
+		try {
+			RuleDTO ruleFromDb = getRuleFromDb(rid);
+			Map<String, Object> fields = ruleFromDb.getFields();
+			String email = (String) fields.getOrDefault("email", null);
+			if (email == null)
+				return null;
+			String[] split = email.split(",|;");
+			return Arrays.asList(split);
+		}
+		catch (GaiaRuleException e){
+			LOGGER.error("Sending mail: "+e.getMessage());
+		}
+		return null;
+	}
+
 	public Long getParentArea(String ruleId) {
 		OrientVertex ruleVertex = ogf.getNoTx().getVertex(ruleId);
 		try {
