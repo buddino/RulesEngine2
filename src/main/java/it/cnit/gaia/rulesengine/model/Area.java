@@ -1,13 +1,13 @@
 package it.cnit.gaia.rulesengine.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
 import java.util.*;
 
 public class Area implements Fireable {
-
 	public Long aid;
 	public String rid;
 	public String name;
@@ -24,7 +24,8 @@ public class Area implements Fireable {
 	}
 
 	public void fire() {
-		children.forEach(f -> f.fire());
+		children.forEach(
+				f -> f.fire());
 	}
 
 	public boolean add(Fireable f) {

@@ -5,9 +5,9 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.AuthorizationScope;
 import io.swagger.sparks.model.SingleResourceMeasurementAPIModel;
-import it.cnit.gaia.rulesengine.loader.RulesLoader;
 import it.cnit.gaia.rulesengine.service.MeasurementRepository;
 import it.cnit.gaia.rulesengine.service.MetadataService;
+import it.cnit.gaia.rulesengine.service.RuleDatabaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +29,7 @@ public class UtilityController {
 	@Autowired
 	MeasurementRepository measurementRepository;
 	@Autowired
-	private RulesLoader rulesLoader;
+	private RuleDatabaseService ruleDatabaseService;
 	@Autowired
 	private MetadataService metadataService;
 
@@ -65,6 +65,13 @@ public class UtilityController {
 	public @ResponseBody
 	ResponseEntity updateSchedules() {
 		metadataService.updateAll();
+		return ResponseEntity.noContent().build();
+	}
+
+	@GetMapping("rules/update")
+	@ApiOperation(value = "RELOAD all rules", notes = "Force rules reloading for all buildings.")
+	public ResponseEntity<Void> reloadRules(@RequestParam(defaultValue = "false", required = false) Boolean reloadnow) {
+		ruleDatabaseService.reloadAllSchools(reloadnow);
 		return ResponseEntity.noContent().build();
 	}
 

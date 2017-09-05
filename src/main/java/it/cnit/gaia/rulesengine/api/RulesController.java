@@ -53,10 +53,10 @@ public class RulesController {
 		return ResponseEntity.ok(rulesOfArea);
 	}
 
-	@ApiOperation(value = "GET rules of building",
-			notes = "Get all the rules associated to the area identified by {id}",
-			responseContainer = "List")
-	@GetMapping(value = "building/{aid}/rules", produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(
+			value = "GET building tree",
+			notes = "Get the building tree including Areas/Rules")
+	@GetMapping(value = "building/{aid}/tree", produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public ResponseEntity<AreaDepth> getRuleOfBuilding(
 			@ApiParam("ID of the area")
@@ -80,11 +80,12 @@ public class RulesController {
 		return ResponseEntity.noContent().build();
 	}
 
-	@ApiOperation(value = "EDIT the rule", notes = "Modify the rule identified by {rid} according to the object passed in the body")
+	@ApiOperation(value = "PATCH the rule", notes = "Modify the rule identified by {rid} according to the object passed in the body")
 	@PatchMapping(value = "rules/{rid}", produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public ResponseEntity<RuleDTO> patchRule(@ApiParam("Identifier of the rule") @PathVariable String rid, @RequestBody RuleDTO ruleDTO) throws GaiaRuleException {
 		ruleDTO = ruleDatabaseService.patchCustomRule(rid, ruleDTO);
+		ruleDatabaseService.reloadAllSchools(false);
 		return ResponseEntity.ok(ruleDTO);
 	}
 
@@ -93,6 +94,7 @@ public class RulesController {
 	@ResponseBody
 	public ResponseEntity<RuleDTO> editRule(@ApiParam("Identifier of the rule") @PathVariable String rid, @RequestBody RuleDTO ruleDTO) throws GaiaRuleException {
 		ruleDTO = ruleDatabaseService.editCustomRule(rid, ruleDTO);
+		ruleDatabaseService.reloadAllSchools(false);
 		return ResponseEntity.ok(ruleDTO);
 	}
 
@@ -144,6 +146,7 @@ public class RulesController {
 			@ApiParam(value = "JSON Object describing the rule")
 			@RequestBody RuleDTO ruleDTO) throws Exception {
 		ruleDTO = ruleDatabaseService.addCustomRuleToArea(aid, ruleDTO);
+		ruleDatabaseService.reloadAllSchools(false);
 		return ResponseEntity.status(HttpStatus.CREATED).body(ruleDTO);
 	}
 
@@ -174,6 +177,7 @@ public class RulesController {
 		for (RuleDTO rule : compositeDTO.getRules()) {
 			ruleDatabaseService.addCustomRuleToComposite(composite.getRid(), rule);
 		}
+		ruleDatabaseService.reloadAllSchools(false);
 		return ResponseEntity.status(HttpStatus.CREATED).body(composite);
 	}
 
@@ -186,6 +190,7 @@ public class RulesController {
 			@ApiParam(value = "JSON Object describing the rule")
 			@RequestBody RuleDTO ruleDTO) throws Exception {
 		ruleDTO = ruleDatabaseService.addCustomRuleToComposite(rid, ruleDTO);
+		ruleDatabaseService.reloadAllSchools(false);
 		return ResponseEntity.status(HttpStatus.CREATED).body(ruleDTO);
 	}
 
@@ -195,13 +200,6 @@ public class RulesController {
 		School school = ruleDatabaseService.getSchool(id);
 		school.fire();
 		return ResponseEntity.ok(null);
-	}
-
-	@GetMapping("reload")
-	@ApiOperation(value = "RELOAD all rules", notes = "Force rules reloading for all buildings.")
-	public ResponseEntity<Void> reloadRules(@RequestParam(defaultValue = "false", required = false) Boolean reloadnow) {
-		ruleDatabaseService.reloadAllSchools(reloadnow);
-		return ResponseEntity.noContent().build();
 	}
 
 	@ExceptionHandler(GaiaRuleException.class)

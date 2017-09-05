@@ -82,9 +82,7 @@ public class MetadataService implements SparksAAAService {
 	}
 
 	public void updateSchedules() {
-		for (Long aid : areas) {
-			updateSchedule(aid);
-		}
+		areas.parallelStream().forEach(aid -> updateSchedule(aid));
 	}
 
 	public void updateSchedule(Long aid) {
@@ -101,9 +99,7 @@ public class MetadataService implements SparksAAAService {
 	}
 
 	public void updateCalendars() {
-		for (Long bid : buildings) {
-			updateCalendar(bid);
-		}
+		buildings.parallelStream().forEach(bid -> updateCalendar(bid));
 	}
 
 	public void updateCalendar(Long bid) {

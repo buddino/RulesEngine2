@@ -1,5 +1,6 @@
 package it.cnit.gaia.rulesengine.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import it.cnit.gaia.rulesengine.model.exceptions.RuleInitializationException;
 
@@ -8,6 +9,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class AreaDepth implements Fireable{
 
 	public Long aid;
@@ -22,11 +24,8 @@ public class AreaDepth implements Fireable{
 
 	public AreaDepth(Area a){
 		this.aid = a.aid;
-		this.rid = a.rid;
 		this.name = a.name;
-		this.uri = a.uri;
 		this.type = a.type;
-		this.metadata = a.metadata;
 		for(Fireable f : a.children){
 			if( f instanceof Area) {
 				Fireable x = new AreaDepth((Area) f);

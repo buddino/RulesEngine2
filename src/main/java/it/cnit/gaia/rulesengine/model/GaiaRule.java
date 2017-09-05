@@ -1,7 +1,6 @@
 package it.cnit.gaia.rulesengine.model;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import com.fasterxml.jackson.annotation.*;
 import com.weatherlibrary.WeatherService;
 import io.swagger.sparks.ApiException;
 import it.cnit.gaia.buildingdb.BuildingDatabaseService;
@@ -23,6 +22,7 @@ import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.util.*;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public abstract class GaiaRule implements Fireable {
 
 	protected final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
@@ -52,8 +52,10 @@ public abstract class GaiaRule implements Fireable {
 	 * The School object associated with the rule, linked during loading
 	 */
 	@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "aid")
+	@JsonIdentityReference(alwaysAsId=true) // otherwise first ref as POJO, others as id
 	public School school;
 	@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "aid")
+	@JsonIdentityReference(alwaysAsId=true) // otherwise first ref as POJO, others as id
 	public Area area;
 
 	/**
@@ -163,7 +165,7 @@ public abstract class GaiaRule implements Fireable {
 						}
 						if (f.isAnnotationPresent(URI.class)) {
 							//FIXME Checking by querying here, results in a double query and in a slow validation time
-							//Potrebbe essere un'idea fare il mapping non tutto insieme ma via via che si aggiungono power_uri (perdo parallel)
+							//Potrebbe essere un'idea fare il mapping non tutto insieme ma via via che si aggiungono uti (perdo parallel)
 							measurements.checkUri((String) f.get(this));
 						}
 					} catch (IllegalAccessException e) {

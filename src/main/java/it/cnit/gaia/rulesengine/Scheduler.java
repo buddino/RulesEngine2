@@ -50,32 +50,33 @@ public class Scheduler {
 		} catch (OStorageException e) {
 			LOGGER.error(e.getMessage());
 		}
+
 		LOGGER.info("Checking authentication");
 		measurements.getMeasurementService().checkAuth();
-
+		rulesLoader.loadSchools();
 		LOGGER.info("Loading schedules");
 		reloadSchedules();
 
 	}
 
-	@Scheduled(fixedDelayString = "${scheduler.interval}")
+	@Scheduled(fixedRateString = "${scheduler.interval}")
 	public void scheduledMethod() throws IOException {
 		//Riguarda
 		measurements.getMeasurementService().checkAuth();
-		LOGGER.info("Executing iteration");
-		rulesLoader.reloadAllSchools();
 		schools = rulesLoader.loadSchools().values();
+		LOGGER.info("Executing iteration");
 		measurements.updateLatest();
 		schools.forEach(s -> s.fire());
 	}
 
-	//@Scheduled(fixedDelay = 3600 * 1000)
+	@Scheduled(initialDelay = 3500 * 1000, fixedDelay = 3500 * 1000)
 	public void reloadSchools() {
 		rulesLoader.reloadAllSchools();
 	}
 
 	@Scheduled(cron = "0 0 12 * * ?")
-	public void reloadSchedules() {
+	public void reloadSchedules() throws IOException {
+		measurements.getMeasurementService().checkAuth();
 		metadataService.updateAll();
 	}
 

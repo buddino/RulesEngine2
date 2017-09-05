@@ -61,8 +61,13 @@ public class ComfortIndex extends GaiaRule {
 			return false;
 
 		//Source: http://www.azosensors.com/article.aspx?ArticleID=487
-		temp = measurements.getLatestFor(temperature_uri).getReading();
-		humid = measurements.getLatestFor(humidity_uri).getReading();
+		try {
+			temp = measurements.getLatestFor(temperature_uri).getReading();
+			humid = measurements.getLatestFor(humidity_uri).getReading();
+		}
+		catch (NullPointerException e){
+			error("Measurement repository returned NULL");
+		}
 		index = -8.7847 + 1.6114 * temp + 2.3385 * humid
 				- 0.1461 * humid * temp - 0.0123 * temp * temp - 0.0164 * humid * humid
 				+ 2.2117 * Math.pow(10, -3) * temp * temp * humid

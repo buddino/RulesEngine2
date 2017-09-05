@@ -1,6 +1,7 @@
 package it.cnit.gaia.rulesengine.service;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -286,18 +287,20 @@ public class RuleDatabaseService {
 	}
 
 	public void setLatestFireTime(String rid, Date date) {
-		OrientGraph tx = ogf.getTx();
+		OrientGraphNoTx tx = ogf.getNoTx();
 		try {
 			OrientVertex vertex = tx.getVertex(rid);
 			vertex.setProperty("latestFireTime", date);
 		}
-		finally {
-			tx.shutdown();
+		catch ( OConcurrentModificationException e){
+			tx.getVertex(rid).setProperty("latestFireTime", date);
 		}
+		tx.shutdown();
 	}
 
 	public Date getLatestFireTime(String rid) {
-		OrientVertex vertex = ogf.getNoTx().getVertex(rid);
+		OrientGraphNoTx noTx = ogf.getNoTx();
+		OrientVertex vertex = noTx.getVertex(rid);
 		try {
 			Date latestFireTime = vertex.getProperty("latestFireTime");
 			return latestFireTime;
@@ -306,6 +309,9 @@ public class RuleDatabaseService {
 			Date latestFireTime = new Date((Long)vertex.getProperty("latestFireTime"));
 			return latestFireTime;
 		}
+		finally {
+			noTx.shutdown();
+		}
 	}
 
 	public School getSchool(Long aid) {
@@ -313,7 +319,7 @@ public class RuleDatabaseService {
 	}
 
 	public RuleDTO addCustomRuleToComposite(String rid, RuleDTO ruleDTO) throws GaiaRuleException {
-		OrientGraph tx = ogf.getTx();
+		OrientGraphNoTx tx = ogf.getNoTx();
 		OrientVertex composite = tx.getVertex(rid);
 		if (composite == null)
 			throw new GaiaRuleException("Parent rule not found", HttpStatus.NOT_FOUND);
