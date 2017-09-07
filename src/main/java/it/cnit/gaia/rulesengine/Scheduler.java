@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class Scheduler {
@@ -36,6 +37,9 @@ public class Scheduler {
 
 	@Value("${scheduler.interval}")
 	String schedulerInterval;
+
+	@Value("${scheduler.retry_interval_in_seconds}")
+	Long retryInterval;
 
 
 	@PostConstruct
@@ -60,16 +64,22 @@ public class Scheduler {
 	}
 
 	@Scheduled(fixedRateString = "${scheduler.interval}")
-	public void scheduledMethod() throws IOException {
+	public void scheduledMethod() throws IOException, InterruptedException {
 		//Riguarda
 		measurements.getMeasurementService().checkAuth();
 		schools = rulesLoader.loadSchools().values();
 		LOGGER.info("Executing iteration");
-		measurements.updateLatest();
+		if(!measurements.updateLatest()) {
+			LOGGER.warn("No measurement have been updated. Retrying in "+retryInterval+" seconds");
+			TimeUnit.SECONDS.sleep(retryInterval);
+			if(!measurements.updateLatest())
+				LOGGER.warn("Still can't get any measurement. Next iteration is scheduled.");
+				return;
+		}
 		schools.forEach(s -> s.fire());
 	}
 
-	@Scheduled(initialDelay = 3500 * 1000, fixedDelay = 3500 * 1000)
+	@Scheduled(initialDelay = 120 * 1000, fixedDelay = 900 * 1000)
 	public void reloadSchools() {
 		rulesLoader.reloadAllSchools();
 	}
