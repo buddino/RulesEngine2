@@ -1,0 +1,107 @@
+<!--Author      : @arboshiki-->
+<style>
+    .doughnut-legend, .pie-legend {
+        position: inherit;
+        margin: 1em;
+    }
+
+</style>
+<div id="chartjs">
+    <div class="row">
+        <div class="col-lg-12">
+            <div id="latest-rules" class="panel panel-light">
+                <div class="panel-heading">
+                    <div class="panel-title">
+                        <h4>Latest fired rules</h4>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <table id="latest-fired" class="display table table-striped table-bordered" cellspacing="0"
+                           width="100%">
+                        <thead>
+                        <tr>
+                            <th>Rule name</th>
+                            <th>Rule class</th>
+                            <th>Suggestion</th>
+                            <th>Timestamp</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        var base = "";
+        var  table;
+
+
+        LobiAdmin.loadScript([
+            'js/plugin/datatables/jquery.dataTables.min.js',
+            'js/plugin/datejs/date.js',
+        ], function () {
+            LobiAdmin.loadScript([
+                'js/plugin/datatables/dataTables.bootstrap.min.js',
+                'js/plugin/datatables/dataTables.responsive.min.js',
+                'js/plugin/bootstrap-datepicker/bootstrap-datepicker.js'
+            ], initPage)
+        });
+
+
+
+        function latestEvents() {
+            console.info("Querying latest events details...");
+            $.get(base + "/events?limit=50", function (result) {
+                for (var i = 0; i < result.length; i++) {
+                    var item = result[i];
+                    console.log(item);
+                    table.row.add(
+                        [item.rule.fields.name.substr(0, 20),
+                        item.rule.class.substr(0,20),
+                            item.values.suggestion == null ? "" : item.values.suggestion.substr(0, 160),
+                        new Date(item.timestamp).toString("dd/MM/yy hh:mm:ss")]);
+                }
+                table.draw();
+            });
+        }
+        function start() {
+            latestEvents();
+        }
+
+        function initPage() {
+            $('.panel').lobiPanel({
+
+                reload: false,
+                editTitle: true,
+                sortable: true
+            });
+            table = $('#latest-fired').DataTable({
+                "columns": [
+                    {"width": "10em"},
+                    {"width": "10em"},
+                    null,
+                    {"width": "8em"}
+                ],
+                "scrollY": 250,
+                "paging": true,
+                "ordering": false,
+                "info": true,
+                "searching": true
+            });
+            $('body').on('beforePageLoad.lobiAdmin.1', function () {
+                $('body').off('beforePageLoad.lobiAdmin.1');
+            });
+
+            start();
+        }
+
+        function hashcolor(string) {
+            return '#' + md5(string).slice(0, 6);
+        }
+
+    </script>
+</div>

@@ -3,6 +3,7 @@ package it.cnit.gaia.rulesengine.service;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
@@ -11,7 +12,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import io.swagger.sparks.ApiException;
 import it.cnit.gaia.rulesengine.api.dto.RuleDTO;
 import it.cnit.gaia.rulesengine.api.exception.GaiaRuleException;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
@@ -100,9 +100,8 @@ public class RuleDatabaseService {
 	}
 
 	public void resetRuleCounter(String ruleId) {
-		OrientGraph orientdb = ogf.getTx();
+		OrientGraphNoTx orientdb = ogf.getNoTx();
 		orientdb.getVertex(ruleId).setProperty("counter", 0);
-		orientdb.commit();
 	}
 
 	public long incrementCounter(String ruleId) {
@@ -144,7 +143,10 @@ public class RuleDatabaseService {
 		//FIXME Remove all the linked rules for composite rules
 		OrientGraph tx = ogf.getTx();
 		OrientVertex v = tx.getVertex(rid);
-		if (!(Boolean) v.getProperty("custom")) {
+		if (!v.getProperties().containsKey("custom")) {
+			throw new GaiaRuleException("Trying to delete a non-custom rule", HttpStatus.UNAUTHORIZED);
+		}
+		else if (!(Boolean) v.getProperty("custom")) {
 			throw new GaiaRuleException("Trying to delete a non-custom rule", HttpStatus.UNAUTHORIZED);
 		}
 		v.remove();
@@ -167,7 +169,7 @@ public class RuleDatabaseService {
 
 		//Check URI
 		//FIXME Maybe not required beacuse the next control with init
-		if (ruleDTO.getClazz().equals("SimpleThresholdRule")) {
+		/*if (ruleDTO.getClazz().equals("SimpleThresholdRule")) {
 			String uri = (String) ruleDTO.getFields().get("uri");
 			try {
 				measurementRepository.checkUri(uri);
@@ -175,7 +177,7 @@ public class RuleDatabaseService {
 				tx.rollback();
 				throw new GaiaRuleException(String.format("URI '%s' not found", uri), HttpStatus.BAD_REQUEST.value());
 			}
-		}
+		}*/
 
 
 		//Load rule
@@ -223,7 +225,7 @@ public class RuleDatabaseService {
 			throw new GaiaRuleException("Not authorized", 403);
 		}
 		Set<String> propertyKeys = ruleVertex.getPropertyKeys();
-		propertyKeys.forEach(key -> ruleVertex.removeProperty(key));
+		//propertyKeys.forEach(key -> ruleVertex.removeProperty(key));
 		ruleVertex.setProperties(fieldMap);
 		GaiaRule javaRule = rulesLoader.getRuleForTest(ruleVertex);
 		try {
@@ -303,30 +305,38 @@ public class RuleDatabaseService {
 	}
 
 	public void setLatestFireTime(String rid, Date date) {
+		setLatestFireTime(rid, date, 0);
+	}
+
+	private void setLatestFireTime(String rid, Date date, int retry) {
+		int max = 5;
 		OrientGraphNoTx tx = ogf.getNoTx();
 		try {
 			OrientVertex vertex = tx.getVertex(rid);
 			vertex.setProperty("latestFireTime", date);
 		}
 		catch ( OConcurrentModificationException e){
-			tx.getVertex(rid).setProperty("latestFireTime", date);
+			LOGGER.debug(String.format("Update of record %s failed. Retrying %d/%d.", rid, ++retry, max));
+			if( retry > max ){
+				throw e;
+			}
+			ogf.getDatabase().getLocalCache().deleteRecord(new ORecordId(rid));
+			setLatestFireTime(rid, date, retry);
 		}
-		tx.shutdown();
 	}
 
 	public Date getLatestFireTime(String rid) {
 		OrientGraphNoTx noTx = ogf.getNoTx();
 		OrientVertex vertex = noTx.getVertex(rid);
+		//Should this separation avoid UPDATE CONCURRENCY ERROR?
+		Object latestFireTimeTmp = vertex.getProperty("latestFireTime");
 		try {
-			Date latestFireTime = vertex.getProperty("latestFireTime");
+			Date latestFireTime = (Date) latestFireTimeTmp;
 			return latestFireTime;
 		}
 		catch (ClassCastException e){
-			Date latestFireTime = new Date((Long)vertex.getProperty("latestFireTime"));
+			Date latestFireTime = new Date((Long)latestFireTimeTmp);
 			return latestFireTime;
-		}
-		finally {
-			noTx.shutdown();
 		}
 	}
 

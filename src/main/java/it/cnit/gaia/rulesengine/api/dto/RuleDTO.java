@@ -4,6 +4,7 @@ package it.cnit.gaia.rulesengine.api.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
 
+import javax.validation.constraints.NotNull;
 import java.util.Map;
 
 public class RuleDTO {
@@ -11,6 +12,7 @@ public class RuleDTO {
 	@JsonProperty("rid")
 	@ApiModelProperty(readOnly = true, example = "25:6", value = "Unique identifier of the Rule")
 	private String rid;
+	@NotNull
 	@JsonProperty("class")
 	@ApiModelProperty(example = "SimpleThresholdRule",value = "Must be the name of the class of one of the implemented rules, see documentation", required = true)
 	private String clazz;

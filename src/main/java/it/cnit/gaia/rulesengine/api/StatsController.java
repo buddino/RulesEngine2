@@ -131,6 +131,7 @@ public class StatsController {
 			map.put("class", o.field("class"));
 			map.put("school", o.field("school"));
 			map.put("latest", o.field("latestFireTime"));
+			map.put("values", o.field("values"));
 			list.add(map);
 		}
 		return ResponseEntity.ok(list);

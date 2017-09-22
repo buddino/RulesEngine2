@@ -18,6 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -69,7 +70,7 @@ public class BuildingController {
 	public
 	@ResponseBody
 	ResponseEntity<Area> getBuildingTree(@ApiParam("ID of the building") @PathVariable Long id) throws IllegalAccessException, BuildingDatabaseException {
-		School school = rulesLoader.loadSchools().get(id);
+		School school = rulesLoader.getSchools().get(id);
 		if(school == null)
 			return ResponseEntity.notFound().build();
 		return ResponseEntity.ok(school);
@@ -80,7 +81,10 @@ public class BuildingController {
 	public
 	@ResponseBody
 	ResponseEntity<List<Area>> getSchools() {
-		return ResponseEntity.ok(Lists.newArrayList(rulesLoader.loadSchools().values()));
+		if(rulesLoader.getSchools()!=null)
+			return ResponseEntity.ok(Lists.newArrayList(rulesLoader.getSchools().values()));
+		else
+			return ResponseEntity.ok(new ArrayList<>());
 	}
 
 	@GetMapping(value = "building/{bid}/areas")

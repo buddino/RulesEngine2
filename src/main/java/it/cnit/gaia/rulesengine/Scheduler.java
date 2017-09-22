@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import io.swagger.sparks.ApiException;
+import it.cnit.gaia.rulesengine.configuration.ContextProvider;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
 import it.cnit.gaia.rulesengine.model.School;
 import it.cnit.gaia.rulesengine.service.MeasurementRepository;
@@ -12,7 +13,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -32,6 +35,10 @@ public class Scheduler {
 	OrientGraphFactory ogf;
 	@Autowired
 	MetadataService metadataService;
+	@Autowired
+	ContextProvider contextProvider;
+
+	Boolean isRunning = Boolean.FALSE;
 
 	Collection<School> schools;
 
@@ -44,6 +51,12 @@ public class Scheduler {
 
 	@PostConstruct
 	public void init() throws ApiException, IOException {
+
+		//Set the thread pool size to one. In this way only one scheduled thread will be executed avoiding concurrency
+		ThreadPoolTaskScheduler scheduler = (ThreadPoolTaskScheduler) ContextProvider.getBean(TaskScheduler.class);
+		scheduler.setPoolSize(1);
+		scheduler.setThreadNamePrefix("SCHEDULED");
+
 		LOGGER.info("RulesEngine Initialization");
 		LOGGER.info("Interval: " + schedulerInterval + "ms");
 		//Test connection to the database
@@ -60,10 +73,10 @@ public class Scheduler {
 		rulesLoader.loadSchools();
 		LOGGER.info("Loading schedules");
 		reloadSchedules();
-
+		LOGGER.info("\nRecommendations Engine ready!\n");
 	}
 
-	@Scheduled(fixedRateString = "${scheduler.interval}")
+	//@Scheduled(fixedRateString = "${scheduler.interval}")
 	public void scheduledMethod() throws IOException, InterruptedException {
 		//Riguarda
 		measurements.getMeasurementService().checkAuth();
@@ -79,7 +92,7 @@ public class Scheduler {
 		schools.forEach(s -> s.fire());
 	}
 
-	@Scheduled(initialDelay = 120 * 1000, fixedDelay = 900 * 1000)
+	@Scheduled(fixedDelay = 900 * 1000)
 	public void reloadSchools() {
 		rulesLoader.reloadAllSchools();
 	}
@@ -89,5 +102,6 @@ public class Scheduler {
 		measurements.getMeasurementService().checkAuth();
 		metadataService.updateAll();
 	}
+
 
 }

@@ -95,7 +95,7 @@ public class StatsService {
 		ODatabaseDocumentTx db = graphFactory.getNoTx().getRawGraph();
 		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
 				"select name, @class, latestFireTime, school.name as school from GaiaRule order by latestFireTime desc");
-		query.setLimit(10);
+		query.setLimit(30);
 		List<ODocument> result = db.command(query).execute();
 		return result;
 	}

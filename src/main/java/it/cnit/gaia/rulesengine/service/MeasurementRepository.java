@@ -10,12 +10,15 @@ import it.cnit.gaia.rulesengine.model.exceptions.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
 
 
 @Repository
+@PropertySource("file:application.properties")
 public class MeasurementRepository {
 
 	Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
@@ -23,6 +26,8 @@ public class MeasurementRepository {
 	Date latestUpdate = null;
 	Map<String, SingleResourceMeasurementAPIModel> latestReadings = new HashMap<>();
 	Map<String, List<SingleResourceMeasurementAPIModel>> lastHourRedings = new HashMap<>();
+	@Value("${scheduler.iteration_size}")
+	int iterationSize;
 
 	@Autowired
 	SparksService sparks;
@@ -35,9 +40,9 @@ public class MeasurementRepository {
 		LOGGER.info("Updating resources...");
 		try {
 			//latestReadings = sparks.queryLatest();
-			latestReadings = sparks.queryLatestIteration(20);
+			latestReadings = sparks.queryLatestIteration(iterationSize);
 			if (latestReadings==null){
-				LOGGER.debug("Error updating resources. Query returned null.");
+				LOGGER.debug("Error updating resources. Query returned null with ");
 				return false;
 			}
 			latestUpdate = new Date();

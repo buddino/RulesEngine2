@@ -10,7 +10,7 @@ import it.cnit.gaia.rulesengine.loader.RulesLoader;
 import it.cnit.gaia.rulesengine.model.AreaDepth;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.School;
-import it.cnit.gaia.rulesengine.model.exceptions.RulesLoaderException;
+import it.cnit.gaia.rulesengine.model.exceptions.RuleInitializationException;
 import it.cnit.gaia.rulesengine.rules.AllCompositeRule;
 import it.cnit.gaia.rulesengine.rules.AnyCompositeRule;
 import it.cnit.gaia.rulesengine.service.RuleDatabaseService;
@@ -61,14 +61,13 @@ public class RulesController {
 	public ResponseEntity<AreaDepth> getRuleOfBuilding(
 			@ApiParam("ID of the area")
 			@PathVariable Long aid) throws GaiaRuleException {
-		try {
-			School school = rulesLoader.getSchool(aid);
-			AreaDepth areaDepth = new AreaDepth(school);
-			return ResponseEntity.ok(areaDepth);
-
-		} catch (RulesLoaderException e) {
+		School school = rulesLoader.getSchools().get(aid);
+		if (school == null)
 			return ResponseEntity.notFound().build();
-		}
+		AreaDepth areaDepth = new AreaDepth(school);
+		return ResponseEntity.ok(areaDepth);
+
+
 	}
 
 
@@ -203,7 +202,7 @@ public class RulesController {
 	}
 
 	@ExceptionHandler(GaiaRuleException.class)
-	public ResponseEntity<ErrorResponse> exceptionHandler(GaiaRuleException e) {
+	public ResponseEntity<ErrorResponse> gaiaexceptionHandler(GaiaRuleException e) {
 		if (e.getStatus() == HttpStatus.INTERNAL_SERVER_ERROR) {
 			LOGGER.error(e);
 		}
@@ -211,6 +210,15 @@ public class RulesController {
 		ResponseEntity responseEntity = new ResponseEntity(error, null, e.getStatus());
 		return responseEntity;
 	}
+
+	@ExceptionHandler(RuleInitializationException.class)
+	public ResponseEntity<ErrorResponse> initexceptionHandler(GaiaRuleException e) {
+		ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage());
+		ResponseEntity responseEntity = new ResponseEntity(error, null, HttpStatus.BAD_REQUEST);
+		return responseEntity;
+	}
+
+
 
 
 }

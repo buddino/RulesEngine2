@@ -42,11 +42,11 @@ public class RulesLoader {
 	@Autowired
 	private MeasurementRepository measurementRepository;
 	private Map<Long, School> schools = null;
+	private Map<Long, School> schools_tmp = null;
 	private Map<String, GaiaRule> ruleMap;
 	private Map<Long, Area> areaMap;
 	private OrientGraph tx; //Riguarda
 	private ObjectMapper mapper = new ObjectMapper();
-	private Boolean isLoading, reloadFlag = false;
 
 	//TEST
 	public void loadSchoolByRid(String rid) throws RulesLoaderException {
@@ -54,6 +54,10 @@ public class RulesLoader {
 		OrientVertex sv = tx.getVertex(rid);
 		School school = traverseSchool(sv);
 		tx.shutdown();
+	}
+
+	public Map<Long, School> getSchools() {
+		return schools_tmp;
 	}
 
 	//////
@@ -88,6 +92,7 @@ public class RulesLoader {
 		tx.commit();
 		tx.shutdown();
 		measurementRepository.updateMeterMap();
+		schools_tmp = schools;
 		return schools;
 	}
 
@@ -135,7 +140,7 @@ public class RulesLoader {
 	}
 
 	public void reloadAllSchools() {
-		graphFactory.getDatabase().getLocalCache().invalidate();
+		//graphFactory.getDatabase().getLocalCache().invalidate();
 		schools = null;
 	}
 
