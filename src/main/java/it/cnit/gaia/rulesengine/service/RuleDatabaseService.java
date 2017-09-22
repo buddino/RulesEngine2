@@ -3,7 +3,6 @@ package it.cnit.gaia.rulesengine.service;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
@@ -12,6 +11,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import io.swagger.sparks.ApiException;
 import it.cnit.gaia.rulesengine.api.dto.RuleDTO;
 import it.cnit.gaia.rulesengine.api.exception.GaiaRuleException;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
@@ -42,9 +42,9 @@ public class RuleDatabaseService {
 	@Autowired
 	private RulesLoader rulesLoader;
 
-	public void reloadAllSchools(Boolean reloadnow){
+	public void reloadAllSchools(Boolean reloadnow) {
 		rulesLoader.reloadAllSchools();
-		if(reloadnow)
+		if (reloadnow)
 			rulesLoader.loadSchools();
 	}
 
@@ -57,9 +57,8 @@ public class RuleDatabaseService {
 				return null;
 			String[] split = email.split(",|;");
 			return Arrays.asList(split);
-		}
-		catch (GaiaRuleException e){
-			LOGGER.error("Sending mail: "+e.getMessage());
+		} catch (GaiaRuleException e) {
+			LOGGER.error("Sending mail: " + e.getMessage());
 		}
 		return null;
 	}
@@ -100,8 +99,9 @@ public class RuleDatabaseService {
 	}
 
 	public void resetRuleCounter(String ruleId) {
-		OrientGraphNoTx orientdb = ogf.getNoTx();
+		OrientGraph orientdb = ogf.getTx();
 		orientdb.getVertex(ruleId).setProperty("counter", 0);
+		orientdb.commit();
 	}
 
 	public long incrementCounter(String ruleId) {
@@ -110,8 +110,7 @@ public class RuleDatabaseService {
 			long counter = orientdb.getVertex(ruleId).getProperty("counter");
 			orientdb.getVertex(ruleId).setProperty("counter", ++counter);
 			return counter;
-		}
-		finally {
+		} finally {
 			orientdb.shutdown();
 		}
 	}
@@ -143,12 +142,6 @@ public class RuleDatabaseService {
 		//FIXME Remove all the linked rules for composite rules
 		OrientGraph tx = ogf.getTx();
 		OrientVertex v = tx.getVertex(rid);
-		if (!v.getProperties().containsKey("custom")) {
-			throw new GaiaRuleException("Trying to delete a non-custom rule", HttpStatus.UNAUTHORIZED);
-		}
-		else if (!(Boolean) v.getProperty("custom")) {
-			throw new GaiaRuleException("Trying to delete a non-custom rule", HttpStatus.UNAUTHORIZED);
-		}
 		v.remove();
 		tx.commit();
 		tx.shutdown();
@@ -169,7 +162,7 @@ public class RuleDatabaseService {
 
 		//Check URI
 		//FIXME Maybe not required beacuse the next control with init
-		/*if (ruleDTO.getClazz().equals("SimpleThresholdRule")) {
+		if (ruleDTO.getClazz().equals("SimpleThresholdRule")) {
 			String uri = (String) ruleDTO.getFields().get("uri");
 			try {
 				measurementRepository.checkUri(uri);
@@ -177,7 +170,7 @@ public class RuleDatabaseService {
 				tx.rollback();
 				throw new GaiaRuleException(String.format("URI '%s' not found", uri), HttpStatus.BAD_REQUEST.value());
 			}
-		}*/
+		}
 
 
 		//Load rule
@@ -209,23 +202,9 @@ public class RuleDatabaseService {
 		OrientGraph tx = ogf.getTx();
 		OrientVertex ruleVertex;
 		Map<String, Object> fieldMap = ruleDTO.getFields();
-
-		try {
-			ruleVertex = tx.getVertex(rid);
-		} catch (Exception e) {
-			throw new GaiaRuleException("Not found", 404);
-		}
-		if (ruleVertex == null) {
-			throw new GaiaRuleException("Not found", 404);
-		}
-		if (!ruleVertex.getProperties().containsKey("custom")) {
-			throw new GaiaRuleException("Not authorized", 403);
-		}
-		if (!(Boolean) ruleVertex.getProperty("custom")) {
-			throw new GaiaRuleException("Not authorized", 403);
-		}
+		ruleVertex = tx.getVertex(rid);
 		Set<String> propertyKeys = ruleVertex.getPropertyKeys();
-		//propertyKeys.forEach(key -> ruleVertex.removeProperty(key));
+		propertyKeys.forEach(key -> ruleVertex.removeProperty(key));
 		ruleVertex.setProperties(fieldMap);
 		GaiaRule javaRule = rulesLoader.getRuleForTest(ruleVertex);
 		try {
@@ -245,21 +224,7 @@ public class RuleDatabaseService {
 		OrientGraph tx = ogf.getTx();
 		OrientVertex ruleVertex;
 		Map<String, Object> fieldMap = ruleDTO.getFields();
-
-		try {
-			ruleVertex = tx.getVertex(rid);
-		} catch (Exception e) {
-			throw new GaiaRuleException("Not found", 404);
-		}
-		if (ruleVertex == null) {
-			throw new GaiaRuleException("Not found", 404);
-		}
-		if (!ruleVertex.getProperties().containsKey("custom")) {
-			throw new GaiaRuleException("Not authorized", 403);
-		}
-		if (!(Boolean) ruleVertex.getProperty("custom")) {
-			throw new GaiaRuleException("Not authorized", 403);
-		}
+		ruleVertex = tx.getVertex(rid);
 		ruleVertex.setProperties(fieldMap);
 		GaiaRule javaRule = rulesLoader.getRuleForTest(ruleVertex);
 		try {
@@ -271,7 +236,8 @@ public class RuleDatabaseService {
 		ruleDTO.setRid(ruleVertex.getIdentity().toString());
 		tx.commit();
 		tx.shutdown();
-		return ruleDTO;
+		RuleDTO resp = getRuleFromDb(ruleVertex.getIdentity().toString());
+		return resp;
 	}
 
 	public RuleDTO getRuleFromDb(String rid) throws GaiaRuleException {
@@ -305,38 +271,27 @@ public class RuleDatabaseService {
 	}
 
 	public void setLatestFireTime(String rid, Date date) {
-		setLatestFireTime(rid, date, 0);
-	}
-
-	private void setLatestFireTime(String rid, Date date, int retry) {
-		int max = 5;
 		OrientGraphNoTx tx = ogf.getNoTx();
 		try {
 			OrientVertex vertex = tx.getVertex(rid);
 			vertex.setProperty("latestFireTime", date);
+		} catch (OConcurrentModificationException e) {
+			tx.getVertex(rid).setProperty("latestFireTime", date);
 		}
-		catch ( OConcurrentModificationException e){
-			LOGGER.debug(String.format("Update of record %s failed. Retrying %d/%d.", rid, ++retry, max));
-			if( retry > max ){
-				throw e;
-			}
-			ogf.getDatabase().getLocalCache().deleteRecord(new ORecordId(rid));
-			setLatestFireTime(rid, date, retry);
-		}
+		tx.shutdown();
 	}
 
 	public Date getLatestFireTime(String rid) {
 		OrientGraphNoTx noTx = ogf.getNoTx();
 		OrientVertex vertex = noTx.getVertex(rid);
-		//Should this separation avoid UPDATE CONCURRENCY ERROR?
-		Object latestFireTimeTmp = vertex.getProperty("latestFireTime");
 		try {
-			Date latestFireTime = (Date) latestFireTimeTmp;
+			Date latestFireTime = vertex.getProperty("latestFireTime");
 			return latestFireTime;
-		}
-		catch (ClassCastException e){
-			Date latestFireTime = new Date((Long)latestFireTimeTmp);
+		} catch (ClassCastException e) {
+			Date latestFireTime = new Date((Long) vertex.getProperty("latestFireTime"));
 			return latestFireTime;
+		} finally {
+			noTx.shutdown();
 		}
 	}
 
