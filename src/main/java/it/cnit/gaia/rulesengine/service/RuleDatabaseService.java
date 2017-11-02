@@ -281,6 +281,17 @@ public class RuleDatabaseService {
 		tx.shutdown();
 	}
 
+	public void setLatestTriggerTime(String rid, Date date) {
+		OrientGraphNoTx tx = ogf.getNoTx();
+		try {
+			OrientVertex vertex = tx.getVertex(rid);
+			vertex.setProperty("latestTriggerTime", date);
+		} catch (OConcurrentModificationException e) {
+			tx.getVertex(rid).setProperty("latestTriggerTime", date);
+		}
+		tx.shutdown();
+	}
+
 	public Date getLatestFireTime(String rid) {
 		OrientGraphNoTx noTx = ogf.getNoTx();
 		OrientVertex vertex = noTx.getVertex(rid);
@@ -290,6 +301,20 @@ public class RuleDatabaseService {
 		} catch (ClassCastException e) {
 			Date latestFireTime = new Date((Long) vertex.getProperty("latestFireTime"));
 			return latestFireTime;
+		} finally {
+			noTx.shutdown();
+		}
+	}
+
+	public Date getLatestTriggerTime(String rid) {
+		OrientGraphNoTx noTx = ogf.getNoTx();
+		OrientVertex vertex = noTx.getVertex(rid);
+		try {
+			Date latestTriggerTime = vertex.getProperty("latestTriggerTime");
+			return latestTriggerTime;
+		} catch (ClassCastException e) {
+			Date latestTriggerTime = new Date((Long) vertex.getProperty("latestTriggerTime"));
+			return latestTriggerTime;
 		} finally {
 			noTx.shutdown();
 		}

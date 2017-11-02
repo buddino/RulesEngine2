@@ -22,12 +22,15 @@ public class MailServiceTest {
 	MailService mailService;
 
 	@Before
-	public void setup(){
+	public void setup() {
 	}
 
 	@Test
 	public void testSendingMail() throws ApiException {
-		Response response = mailService.sendMailNotification();
+		Response response = mailService.sendMailNotification(tomail);
+		System.out.println(response.responseMessage());
 	}
+
+
 
 }

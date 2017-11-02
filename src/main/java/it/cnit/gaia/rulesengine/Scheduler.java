@@ -76,7 +76,7 @@ public class Scheduler {
 		LOGGER.info("\nRecommendations Engine ready!\n");
 	}
 
-	//@Scheduled(fixedRateString = "${scheduler.interval}")
+	@Scheduled(fixedRateString = "${scheduler.interval}")
 	public void scheduledMethod() throws IOException, InterruptedException {
 		//Riguarda
 		measurements.getMeasurementService().checkAuth();

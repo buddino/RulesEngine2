@@ -62,6 +62,13 @@ public abstract class GaiaRule implements Fireable {
 	public Area area;
 
 	/**
+	 * Interval in seconds between 2 triggers (e.g. 900 means at most one time every 15 minutes)
+	 * If a rule has been trigger it will not be triggered anymore for N seconds
+	 */
+	@LoadMe(required = false)
+	public Long triggerInterval = 7200L; // 2 hours
+
+	/**
 	 * Interval in seconds between 2 fires (e.g. 900 means at most one time every 15 minutes)
 	 */
 	@LoadMe(required = false)
@@ -71,6 +78,11 @@ public abstract class GaiaRule implements Fireable {
 	 * The timestamp of the latest fire
 	 */
 	public Date latestFireTime;
+
+	/**
+	 * The timestamp of the latest fire
+	 */
+	public Date latestTriggerTime;
 
 	/**
 	 * The cron expression to limit the fire of the rule to a specific time
@@ -115,27 +127,33 @@ public abstract class GaiaRule implements Fireable {
 
 
 	/**
-	 * Checks if the rule can be fired
-	 *
+	 * Checks if the rule can be fired (cron + trigger interval + fire interval)
 	 * @return true if the rule can be fired or false if it is not the time yet
 	 */
 	public boolean isTriggeringIntervalValid() {
 		Date now = new Date();
 		latestFireTime = ruleDatabaseService.getLatestFireTime(rid);
+		latestTriggerTime = ruleDatabaseService.getLatestFireTime(rid);
 
-		boolean intervalValidity;
+		boolean fireIntervalValidity;
+		boolean triggerIntervalValidity;
 		boolean cronValidity;
 
 		if (fireInterval == 0 || latestFireTime == null)
-			intervalValidity = true;
+			fireIntervalValidity = true;
 		else
-			intervalValidity = now.getTime() - latestFireTime.getTime() > fireInterval * 1000;
+			fireIntervalValidity = now.getTime() - latestFireTime.getTime() > fireInterval * 1000; // in millis
+
+		if (triggerInterval == 0 || latestTriggerTime == null)
+			triggerIntervalValidity = true;
+		else
+			triggerIntervalValidity = now.getTime() - latestTriggerTime.getTime() > triggerInterval * 1000; // in millis
 
 		if (cronExpression == null)
 			cronValidity = true;
 		else
 			cronValidity = cronExpression.isSatisfiedBy(now);
-		return cronValidity && intervalValidity;
+		return cronValidity && fireIntervalValidity && triggerIntervalValidity;
 	}
 
 	/**
@@ -153,6 +171,7 @@ public abstract class GaiaRule implements Fireable {
 
 		try {
 			if (condition()) {
+				ruleDatabaseService.setLatestTriggerTime(rid, latestFireTime);
 				action();
 			}
 		} catch (Exception e) {
