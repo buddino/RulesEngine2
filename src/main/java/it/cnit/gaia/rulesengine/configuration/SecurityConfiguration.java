@@ -61,7 +61,8 @@ public class SecurityConfiguration extends ResourceServerConfigurerAdapter {
 			.and().authorizeRequests().antMatchers("/docs/*").permitAll().and().authorizeRequests()		//Allows Swagger API
 			.antMatchers("/v2/api-docs").permitAll()													//Allows Swagger API
 			.and().authorizeRequests().antMatchers("/gs-guide-notification/**").permitAll()				//Allows web socket
-			.and().authorizeRequests().antMatchers("/**").hasRole("USER");				//Block all other dto except from user with ROLE.USER
+			.and().authorizeRequests().antMatchers("/**").hasAnyRole(
+					"GAIA_STUDENT","GAIA_TEACHER","ROLE_GAIA_LOCAL_MANAGER","ROLE_GAIA_GLOBAL_MANAGER","ROLE_GAIA_ADMIN");				//Block all other dto except from user with ROLE.USER
 	}
 
 }

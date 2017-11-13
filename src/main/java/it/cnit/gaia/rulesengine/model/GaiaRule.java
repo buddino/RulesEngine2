@@ -161,7 +161,6 @@ public abstract class GaiaRule implements Fireable {
 	 */
 	public void fire() {
 		if (!isTriggeringIntervalValid()) {
-			LOGGER.debug(String.format("Rule %s not triggered beacuse of the interval constraint / fireCron", rid));
 			return;
 		}
 		//Update the latest fire time. This is kept in memory only.
