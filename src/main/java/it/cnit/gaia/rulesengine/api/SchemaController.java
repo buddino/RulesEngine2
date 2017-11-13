@@ -23,29 +23,6 @@ public class SchemaController {
 	private DatabaseSchemaService dbService;
 
 
-/*
-	@ApiOperation(value="SET DEFAULT",notes = "Set the default settings for a rule", notes = "Example: { 'threshold': 35.5, 'key':'value', ...}")
-	@PutMapping(value = "/schema/{classname}/default", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-	@ResponseBody
-	public ResponseEntity<Map<String, Object>> setDefault(
-			@PathVariable String classname,
-			@RequestBody @ApiParam(value = "Key-Value map representing field -> default value<br>Example: { 'threshold': 35.5, 'key':'value', ...}") Map<String, Object> defaults) {
-		for (Map.Entry<String, Object> e : defaults.entrySet()) {
-			dbService.setDefaultForPropertyInClass(classname, e.getKey(), e.getValue());
-		}
-		return ResponseEntity.ok(dbService.getDefaultForClass(classname));
-	}
-
-
-	@ApiOperation(
-			value = "GET defaults",
-			notes = "Get the default values for the rule class {classname}")
-	@GetMapping(value = "/schema/{classname}/default", produces = MediaType.APPLICATION_JSON_VALUE)
-	@ResponseBody
-	public ResponseEntity<?> getDefault(@PathVariable String classname) {
-		return ResponseEntity.ok(dbService.getDefaultForClass(classname));
-	}
-*/
 	@ApiOperation(
 			value = "GET rule fields",
 			notes = "Get the rule class definition. <br> Example: { 'power_threshold': {'regex': null,'default': null,'mandatory': true}, ... }")

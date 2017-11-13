@@ -1,0 +1,71 @@
+package service;
+
+
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
+import io.swagger.sparks.ApiException;
+import io.swagger.sparks.model.ResourceAPIModel;
+import it.cnit.gaia.rulesengine.configuration.OrientConfiguration;
+import it.cnit.gaia.rulesengine.configuration.SparksTokenRequest;
+import it.cnit.gaia.rulesengine.model.annotation.URI;
+import it.cnit.gaia.rulesengine.service.SparksService;
+import it.cnit.gaia.rulesengine.utils.RuleCreationHelper;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
+
+@SpringBootTest
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(classes = {SparksService.class, SparksTokenRequest.class, RuleCreationHelper.class, OrientConfiguration.class})
+public class RuleCreationHelperTest {
+	private final String rulesPackage = "it.cnit.gaia.rulesengine.rules";
+
+	@Autowired
+	RuleCreationHelper helper;
+	@Autowired
+	SparksService sparks;
+	@Autowired
+	OrientGraphFactory ogf;
+
+	@Before
+	public void setup() {
+		sparks.forceTokenRefresh();
+	}
+
+	@Test
+	public void testRuleSuggestion() throws ApiException {
+		String property = "Luminosity";
+		ResourceAPIModel suggestedResource = helper.getSuggestedResourceByProperty(property, 159742L);
+		System.out.println(suggestedResource);
+	}
+
+	@Test
+	public void testRule() throws ClassNotFoundException, ApiException {
+		Long room_55 = 159737L;
+		String classname = "ComfortIndex";
+		Class<?> aClass = Class.forName(rulesPackage + "." + classname);
+		Field[] fields = aClass.getFields();
+		List<String> uris = new ArrayList<>();
+		for (Field f : fields) {
+			if (f.isAnnotationPresent(URI.class))
+				uris.add(f.getName());
+		}
+		for (String uri : uris) {
+			ResourceAPIModel suggestedResourceByUri = helper.getSuggestedResourceByUri(uri, room_55);
+			System.out.println(uri + ": " + suggestedResourceByUri);
+		}
+	}
+
+	@Test
+	public void testDefaults() {
+
+
+	}
+}

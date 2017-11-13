@@ -10,22 +10,34 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.validation.constraints.NotNull;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class RuleCreateHelper {
+public class RuleCreationHelper {
 	private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
 	//Static hard coded map
 	//TODO Use the DB to read the map
+	private static HashMap<String,String> parametersMap = new HashMap<>();
 
-
-
-
+	static {
+		parametersMap.put("pwf_uri","Power Factor");
+		parametersMap.put("temperature_uri","Temperature");
+		parametersMap.put("humidity_uri","Relative Humidity");
+	}
 
 	@Autowired
 	SparksService sparksService;
+
+
+	public ResourceAPIModel getSuggestedResourceByUri(@NotNull String uri, @NotNull Long aid) throws ApiException {
+		String property = parametersMap.getOrDefault(uri,null);
+		if(property == null)
+			return null;
+		return getSuggestedResourceByProperty(property,aid);
+	}
 
 	public List<ResourceAPIModel> getAllSuggestedResources(@NotNull String property, @NotNull Long aid) throws ApiException {
 		CollectionOfResourceAPIModel collectionOfResourceAPIModel = sparksService.getResApi()
@@ -39,7 +51,7 @@ public class RuleCreateHelper {
 		return null;
 	}
 
-	public ResourceAPIModel getSuggestedResource(@NotNull String property, @NotNull Long aid) throws ApiException {
+	public ResourceAPIModel getSuggestedResourceByProperty(@NotNull String property, @NotNull Long aid) throws ApiException {
 		List<ResourceAPIModel> filtered = getAllSuggestedResources(property, aid);
 		if (filtered == null || filtered.size() == 0)
 			return null;
@@ -63,9 +75,5 @@ public class RuleCreateHelper {
 		}
 		return null;
 	}
-
-
-
-
 
 }

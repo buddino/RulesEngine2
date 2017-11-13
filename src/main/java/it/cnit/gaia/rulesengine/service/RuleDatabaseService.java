@@ -1,9 +1,11 @@
 package it.cnit.gaia.rulesengine.service;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OConcurrentResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
@@ -355,5 +357,24 @@ public class RuleDatabaseService {
 		ruleDTO.setRid(ruleVertex.getIdentity().toString());
 		tx.shutdown();
 		return ruleDTO;
+	}
+
+	public void addDefault(String classname, Map<String, Object> fields) {
+
+	}
+
+	public Map<String, Map<String, Map<String, String>>> getDefault(String classname) {
+		ODatabaseDocumentTx database = ogf.getDatabase();
+		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>("SELECT * FROM GaiaDefaults where classname = ?");
+		OConcurrentResultSet resultSet = query.execute(classname);
+		if (resultSet.size() == 0)
+			return null;
+		Map<String, Object> defaults = ((ODocument) resultSet.get(0)).toMap();
+		Map<String, Map<String, String>> fields = (Map<String, Map<String, String>>) defaults.get("fields");
+		Map<String, Map<String, String>> suggestion = (Map<String, Map<String, String>>) defaults.get("suggestion");
+		Map<String, Map<String, Map<String, String>>> result = new HashMap<>();
+		result.put("fields", fields);
+		result.put("suggestion", suggestion);
+		return result;
 	}
 }

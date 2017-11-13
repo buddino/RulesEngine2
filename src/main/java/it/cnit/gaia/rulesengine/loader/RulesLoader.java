@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
 
 @Service
 public class RulesLoader {
-	private final String rulesPackage = "it.cnit.gaia.rulesengine.rules";
+	public static final String rulesPackage = "it.cnit.gaia.rulesengine.rules";
 	private final String ruleContainerName = "Area";
 	//TODO Non serve a niente! Levalo!
 	private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
