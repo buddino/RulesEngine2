@@ -351,6 +351,7 @@ public class RulesLoader {
 				}
 			}
 		}
+		area.setSchool(school);
 		if (school.aid != area.aid)
 			areaMap.put(area.aid, area);
 		return area;
