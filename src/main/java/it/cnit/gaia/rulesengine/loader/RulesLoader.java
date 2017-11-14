@@ -44,7 +44,7 @@ public class RulesLoader {
 	private Map<Long, School> schools = null;
 	private Map<Long, School> schools_tmp = null;
 	private Map<String, GaiaRule> ruleMap;
-	private Map<Long, Area> areaMap;
+	private Map<Long, Area> areaMap = new HashMap<>();
 	private OrientGraph tx; //Riguarda
 	private ObjectMapper mapper = new ObjectMapper();
 

@@ -14,6 +14,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import io.swagger.sparks.ApiException;
+import it.cnit.gaia.rulesengine.api.dto.DefaultsDTO;
 import it.cnit.gaia.rulesengine.api.dto.RuleDTO;
 import it.cnit.gaia.rulesengine.api.exception.GaiaRuleException;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
@@ -359,22 +360,62 @@ public class RuleDatabaseService {
 		return ruleDTO;
 	}
 
-	public void addDefault(String classname, Map<String, Object> fields) {
-
-	}
-
-	public Map<String, Map<String, Map<String, String>>> getDefault(String classname) {
+	public DefaultsDTO getDefault(String classname) {
 		ODatabaseDocumentTx database = ogf.getDatabase();
 		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>("SELECT * FROM GaiaDefaults where classname = ?");
 		OConcurrentResultSet resultSet = query.execute(classname);
 		if (resultSet.size() == 0)
 			return null;
-		Map<String, Object> defaults = ((ODocument) resultSet.get(0)).toMap();
-		Map<String, Map<String, String>> fields = (Map<String, Map<String, String>>) defaults.get("fields");
-		Map<String, Map<String, String>> suggestion = (Map<String, Map<String, String>>) defaults.get("suggestion");
-		Map<String, Map<String, Map<String, String>>> result = new HashMap<>();
-		result.put("fields", fields);
-		result.put("suggestion", suggestion);
-		return result;
+		Map<String, Object> res = ((ODocument) resultSet.get(0)).toMap();
+		Map<String, Map<String, Object>> fields = (Map<String, Map<String, Object>>) res.get("fields");
+		Map<String,String> suggestion = (Map<String, String>) res.get("suggestion");
+		DefaultsDTO defaults = new DefaultsDTO();
+		defaults.setFields(fields);
+		defaults.setSuggestion(suggestion);
+		return defaults;
 	}
+
+
+	public void deleteDefault(String classname) throws GaiaRuleException {
+		ODatabaseDocumentTx database = ogf.getDatabase();
+		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>("SELECT * FROM GaiaDefaults where classname = ?");
+		OConcurrentResultSet resultSet = query.execute(classname);
+		if(resultSet.size()==1){
+			ODocument o = (ODocument) resultSet.get(0);
+			o.delete();
+			return;
+		}
+		throw new GaiaRuleException("Not found",HttpStatus.NOT_FOUND);
+	}
+
+	public ODocument editDefault(String classname, DefaultsDTO defaults) throws GaiaRuleException {
+		ODatabaseDocumentTx database = ogf.getDatabase();
+		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>("SELECT * FROM GaiaDefaults where classname = ?");
+		OConcurrentResultSet resultSet = query.execute(classname);
+		if(resultSet.size()==1){
+			ODocument o = (ODocument) resultSet.get(0);
+			o.field("fields", defaults.getFields());
+			o.field("suggestion", defaults.getSuggestion());
+			o.save();
+			return o;
+		}
+		throw new GaiaRuleException("Not found",HttpStatus.NOT_FOUND);
+	}
+
+	//TODO Patch
+
+	public ODocument addDefault(String classname, DefaultsDTO defaults) throws GaiaRuleException {
+		if(getDefault(classname)!=null)
+			throw new GaiaRuleException("Conflict, default alredy present, use PUT to edit!", HttpStatus.CONFLICT);
+		ODatabaseDocumentTx database = ogf.getDatabase();
+		ODocument d = new ODocument("GaiaDefaults");
+		d.field("classname", classname);
+		//TODO Add control on the classname
+		d.field("fields", defaults.getFields());
+		d.field("suggestion", defaults.getSuggestion());
+		d.save();
+		return d;
+	}
+
+
 }

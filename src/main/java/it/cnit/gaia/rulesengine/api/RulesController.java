@@ -2,10 +2,7 @@ package it.cnit.gaia.rulesengine.api;
 
 import io.swagger.annotations.*;
 import io.swagger.sparks.model.ResourceAPIModel;
-import it.cnit.gaia.rulesengine.api.dto.CompositeDTO;
-import it.cnit.gaia.rulesengine.api.dto.ConditionDTO;
-import it.cnit.gaia.rulesengine.api.dto.ErrorResponse;
-import it.cnit.gaia.rulesengine.api.dto.RuleDTO;
+import it.cnit.gaia.rulesengine.api.dto.*;
 import it.cnit.gaia.rulesengine.api.exception.GaiaRuleException;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
 import it.cnit.gaia.rulesengine.model.AreaDepth;
@@ -210,6 +207,8 @@ public class RulesController {
 	}
 
 
+	//TODO Move logic in helper class
+	//Riguarda
 	@ApiOperation(value = "GET default values before creating a rule", notes = "GET default values before creating a rule")
 	@GetMapping(value = "area/{aid}/{classname}", produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
@@ -222,7 +221,7 @@ public class RulesController {
 			@RequestParam(defaultValue = "en", required = false) String lang) throws Exception {
 		RuleDTO suggested = new RuleDTO();
 		Map<String, Object> suggestedFields = new HashMap<>();
-		Map<String, Map<String, Map<String, String>>> defaults = ruleDatabaseService.getDefault(classname);
+		DefaultsDTO defaults = ruleDatabaseService.getDefault(classname);
 		if(defaults==null)
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
 		Class<?> aClass = Class.forName(RulesLoader.rulesPackage + "." + classname);
@@ -232,25 +231,25 @@ public class RulesController {
 			if (f.isAnnotationPresent(LoadMe.class)) {
 				if (f.isAnnotationPresent(URI.class)) {
 					//Translate uri to property
-					Map<String, String> field = defaults.get("fields").getOrDefault(f.getName(),null);
+					Map<String, Object> field = defaults.getFields().getOrDefault(f.getName(),null);
 					ResourceAPIModel suggestedResources;
 					if(field!=null){
 						//If the defaults contains the parameter use it
-						String property = field.get("value");
-						suggestedResources = helper.getSuggestedResourceByProperty(property, aid);
+						String property = String.valueOf(field.get("value"));
+						suggestedResources = helper.getSuggestedResourceByProperty(f.getName(), aid, property);
 					}
 					else {
 						//Else let the helper do the conversion if possible
-						suggestedResources = helper.getSuggestedResourceByUri(f.getName(), aid);
+						suggestedResources = helper.getSuggestedResourceByFieldname(f.getName(), aid, null);
 					}
 					if (suggestedResources != null)
 						suggestedFields.put(f.getName(), suggestedResources.getUri());
 					else
 						suggestedFields.put(f.getName(), null);
 				} else if (f.getName().equals("suggestion")) {
-					suggestedFields.put(f.getName(), defaults.get("suggestion").get(lang));
+					suggestedFields.put(f.getName(), defaults.getSuggestion().getOrDefault(lang,""));
 				} else {
-					Map<String, String> field = defaults.get("fields").getOrDefault(f.getName(), null);
+					Map<String, Object> field = defaults.getFields().getOrDefault(f.getName(), null);
 					if(field!=null)
 						suggestedFields.put(f.getName(), field.get("value"));
 					else
