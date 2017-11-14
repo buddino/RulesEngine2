@@ -236,7 +236,7 @@ public class RulesController {
 					if(field!=null){
 						//If the defaults contains the parameter use it
 						String property = String.valueOf(field.get("value"));
-						suggestedResources = helper.getSuggestedResourceByProperty(f.getName(), aid, property);
+						suggestedResources = helper.getSuggestedResourceByProperty(property, aid, null);
 					}
 					else {
 						//Else let the helper do the conversion if possible

@@ -70,7 +70,6 @@ public class RuleCreationHelper {
 		return getSuggestedResourceByProperty(property, aid, tag);
 	}
 
-
 	public List<ResourceAPIModel> getAllSuggestedResources(@NotNull String property, @NotNull Long
 			aid, @Nullable String tag) throws ApiException {
 		CollectionOfResourceAPIModel collectionOfResourceAPIModel = sparksService.getResApi()
@@ -87,7 +86,6 @@ public class RuleCreationHelper {
 		}
 		return null;
 	}
-
 
 	public ResourceAPIModel getSuggestedResourceByProperty(@NotNull String property, @NotNull Long aid, @Nullable String tag) throws ApiException {
 		List<ResourceAPIModel> filtered = getAllSuggestedResources(property, aid, tag);
@@ -132,7 +130,7 @@ public class RuleCreationHelper {
 
 	private String needsParent(String uri) {
 		if (parent.matcher(uri).find()) {
-			String s =uri.replaceFirst(root.pattern(), "");
+			String s = uri.replaceFirst(root.pattern(), "");
 			return s;
 		}
 		return null;
