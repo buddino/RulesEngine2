@@ -143,6 +143,12 @@
             <artifactId>reflections</artifactId>
             <version>0.9.10</version>
         </dependency>
+        <!-- INTERVAL PARSER  -->
+        <dependency>
+            <groupId>it.cnit.gaia</groupId>
+            <artifactId>intervalparser</artifactId>
+            <version>1.0</version>
+        </dependency>
         <!-- METRICS AND INFO -->
         <!--<dependency>-->
             <!--<groupId>org.springframework.boot</groupId>-->
