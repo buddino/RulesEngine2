@@ -5,9 +5,10 @@ import it.cnit.gaia.api.model.Schedule;
 import it.cnit.gaia.api.model.Site;
 import it.cnit.gaia.api.model.SiteInfo;
 import it.cnit.gaia.buildingdb.exceptions.BuildingDatabaseException;
+import it.cnit.gaia.intervalparser.LocalInterval;
+import it.cnit.gaia.intervalparser.LocalIntervalParser;
 import it.cnit.gaia.rulesengine.configuration.SparksTokenRequest;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
-import org.quartz.CronExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,9 @@ import org.springframework.web.client.HttpStatusCodeException;
 
 import javax.annotation.PostConstruct;
 import java.text.ParseException;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -23,6 +27,9 @@ import java.util.stream.Collectors;
 public class MetadataService implements SparksAAAService {
 	private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
+
+	@Autowired
+	private LocalIntervalParser intervalParser;
 	@Autowired
 	private SparksTokenRequest tokenRequest;
 	@Autowired
@@ -30,9 +37,10 @@ public class MetadataService implements SparksAAAService {
 	@Autowired
 	private MetadataAPI metadataAPI;
 
-	private Map<Long, List<CronExpression>> occupation = new HashMap<>();
-	private Map<Long, List<CronExpression>> schoolClosed = new HashMap<>();
-	private Map<Long, List<CronExpression>> schoolTeaching = new HashMap<>();
+
+	private Map<Long, List<LocalInterval>> occupation = new HashMap<>();
+	private Map<Long, List<LocalInterval>> schoolClosed = new HashMap<>();
+	private Map<Long, List<LocalInterval>> schoolTeaching = new HashMap<>();
 	private Set<Long> areas = new HashSet<>();
 	private Set<Long> buildings = new HashSet<>();
 
@@ -57,15 +65,15 @@ public class MetadataService implements SparksAAAService {
 		return metadataAPI.getScheduleForSite(id);
 	}
 
-	public List<CronExpression> getClosed(Long id) {
+	public List<LocalInterval> getClosed(Long id) {
 		return schoolClosed.get(id);
 	}
 
-	public List<CronExpression> getOccupied(Long id) {
+	public List<LocalInterval> getOccupied(Long id) {
 		return occupation.get(id);
 	}
 
-	public List<CronExpression> getTeaching(Long id) {
+	public List<LocalInterval> getTeaching(Long id) {
 		return schoolTeaching.get(id);
 	}
 
@@ -90,8 +98,8 @@ public class MetadataService implements SparksAAAService {
 			Collection<Schedule> scheduleForSite = metadataAPI.getScheduleForSite(aid);
 			List<String> cronStrings = scheduleForSite.stream().flatMap(l -> l.getCronDefinitions().stream())
 													  .collect(Collectors.toList());
-			List<CronExpression> cronExpressions = toExpressionList(cronStrings);
-			occupation.put(aid, cronExpressions);
+			List<LocalInterval> intervalList = toIntervalList(cronStrings);
+			occupation.put(aid, intervalList);
 		}
 		catch (HttpStatusCodeException e){
 			LOGGER.warn("Error while updating schedule for: "+aid+". Error: "+e.getStatusText());
@@ -115,8 +123,8 @@ public class MetadataService implements SparksAAAService {
 											   .collect(Collectors.toList());
 			List<String> teachingStrings = teaching.stream().flatMap(l -> l.getCronDefinitions().stream())
 												   .collect(Collectors.toList());
-			schoolClosed.put(bid, toExpressionList(closedStrings));
-			schoolTeaching.put(bid, toExpressionList(teachingStrings));
+			schoolClosed.put(bid, toIntervalList(closedStrings));
+			schoolTeaching.put(bid, toIntervalList(teachingStrings));
 		}
 		catch (HttpStatusCodeException e){
 			LOGGER.warn("Error while updating schedule for: "+bid+". Error: "+e.getStatusText());
@@ -124,36 +132,42 @@ public class MetadataService implements SparksAAAService {
 	}
 
 	public boolean isOccupied(Long id, Date date) throws BuildingDatabaseException {
-		List<CronExpression> cronexpr = occupation.get(id);
-		if (cronexpr == null) {
+		LocalDateTime queryDate = LocalDateTime
+				.ofInstant(Instant.ofEpochMilli(date.getTime()), ZoneId.systemDefault());
+		List<LocalInterval> intervals = occupation.get(id);
+		if (intervals == null) {
 			updateSchedule(id);
-			cronexpr = occupation.get(id);
-			if (cronexpr == null)
+			intervals = occupation.get(id);
+			if (intervals == null)
 				throw new BuildingDatabaseException("No schedule found for school " + id);
 		}
-		return cronexpr.stream().anyMatch(e -> e.isSatisfiedBy(date));
+		return intervals.stream().anyMatch(e -> e.inRange(queryDate));
 	}
 
 	public boolean isClosed(Long sid, Date date) throws BuildingDatabaseException {
-		List<CronExpression> cronexpr = schoolClosed.get(sid);
-		if (cronexpr == null) {
+		LocalDateTime queryDate = LocalDateTime
+				.ofInstant(Instant.ofEpochMilli(date.getTime()), ZoneId.systemDefault());
+		List<LocalInterval> intervals = schoolClosed.get(sid);
+		if (intervals == null) {
 			updateCalendar(sid);
-			cronexpr = schoolClosed.get(sid);
-			if (cronexpr == null)
+			intervals = schoolClosed.get(sid);
+			if (intervals == null)
 				throw new BuildingDatabaseException("No schedule found for school " + sid);
 		}
-		return cronexpr.stream().anyMatch(e -> e.isSatisfiedBy(date));
+		return intervals.stream().anyMatch(e -> e.inRange(queryDate));
 	}
 
 	public boolean isTeaching(Long aid, Date date) throws BuildingDatabaseException {
-		List<CronExpression> cronexpr = schoolTeaching.get(aid);
-		if (cronexpr == null) {
+		LocalDateTime queryDate = LocalDateTime
+				.ofInstant(Instant.ofEpochMilli(date.getTime()), ZoneId.systemDefault());
+		List<LocalInterval> intervals = schoolClosed.get(aid);
+		if (intervals == null) {
 			updateCalendar(aid);
-			cronexpr = schoolTeaching.get(aid);
-			if (cronexpr == null)
+			intervals = schoolTeaching.get(aid);
+			if (intervals == null)
 				throw new BuildingDatabaseException("No schedule found for school " + aid);
 		}
-		return cronexpr.stream().anyMatch(e -> e.isSatisfiedBy(date));
+		return intervals.stream().anyMatch(e -> e.inRange(queryDate));
 	}
 
 	public boolean isTeaching(Long id) throws BuildingDatabaseException {
@@ -176,6 +190,7 @@ public class MetadataService implements SparksAAAService {
 		metadataAPI.setToken(token);
 	}
 
+	/*
 	private List<CronExpression> toExpressionList(Collection<String> strings) {
 		List<CronExpression> cronexpr = new LinkedList<>();
 		for (String s : strings) {
@@ -187,6 +202,20 @@ public class MetadataService implements SparksAAAService {
 			}
 		}
 		return cronexpr;
+	}
+	*/
+
+	private List<LocalInterval> toIntervalList(Collection<String> strings) {
+		List<LocalInterval> intervals = new LinkedList<>();
+		for (String s : strings) {
+			try {
+				LocalInterval i = intervalParser.parse(s);
+				intervals.add(i);
+			} catch (ParseException e) {
+				LOGGER.warn("Could not parse: " + s);
+			}
+		}
+		return intervals;
 	}
 
 }

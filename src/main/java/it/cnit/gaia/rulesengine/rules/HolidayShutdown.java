@@ -1,5 +1,6 @@
 package it.cnit.gaia.rulesengine.rules;
 
+import it.cnit.gaia.intervalparser.LocalInterval;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
 import it.cnit.gaia.rulesengine.model.exceptions.RuleInitializationException;
@@ -14,13 +15,14 @@ public class HolidayShutdown extends GaiaRule {
 	@LoadMe
 	public Long timeBeforeInHours;
 
+	private List<LocalInterval> intervals = new ArrayList<>();
 	private List<CronExpression> cronexps = new ArrayList<>();
 
 	@Override
 	public boolean condition() {
 		Long millisToNextTrigger = computeMillisToNextTrigger();
-		if (millisToNextTrigger < 1000) {
-			//You are inside a CRON PERIOD, don't trigger the rule
+		if (millisToNextTrigger < 0) {
+			//You are inside the interval, DO NOT trigger
 			return false;
 		} else {
 			Long hoursToNextTrigger = millisToNextTrigger / (1000 * 3600);    //Compute the time between the closest fireCron and now in hours
@@ -30,6 +32,8 @@ public class HolidayShutdown extends GaiaRule {
 
 	@Override
 	public boolean init() throws RuleInitializationException {
+		//FIXME Will return alist of interval instead of cronexp
+		//intervals = metadataService.getClosed(155076L);
 		cronexps = metadataService.getClosed(155076L);
 		validateFields();
 		return true;
@@ -40,15 +44,14 @@ public class HolidayShutdown extends GaiaRule {
 		Date now = new Date();
 		OptionalLong next;
 		try {
-			next = cronexps.stream().mapToLong(x -> x.getNextValidTimeAfter(now).getTime())
-						   .min();
+			next = intervals.stream().mapToLong(x -> x.getStartAsLong()).min();
 		} catch (NullPointerException e) {
-			return 0L;
+			return Long.MAX_VALUE;
 		}
 		if (next.isPresent())
 			return next.getAsLong() - now.getTime();
 		else
-			return 0L;
+			return Long.MAX_VALUE;
 	}
 
 	public List<CronExpression> getCronexps() {
