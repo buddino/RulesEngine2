@@ -209,6 +209,7 @@ public class MetadataService implements SparksAAAService {
 		List<LocalInterval> intervals = new LinkedList<>();
 		for (String s : strings) {
 			try {
+				LOGGER.debug("Parsing: "+s);
 				LocalInterval i = intervalParser.parse(s);
 				intervals.add(i);
 			} catch (ParseException e) {

@@ -1,11 +1,9 @@
 package rules;
 
-import it.cnit.gaia.buildingdb.dto.AreaScheduleDTO;
-import it.cnit.gaia.buildingdb.dto.BuildingCalendarDTO;
-import it.cnit.gaia.buildingdb.dto.CalendarStatus;
 import it.cnit.gaia.buildingdb.exceptions.BuildingDatabaseException;
+import it.cnit.gaia.intervalparser.LocalInterval;
+import it.cnit.gaia.intervalparser.LocalIntervalParser;
 import it.cnit.gaia.rulesengine.model.exceptions.RuleInitializationException;
-import it.cnit.gaia.rulesengine.model.notification.GAIANotification;
 import it.cnit.gaia.rulesengine.rules.HolidayShutdown;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -13,16 +11,13 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.junit.rules.ExpectedException;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.mockito.invocation.Invocation;
 
+import java.text.ParseException;
 import java.util.Arrays;
-import java.util.Collection;
 
 import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 public class TestHolidayShutdown extends GenericRuleTest {
 	@Rule
@@ -38,124 +33,36 @@ public class TestHolidayShutdown extends GenericRuleTest {
 	}
 
 	@Test
-	public void failInitNoTimeBefore() throws RuleInitializationException, BuildingDatabaseException {
-		thrown.expect(RuleInitializationException.class);
-		AreaScheduleDTO scheduleDTO = new AreaScheduleDTO();
-		scheduleDTO.setCron("[\"* * 10-15 * * ? *\",\"* * * 15 * ? *\"]");
-		when(buildingDatabaseService.getScheduleForArea(anyLong())).thenReturn(Arrays.asList(scheduleDTO));
-		rule.init();
-	}
-
-
-	@Test
-	public void failInitNotValidCron() throws BuildingDatabaseException, RuleInitializationException {
-		thrown.expect(RuleInitializationException.class);
-		AreaScheduleDTO scheduleDTO = new AreaScheduleDTO();
-		scheduleDTO.setCron("[\"* * 10-15 * * ? *\", \"* * * p * ? *\"");
-		when(buildingDatabaseService.getScheduleForArea(anyLong())).thenReturn(Arrays.asList(scheduleDTO));
-		rule.init();
-	}
-
-	@Test
-	public void testConditionVerified() throws BuildingDatabaseException, RuleInitializationException {
+	public void testConditionVerified() throws BuildingDatabaseException, RuleInitializationException, ParseException {
 		/*
 		The event is set 3 days from now, the notification is set 96 hours before the event (4 days)
 		So the condition should be true
 		 */
 		DateTime futureDate = this.dateTime.plusDays(3);
-		String cron = String.format("[\"* * * %d %d ? *\"]", futureDate.getDayOfMonth(), futureDate.getMonthOfYear());
-		AreaScheduleDTO scheduleDTO = new AreaScheduleDTO();
-		scheduleDTO.setCron(cron);
+		String interval = String.format("%02d/%02d/%d-31/12/2020",futureDate.getDayOfMonth(),futureDate.getMonthOfYear(),futureDate.getYear());
+		LocalIntervalParser localIntervalParser = new LocalIntervalParser();
+		LocalInterval parse = localIntervalParser.parse(interval);
+		when(metadataService.getClosed(anyLong())).thenReturn(Arrays.asList(parse));
 		rule.timeBeforeInHours = 96L;
-		when(buildingDatabaseService.getScheduleForArea(anyLong())).thenReturn(Arrays.asList(scheduleDTO));
 		rule.init();
 		Assertions.assertTrue(rule.condition());
 	}
 
 	@Test
-	public void testConditionNotVerified() throws BuildingDatabaseException, RuleInitializationException {
+	public void testConditionNotVerified() throws BuildingDatabaseException, RuleInitializationException, ParseException {
 		/*
 		The event is set 3 days from now, the notification is set to 36 hours before the event
 		So the condition should be false
 		 */
 		DateTime futureDate = this.dateTime.plusDays(3);
-		String cron = String.format("[\"* * * %d %d ? *\"]", futureDate.getDayOfMonth(), futureDate.getMonthOfYear());
-		AreaScheduleDTO scheduleDTO = new AreaScheduleDTO();
-		scheduleDTO.setCron(cron);
+		String interval = String.format("%02d/%02d/%d-31/12/2020",futureDate.getDayOfMonth(),futureDate.getMonthOfYear(),futureDate.getYear());
+		LocalIntervalParser localIntervalParser = new LocalIntervalParser();
+		LocalInterval parse = localIntervalParser.parse(interval);
+		when(metadataService.getClosed(anyLong())).thenReturn(Arrays.asList(parse));
 		rule.timeBeforeInHours = 36L;
-		when(buildingDatabaseService.getScheduleForArea(anyLong())).thenReturn(Arrays.asList(scheduleDTO));
 		rule.init();
 		Assertions.assertFalse(rule.condition());
 	}
 
-	@Test
-	public void testOldEvent() throws BuildingDatabaseException, RuleInitializationException {
-		AreaScheduleDTO scheduleDTO = new AreaScheduleDTO();
-		scheduleDTO.setCron("[\"2* * * * * ? 2016\"]");
-		rule.timeBeforeInHours = 36L;
-		when(buildingDatabaseService.getScheduleForArea(anyLong())).thenReturn(Arrays.asList(scheduleDTO));
-		rule.init();
-		Assertions.assertFalse(rule.condition());
-	}
-
-	//@Test
-	public void testEmptyExpressionList() throws BuildingDatabaseException, RuleInitializationException {
-		//TODO Schianta
-		thrown.expect(RuleInitializationException.class);
-		AreaScheduleDTO scheduleDTO = new AreaScheduleDTO();
-		rule.timeBeforeInHours = 36L;
-		when(buildingDatabaseService.getScheduleForArea(anyLong())).thenReturn(Arrays.asList(scheduleDTO));
-		rule.init();
-	}
-
-	@Test
-	public void test() throws BuildingDatabaseException, RuleInitializationException {
-		DateTime futureDate = this.dateTime.plusDays(3);
-		AreaScheduleDTO scheduleDTO = new AreaScheduleDTO();
-		scheduleDTO.setCron("[\"* * * "+futureDate.getDayOfMonth()+" "+futureDate.getMonthOfYear()+" ? *\"]");
-		rule.timeBeforeInHours = 300L;
-		when(buildingDatabaseService.getScheduleForArea(anyLong())).thenReturn(Arrays.asList(scheduleDTO));
-		rule.init();
-		rule.fire();
-		Collection<Invocation> invocations = Mockito.mockingDetails(websocketService).getInvocations();
-		verify(websocketService,times(1)).pushNotification((GAIANotification) anyObject());
-	}
-
-
-	@Test
-	public void testLatestFireTime() throws BuildingDatabaseException, RuleInitializationException {
-		DateTime futureDate = this.dateTime.plusDays(3);
-		AreaScheduleDTO scheduleDTO = new AreaScheduleDTO();
-		scheduleDTO.setCron("[\"* * * "+futureDate.getDayOfMonth()+" "+futureDate.getMonthOfYear()+" ? *\"]");
-		rule.timeBeforeInHours = 300L;
-		when(buildingDatabaseService.getScheduleForArea(anyLong())).thenReturn(Arrays.asList(scheduleDTO));
-		rule.init();
-		rule.fire();
-		Assertions.assertNotNull(rule.latestFireTime);
-	}
-
-	@Test
-	public void testConsecutiveFire() throws BuildingDatabaseException, RuleInitializationException {
-		DateTime futureDate = this.dateTime.plusDays(3);
-		AreaScheduleDTO scheduleDTO = new AreaScheduleDTO();
-		scheduleDTO.setCron("[\"* * * "+futureDate.getDayOfMonth()+" "+futureDate.getMonthOfYear()+" ? *\"]");
-		rule.timeBeforeInHours = 300L;
-		when(buildingDatabaseService.getScheduleForArea(anyLong())).thenReturn(Arrays.asList(scheduleDTO));
-		rule.fireInterval = 100L;
-		rule.init();
-		rule.fire();
-		rule.fire();
-		verify(websocketService,times(1)).pushNotification((GAIANotification) anyObject());
-	}
-
-	//@Test
-	public void testPrato() throws BuildingDatabaseException, RuleInitializationException {
-		BuildingCalendarDTO calendarDTO = new BuildingCalendarDTO();
-		calendarDTO.setCron("[\"* * * ? * SAT,SUN *\",\"* * * 14-18 8 ? 2017\",\"* * * 13-17 8 ? 2018\"]");
-		rule.timeBeforeInHours = 26L;
-		when(buildingDatabaseService.getBuildingCalendar(anyLong(), any(CalendarStatus.class))).thenReturn(Arrays.asList(calendarDTO));
-		rule.init();
-		System.out.println(rule.condition());
-	}
 
 }

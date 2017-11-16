@@ -7,10 +7,7 @@ import it.cnit.gaia.buildingdb.BuildingDatabaseService;
 import it.cnit.gaia.rulesengine.configuration.ContextProvider;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.School;
-import it.cnit.gaia.rulesengine.service.EventService;
-import it.cnit.gaia.rulesengine.service.MeasurementRepository;
-import it.cnit.gaia.rulesengine.service.RuleDatabaseService;
-import it.cnit.gaia.rulesengine.service.WebsocketService;
+import it.cnit.gaia.rulesengine.service.*;
 import org.junit.runner.RunWith;
 import org.mockito.Answers;
 import org.mockito.Mock;
@@ -38,12 +35,18 @@ public class GenericRuleTest {
 	RuleDatabaseService ruleDatabaseService;
 	@Mock
 	WeatherService weatherService;
+	@Mock
+	MetadataService metadataService;
+	@Mock
+	MailService mailService;
 
 
 	protected void setUpRule(GaiaRule rule){
 		School school = mock(School.class);
 		when(school.getName()).thenReturn("DummySchool");
 		rule.setSchool(school);
+		rule.setMetadataService(metadataService);
+		rule.setMailService(mailService);
 		rule.setWebsocket(websocketService);
 		rule.setBuildingDBService(buildingDatabaseService);
 		rule.setEventService(eventService);

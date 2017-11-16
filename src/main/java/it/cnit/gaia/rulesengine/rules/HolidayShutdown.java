@@ -33,8 +33,8 @@ public class HolidayShutdown extends GaiaRule {
 	@Override
 	public boolean init() throws RuleInitializationException {
 		//FIXME Will return alist of interval instead of cronexp
-		//intervals = metadataService.getClosed(155076L);
-		cronexps = metadataService.getClosed(155076L);
+		intervals = metadataService.getClosed(155076L);
+		//cronexps = metadataService.getClosed(155076L);
 		validateFields();
 		return true;
 	}
