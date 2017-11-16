@@ -7,6 +7,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.ResourceServerConfigurerAdapter;
 import org.springframework.security.oauth2.provider.token.RemoteTokenServices;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Configuration for the AAA system
@@ -15,10 +17,11 @@ import org.springframework.security.oauth2.provider.token.RemoteTokenServices;
 @Configuration
 @EnableResourceServer
 @EnableGlobalMethodSecurity(prePostEnabled = true)
-@Profile("default")
+@Profile("noauth")
 @PropertySource("file:account.properties")
-public class SecurityConfiguration extends ResourceServerConfigurerAdapter {
+public class SecurityConfigurationTest extends ResourceServerConfigurerAdapter {
 
+	Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 	@Value("${aaa.check_token}")
 	private String check_token;
 	@Value("${aaa.secret}")
@@ -28,6 +31,7 @@ public class SecurityConfiguration extends ResourceServerConfigurerAdapter {
 
 	/**
 	 * RemoteTokenService for checking information about the user (ROLE etc.)
+	 *
 	 * @return
 	 */
 	@Primary
@@ -46,21 +50,20 @@ public class SecurityConfiguration extends ResourceServerConfigurerAdapter {
 	 * Allow only authenticated users with role USER (to be modified according to permissions)
 	 * Allow requests to the SockJS websocket endpoint
 	 * Allow access to documentation ?
+	 *
 	 * @param http
 	 * @throws Exception
 	 */
 	@Override
 	public void configure(HttpSecurity http) throws Exception {
+		LOGGER.info("TESTING PROFILE ACTIVE: AUTHENTICATION IS DISABLED");
 		//http.authorizeRequests().antMatchers("/**").permitAll();
 		//http.authorizeRequests().requestMatchers(CorsUtils::isPreFlightRequest).permitAll().antMatchers("/**").hasRole("USER");
 		//http.authorizeRequests().antMatchers(HttpMethod.OPTIONS).permitAll().antMatchers("/**").hasRole("USER");
 
-		http.cors()																									//Enable CORS
-			.and().authorizeRequests().antMatchers("/docs/*").permitAll().and().authorizeRequests()		//Allows Swagger API
-			.antMatchers("/v2/api-docs").permitAll()													//Allows Swagger API
-			.and().authorizeRequests().antMatchers("/gs-guide-notification/**").permitAll()				//Allows web socket
-			.and().authorizeRequests().antMatchers("/**").hasAnyRole(
-					"GAIA_STUDENT","GAIA_TEACHER","GAIA_LOCAL_MANAGER","GAIA_GLOBAL_MANAGER","GAIA_ADMIN");				//Block all other dto except from user with ROLE.USER
+		http.cors()                                                                                                    //Enable CORS
+			.and().authorizeRequests().antMatchers("/**").permitAll().and()
+			.authorizeRequests();            //Block all other dto except from user with ROLE.USER
 	}
 
 }

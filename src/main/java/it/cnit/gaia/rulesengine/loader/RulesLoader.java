@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
 
 @Service
 public class RulesLoader {
-	private final String rulesPackage = "it.cnit.gaia.rulesengine.rules";
+	public static final String rulesPackage = "it.cnit.gaia.rulesengine.rules";
 	private final String ruleContainerName = "Area";
 	//TODO Non serve a niente! Levalo!
 	private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
@@ -44,7 +44,7 @@ public class RulesLoader {
 	private Map<Long, School> schools = null;
 	private Map<Long, School> schools_tmp = null;
 	private Map<String, GaiaRule> ruleMap;
-	private Map<Long, Area> areaMap;
+	private Map<Long, Area> areaMap = new HashMap<>();
 	private OrientGraph tx; //Riguarda
 	private ObjectMapper mapper = new ObjectMapper();
 
@@ -351,6 +351,7 @@ public class RulesLoader {
 				}
 			}
 		}
+		area.setSchool(school);
 		if (school.aid != area.aid)
 			areaMap.put(area.aid, area);
 		return area;

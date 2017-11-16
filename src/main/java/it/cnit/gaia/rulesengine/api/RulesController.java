@@ -13,6 +13,7 @@ import it.cnit.gaia.rulesengine.model.School;
 import it.cnit.gaia.rulesengine.model.exceptions.RuleInitializationException;
 import it.cnit.gaia.rulesengine.rules.AllCompositeRule;
 import it.cnit.gaia.rulesengine.rules.AnyCompositeRule;
+import it.cnit.gaia.rulesengine.service.RuleCreationHelper;
 import it.cnit.gaia.rulesengine.service.RuleDatabaseService;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,8 @@ public class RulesController {
 	private RuleDatabaseService ruleDatabaseService;
 	@Autowired
 	private RulesLoader rulesLoader;
+	@Autowired
+	private RuleCreationHelper helper;
 
 	@ApiOperation(value = "GET rules of area",
 			notes = "Get all the rules associated to the area identified by {id}",
@@ -149,6 +152,33 @@ public class RulesController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(ruleDTO);
 	}
 
+	@ApiOperation(value = "ADD a rule to area", notes = "Add a custom rule according to the object passed in the body")
+	@PostMapping(value = "area/{aid}/rules", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ResponseBody
+	public ResponseEntity<RuleDTO> addRuleToArea(
+			@ApiParam("ID of the area")
+			@PathVariable Long aid,
+			@ApiParam("JSON Object describing the rule")
+			@RequestBody RuleDTO ruleDTO,
+			@ApiParam("If true the rule will be instantiated using the default values")
+			@RequestParam(defaultValue = "false") Boolean usedefaults,
+			@ApiParam("Language (e.g.,it,en,el...)")
+			@RequestParam(defaultValue = "en") String lang) throws Exception {
+		if(usedefaults) {
+			//Get defaults
+			RuleDTO defaults = helper.getSuggestion(aid, ruleDTO.getClazz(), lang, true);
+			//Add custom fields replacing the defaults
+			for(Map.Entry<String,Object> e : ruleDTO.getFields().entrySet()){
+				defaults.getFields().put(e.getKey(),e.getValue());
+			}
+			ruleDTO = defaults;
+		}
+		ruleDTO = ruleDatabaseService.addCustomRuleToArea(aid, ruleDTO);
+		ruleDatabaseService.reloadAllSchools(false);
+		return ResponseEntity.status(HttpStatus.CREATED).body(ruleDTO);
+	}
+
+
 	@ApiOperation(value = "TODO", notes = "TODO")
 	@PostMapping(value = "area/{aid}/rules/composite", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
@@ -201,6 +231,9 @@ public class RulesController {
 		return ResponseEntity.ok(null);
 	}
 
+
+
+
 	@ExceptionHandler(GaiaRuleException.class)
 	public ResponseEntity<ErrorResponse> gaiaexceptionHandler(GaiaRuleException e) {
 		if (e.getStatus() == HttpStatus.INTERNAL_SERVER_ERROR) {
@@ -217,8 +250,6 @@ public class RulesController {
 		ResponseEntity responseEntity = new ResponseEntity(error, null, HttpStatus.BAD_REQUEST);
 		return responseEntity;
 	}
-
-
 
 
 }

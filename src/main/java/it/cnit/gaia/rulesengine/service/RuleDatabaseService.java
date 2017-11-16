@@ -1,17 +1,19 @@
 package it.cnit.gaia.rulesengine.service;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OConcurrentResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import io.swagger.sparks.ApiException;
+import it.cnit.gaia.rulesengine.api.dto.DefaultsDTO;
 import it.cnit.gaia.rulesengine.api.dto.RuleDTO;
 import it.cnit.gaia.rulesengine.api.exception.GaiaRuleException;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
@@ -63,20 +65,10 @@ public class RuleDatabaseService {
 		return null;
 	}
 
-	public Long getParentArea(String ruleId) {
-		OrientVertex ruleVertex = ogf.getNoTx().getVertex(ruleId);
-		try {
-			Vertex areaVertex = ruleVertex.getVertices(Direction.IN).iterator().next();
-			Long aid = areaVertex.getProperty("aid");
-			if (aid == null) {
-				LOGGER.error(String.format("The rule %s is not connected to a valid area (no aid found)", ruleId));
-				return null;
-			}
-			return aid;
-		} catch (NoSuchElementException e) {
-			LOGGER.error(String.format("The rule %s is not connected to an area", ruleId));
-			return null;
-		}
+	@Deprecated
+	public Long getParentArea(String aid) {
+		//TODO
+		return null;
 	}
 
 	public String getRulePath(String ruleId) {
@@ -332,7 +324,7 @@ public class RuleDatabaseService {
 		OSQLSynchQuery query = new OSQLSynchQuery("select * from CompositeRule where @rid=?");
 		List<ODocument> result = (List<ODocument>) query.execute(rid);
 		if (result.size() == 0)
-			throw new GaiaRuleException("The parent rule is not a CompsoiteRule", HttpStatus.NOT_FOUND);
+			throw new GaiaRuleException("The parent rule is not a CompositeRule", HttpStatus.NOT_FOUND);
 
 		Map<String, Object> fieldMap = ruleDTO.getFields();
 		OrientVertex ruleVertex = tx.addVertex("class:" + ruleDTO.getClazz());
@@ -356,4 +348,63 @@ public class RuleDatabaseService {
 		tx.shutdown();
 		return ruleDTO;
 	}
+
+	public DefaultsDTO getDefault(String classname) {
+		ODatabaseDocumentTx database = ogf.getDatabase();
+		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>("SELECT * FROM GaiaDefaults where classname = ?");
+		OConcurrentResultSet resultSet = query.execute(classname);
+		if (resultSet.size() == 0)
+			return null;
+		Map<String, Object> res = ((ODocument) resultSet.get(0)).toMap();
+		Map<String, Map<String, Object>> fields = (Map<String, Map<String, Object>>) res.get("fields");
+		Map<String,String> suggestion = (Map<String, String>) res.get("suggestion");
+		DefaultsDTO defaults = new DefaultsDTO();
+		defaults.setFields(fields);
+		defaults.setSuggestion(suggestion);
+		return defaults;
+	}
+
+
+	public void deleteDefault(String classname) throws GaiaRuleException {
+		ODatabaseDocumentTx database = ogf.getDatabase();
+		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>("SELECT * FROM GaiaDefaults where classname = ?");
+		OConcurrentResultSet resultSet = query.execute(classname);
+		if(resultSet.size()==1){
+			ODocument o = (ODocument) resultSet.get(0);
+			o.delete();
+			return;
+		}
+		throw new GaiaRuleException("Not found",HttpStatus.NOT_FOUND);
+	}
+
+	public ODocument editDefault(String classname, DefaultsDTO defaults) throws GaiaRuleException {
+		ODatabaseDocumentTx database = ogf.getDatabase();
+		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>("SELECT * FROM GaiaDefaults where classname = ?");
+		OConcurrentResultSet resultSet = query.execute(classname);
+		if(resultSet.size()==1){
+			ODocument o = (ODocument) resultSet.get(0);
+			o.field("fields", defaults.getFields());
+			o.field("suggestion", defaults.getSuggestion());
+			o.save();
+			return o;
+		}
+		throw new GaiaRuleException("Not found",HttpStatus.NOT_FOUND);
+	}
+
+	//TODO Patch
+
+	public ODocument addDefault(String classname, DefaultsDTO defaults) throws GaiaRuleException {
+		if(getDefault(classname)!=null)
+			throw new GaiaRuleException("Conflict, default alredy present, use PUT to edit!", HttpStatus.CONFLICT);
+		ODatabaseDocumentTx database = ogf.getDatabase();
+		ODocument d = new ODocument("GaiaDefaults");
+		d.field("classname", classname);
+		//TODO Add control on the classname
+		d.field("fields", defaults.getFields());
+		d.field("suggestion", defaults.getSuggestion());
+		d.save();
+		return d;
+	}
+
+
 }

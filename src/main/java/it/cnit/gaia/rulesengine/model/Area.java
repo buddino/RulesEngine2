@@ -1,7 +1,6 @@
 package it.cnit.gaia.rulesengine.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
@@ -13,6 +12,9 @@ public class Area implements Fireable {
 	public String name;
 	public String uri;
 	public String type;
+	public School school;
+	public Area parent;
+
 	@JsonProperty("json")
 	public Map<String, Object> metadata = new HashMap<>();
 	@JsonIgnore
@@ -104,6 +106,15 @@ public class Area implements Fireable {
 
 	public Area setMetadata(Map<String, Object> metadata) {
 		this.metadata = metadata;
+		return this;
+	}
+
+	public School getSchool() {
+		return school;
+	}
+
+	public Area setSchool(School school) {
+		this.school = school;
 		return this;
 	}
 }

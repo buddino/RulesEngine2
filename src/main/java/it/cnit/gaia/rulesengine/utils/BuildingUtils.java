@@ -147,7 +147,6 @@ public class BuildingUtils {
 		return uri;
 	}
 
-
 	public void deleteBuildingTreeIncludingTheRules(Long id) throws BuildingDatabaseException {
 		OrientGraph graph = graphFactory.getTx();
 		Iterable<Vertex> result = graph.getVertices("aid", id);

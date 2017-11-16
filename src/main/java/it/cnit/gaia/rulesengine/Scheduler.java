@@ -48,8 +48,12 @@ public class Scheduler {
 	@Value("${scheduler.retry_interval_in_seconds}")
 	Long retryInterval;
 
-
 	@PostConstruct
+	public void auth() throws IOException {
+		measurements.getMeasurementService().checkAuth();
+	}
+
+	//@PostConstruct
 	public void init() throws ApiException, IOException {
 
 		//Set the thread pool size to one. In this way only one scheduled thread will be executed avoiding concurrency
@@ -77,7 +81,7 @@ public class Scheduler {
 
 	}
 
-	@Scheduled(fixedRateString = "${scheduler.interval}")
+	//@Scheduled(fixedRateString = "${scheduler.interval}")
 	public void scheduledMethod() throws IOException, InterruptedException {
 		//Riguarda
 		measurements.getMeasurementService().checkAuth();
@@ -93,7 +97,7 @@ public class Scheduler {
 		schools.forEach(s -> s.fire());
 	}
 
-	@Scheduled(fixedDelay = 900 * 1000)
+	//@Scheduled(fixedDelay = 900 * 1000)
 	public void reloadSchools() {
 		rulesLoader.reloadAllSchools();
 	}

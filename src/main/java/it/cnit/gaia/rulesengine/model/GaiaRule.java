@@ -425,4 +425,5 @@ public abstract class GaiaRule implements Fireable {
 		}
 		return TimeZone.getTimeZone(timezone);
 	}
+
 }
