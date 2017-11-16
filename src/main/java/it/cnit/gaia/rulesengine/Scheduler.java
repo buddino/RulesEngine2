@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 
@@ -76,7 +77,7 @@ public class Scheduler {
 
 	}
 
-	//@Scheduled(fixedRateString = "${scheduler.interval}")
+	@Scheduled(fixedRateString = "${scheduler.interval}")
 	public void scheduledMethod() throws IOException, InterruptedException {
 		//Riguarda
 		measurements.getMeasurementService().checkAuth();
@@ -92,12 +93,12 @@ public class Scheduler {
 		schools.forEach(s -> s.fire());
 	}
 
-	//@Scheduled(fixedDelay = 900 * 1000)
+	@Scheduled(fixedDelay = 900 * 1000)
 	public void reloadSchools() {
 		rulesLoader.reloadAllSchools();
 	}
 
-	//@Scheduled(cron = "0 0 12 * * ?")
+	@Scheduled(cron = "0 0 12 * * ?")
 	public void reloadSchedules() throws IOException {
 		measurements.getMeasurementService().checkAuth();
 		metadataService.updateAll();
