@@ -1,20 +1,19 @@
 package it.cnit.gaia.rulesengine.api;
 
 import io.swagger.annotations.*;
-import io.swagger.sparks.model.ResourceAPIModel;
-import it.cnit.gaia.rulesengine.api.dto.*;
+import it.cnit.gaia.rulesengine.api.dto.CompositeDTO;
+import it.cnit.gaia.rulesengine.api.dto.ConditionDTO;
+import it.cnit.gaia.rulesengine.api.dto.ErrorResponse;
+import it.cnit.gaia.rulesengine.api.dto.RuleDTO;
 import it.cnit.gaia.rulesengine.api.exception.GaiaRuleException;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
 import it.cnit.gaia.rulesengine.model.AreaDepth;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.School;
-import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
-import it.cnit.gaia.rulesengine.model.annotation.URI;
 import it.cnit.gaia.rulesengine.model.exceptions.RuleInitializationException;
 import it.cnit.gaia.rulesengine.rules.AllCompositeRule;
 import it.cnit.gaia.rulesengine.rules.AnyCompositeRule;
 import it.cnit.gaia.rulesengine.service.RuleDatabaseService;
-import it.cnit.gaia.rulesengine.utils.RuleCreationHelper;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,8 +21,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,8 +38,6 @@ public class RulesController {
 	private RuleDatabaseService ruleDatabaseService;
 	@Autowired
 	private RulesLoader rulesLoader;
-	@Autowired
-	private RuleCreationHelper helper;
 
 	@ApiOperation(value = "GET rules of area",
 			notes = "Get all the rules associated to the area identified by {id}",
@@ -207,60 +202,7 @@ public class RulesController {
 	}
 
 
-	//TODO Move logic in helper class
-	//Riguarda
-	@ApiOperation(value = "GET default values before creating a rule", notes = "GET default values before creating a rule")
-	@GetMapping(value = "area/{aid}/{classname}", produces = MediaType.APPLICATION_JSON_VALUE)
-	@ResponseBody
-	public ResponseEntity<RuleDTO> suggestField(
-			@ApiParam("ID of the area")
-			@PathVariable Long aid,
-			@ApiParam(value = "Rule classname")
-			@PathVariable String classname,
-			@ApiParam(value = "Language (e.g.,it,en,el...)")
-			@RequestParam(defaultValue = "en", required = false) String lang) throws Exception {
-		RuleDTO suggested = new RuleDTO();
-		Map<String, Object> suggestedFields = new HashMap<>();
-		DefaultsDTO defaults = ruleDatabaseService.getDefault(classname);
-		if(defaults==null)
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-		Class<?> aClass = Class.forName(RulesLoader.rulesPackage + "." + classname);
-		Field[] fields = aClass.getFields();
-		List<String> uris = new ArrayList<>();
-		for (Field f : fields) {
-			if (f.isAnnotationPresent(LoadMe.class)) {
-				if (f.isAnnotationPresent(URI.class)) {
-					//Translate uri to property
-					Map<String, Object> field = defaults.getFields().getOrDefault(f.getName(),null);
-					ResourceAPIModel suggestedResources;
-					if(field!=null){
-						//If the defaults contains the parameter use it
-						String property = String.valueOf(field.get("value"));
-						suggestedResources = helper.getSuggestedResourceByProperty(property, aid, null);
-					}
-					else {
-						//Else let the helper do the conversion if possible
-						suggestedResources = helper.getSuggestedResourceByFieldname(f.getName(), aid, null);
-					}
-					if (suggestedResources != null)
-						suggestedFields.put(f.getName(), suggestedResources.getUri());
-					else
-						suggestedFields.put(f.getName(), null);
-				} else if (f.getName().equals("suggestion")) {
-					suggestedFields.put(f.getName(), defaults.getSuggestion().getOrDefault(lang,""));
-				} else {
-					Map<String, Object> field = defaults.getFields().getOrDefault(f.getName(), null);
-					if(field!=null)
-						suggestedFields.put(f.getName(), field.get("value"));
-					else
-						suggestedFields.put(f.getName(), null);
-				}
-			}
-		}
-		suggested.setClazz(classname);
-		suggested.setFields(suggestedFields);
-		return ResponseEntity.status(HttpStatus.OK).body(suggested);
-	}
+
 
 	@ExceptionHandler(GaiaRuleException.class)
 	public ResponseEntity<ErrorResponse> gaiaexceptionHandler(GaiaRuleException e) {

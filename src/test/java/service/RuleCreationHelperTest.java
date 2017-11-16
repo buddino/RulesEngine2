@@ -12,7 +12,7 @@ import it.cnit.gaia.rulesengine.model.School;
 import it.cnit.gaia.rulesengine.model.annotation.URI;
 import it.cnit.gaia.rulesengine.service.MeasurementRepository;
 import it.cnit.gaia.rulesengine.service.SparksService;
-import it.cnit.gaia.rulesengine.utils.RuleCreationHelper;
+import it.cnit.gaia.rulesengine.service.RuleCreationHelper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -65,7 +65,7 @@ public class RuleCreationHelperTest {
 				uris.add(f.getName());
 		}
 		for (String uri : uris) {
-			ResourceAPIModel suggestedResourceByUri = helper.getSuggestedResourceByFieldname(uri, room_55, null);
+			ResourceAPIModel suggestedResourceByUri = helper.getSuggestedResource(uri, room_55, null);
 			System.out.println(uri + ": " + suggestedResourceByUri);
 		}
 	}
@@ -79,7 +79,7 @@ public class RuleCreationHelperTest {
 		s.aid = 155076L;
 		r55.setSchool(s);
 		rulesLoader.getAreaMap().put(room_55,r55);
-		ResourceAPIModel suggestedResourceByUri = helper.getSuggestedResourceByFieldname("root_temperature_uri", room_55, null);
+		ResourceAPIModel suggestedResourceByUri = helper.getSuggestedResource("root_temperature_uri", room_55, null);
 		System.out.println(suggestedResourceByUri);
 	}
 }

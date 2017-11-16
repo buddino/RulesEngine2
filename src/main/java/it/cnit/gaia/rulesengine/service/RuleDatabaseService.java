@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OConcurrentResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
@@ -66,20 +65,10 @@ public class RuleDatabaseService {
 		return null;
 	}
 
-	public Long getParentArea(String ruleId) {
-		OrientVertex ruleVertex = ogf.getNoTx().getVertex(ruleId);
-		try {
-			Vertex areaVertex = ruleVertex.getVertices(Direction.IN).iterator().next();
-			Long aid = areaVertex.getProperty("aid");
-			if (aid == null) {
-				LOGGER.error(String.format("The rule %s is not connected to a valid area (no aid found)", ruleId));
-				return null;
-			}
-			return aid;
-		} catch (NoSuchElementException e) {
-			LOGGER.error(String.format("The rule %s is not connected to an area", ruleId));
-			return null;
-		}
+	@Deprecated
+	public Long getParentArea(String aid) {
+		//TODO
+		return null;
 	}
 
 	public String getRulePath(String ruleId) {
@@ -335,7 +324,7 @@ public class RuleDatabaseService {
 		OSQLSynchQuery query = new OSQLSynchQuery("select * from CompositeRule where @rid=?");
 		List<ODocument> result = (List<ODocument>) query.execute(rid);
 		if (result.size() == 0)
-			throw new GaiaRuleException("The parent rule is not a CompsoiteRule", HttpStatus.NOT_FOUND);
+			throw new GaiaRuleException("The parent rule is not a CompositeRule", HttpStatus.NOT_FOUND);
 
 		Map<String, Object> fieldMap = ruleDTO.getFields();
 		OrientVertex ruleVertex = tx.addVertex("class:" + ruleDTO.getClazz());

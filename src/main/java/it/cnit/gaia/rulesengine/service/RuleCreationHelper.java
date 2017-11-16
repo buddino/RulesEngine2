@@ -1,10 +1,13 @@
-package it.cnit.gaia.rulesengine.utils;
+package it.cnit.gaia.rulesengine.service;
 
 import io.swagger.sparks.ApiException;
 import io.swagger.sparks.model.CollectionOfResourceAPIModel;
 import io.swagger.sparks.model.ResourceAPIModel;
+import it.cnit.gaia.rulesengine.api.dto.DefaultsDTO;
+import it.cnit.gaia.rulesengine.api.dto.RuleDTO;
 import it.cnit.gaia.rulesengine.loader.RulesLoader;
-import it.cnit.gaia.rulesengine.service.SparksService;
+import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
+import it.cnit.gaia.rulesengine.model.annotation.URI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,8 +15,10 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -28,6 +33,7 @@ public class RuleCreationHelper {
 		parametersMap.put("pwf_uri", "Power Factor");
 		parametersMap.put("temperature_uri", "Temperature");
 		parametersMap.put("humidity_uri", "Relative Humidity");
+		//TODO Finisci
 	}
 
 	private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
@@ -36,12 +42,13 @@ public class RuleCreationHelper {
 	Pattern parent = Pattern.compile("parent_");
 	@Autowired
 	SparksService sparksService;
-
 	@Autowired
 	RulesLoader rulesLoader;
+	@Autowired
+	RuleDatabaseService ruleDatabaseService;
 
 
-	public ResourceAPIModel getSuggestedResourceByFieldname(@NotNull String uri, @NotNull Long aid, @Nullable String property) throws ApiException {
+	public ResourceAPIModel getSuggestedResource(@NotNull String uri, @NotNull Long aid, @Nullable String property) throws ApiException {
 		String tag = null;
 		if (needsRoot(uri) != null) {
 			uri = needsRoot(uri);
@@ -57,6 +64,7 @@ public class RuleCreationHelper {
 			//Get root
 			try {
 				aid = rulesLoader.getAreaMap().getOrDefault(aid, null).getSchool().getAid();
+
 				tag = "External";
 			} catch (NullPointerException e) {
 				LOGGER.warn("Error while retrieving root area", e);
@@ -110,6 +118,79 @@ public class RuleCreationHelper {
 			return resource;
 		}
 		return null;
+	}
+
+	public RuleDTO getSuggestion(Long aid, String classname, String lang, Boolean hardcoded) throws ApiException, ClassNotFoundException, IllegalAccessException, InstantiationException {
+		RuleDTO suggested = new RuleDTO();
+		Map<String, Object> suggestedFields = new HashMap<>();
+		DefaultsDTO defaults = ruleDatabaseService.getDefault(classname);
+		if (defaults == null)
+			return null;
+		Class<?> aClass = Class.forName(RulesLoader.rulesPackage + "." + classname);
+		Field[] fields = aClass.getFields();
+		for (Field f : fields) {
+			if (f.isAnnotationPresent(LoadMe.class)) {
+				if (f.isAnnotationPresent(URI.class)) {
+					//Translate uri to property
+					Map<String, Object> field = defaults.getFields().getOrDefault(f.getName(), null);
+					ResourceAPIModel suggestedResources;
+					if (field != null) {
+						//If the defaults contains the parameter use it
+						String property = String.valueOf(field.get("value"));
+						suggestedResources = getSuggestedResource(f.getName(), aid, property);
+					} else {
+						//Else let the helper do the conversion if possible
+						suggestedResources = getSuggestedResource(f.getName(), aid, null);
+					}
+					if (suggestedResources != null)
+						suggestedFields.put(f.getName(), suggestedResources.getUri());
+					else
+						suggestedFields.put(f.getName(), null);
+				} else if (f.getName().equals("suggestion")) {
+					suggestedFields.put(f.getName(), defaults.getSuggestion().getOrDefault(lang, ""));
+				} else {
+					Map<String, Object> field = defaults.getFields().getOrDefault(f.getName(), null);
+					if (field != null)
+						suggestedFields.put(f.getName(), field.get("value"));
+					else {
+						Object c = null;
+						//null or the hardcoded value
+						if (hardcoded) {
+							c = aClass.newInstance();
+							suggestedFields.put(f.getName(), f.get(c));
+						}
+						else {
+							suggestedFields.put(f.getName(), null);
+						}
+					}
+				}
+			}
+		}
+		suggested.setClazz(classname);
+		suggested.setFields(suggestedFields);
+		return suggested;
+	}
+
+	public DefaultsDTO buildAndCreatDefaults(String classname) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+		DefaultsDTO defaultsDTO = new DefaultsDTO();
+		Class<?> aClass = Class.forName(RulesLoader.rulesPackage + "." + classname);
+		Object c = aClass.newInstance();
+		Field[] classFields = aClass.getFields();
+		Map<String, Map<String, Object>> fields = new HashMap<>();
+		for (Field f : classFields) {
+			if (f.isAnnotationPresent(LoadMe.class)) {
+				LoadMe annotation = f.getAnnotation(LoadMe.class);
+				Map<String, Object> field = new HashMap<>();
+				field.put("value", f.get(c));
+				if (annotation.required())
+					field.put("required", true);
+				else
+					field.put("required", false);
+				fields.put(f.getName(), field);
+			}
+		}
+		defaultsDTO.setFields(fields);
+		return defaultsDTO;
 	}
 
 	private String needsRoot(String uri) {

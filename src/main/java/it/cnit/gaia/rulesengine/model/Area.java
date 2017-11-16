@@ -13,6 +13,7 @@ public class Area implements Fireable {
 	public String uri;
 	public String type;
 	public School school;
+	public Area parent;
 
 	@JsonProperty("json")
 	public Map<String, Object> metadata = new HashMap<>();

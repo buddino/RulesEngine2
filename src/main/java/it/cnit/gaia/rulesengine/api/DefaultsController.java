@@ -1,13 +1,12 @@
 package it.cnit.gaia.rulesengine.api;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import io.swagger.annotations.*;
 import it.cnit.gaia.rulesengine.api.dto.DefaultsDTO;
 import it.cnit.gaia.rulesengine.api.dto.ErrorResponse;
+import it.cnit.gaia.rulesengine.api.dto.RuleDTO;
 import it.cnit.gaia.rulesengine.api.exception.GaiaRuleException;
-import it.cnit.gaia.rulesengine.loader.RulesLoader;
-import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
+import it.cnit.gaia.rulesengine.service.RuleCreationHelper;
 import it.cnit.gaia.rulesengine.service.RuleDatabaseService;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,8 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.ws.rs.Consumes;
-import java.lang.reflect.Field;
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -32,10 +29,9 @@ public class DefaultsController {
 	private Logger LOGGER = Logger.getRootLogger();
 
 	@Autowired
-	private OrientGraphFactory ogf;
-
-	@Autowired
 	private RuleDatabaseService ruleDatabaseService;
+	@Autowired
+	private RuleCreationHelper helper;
 
 
 	//Add a default
@@ -80,7 +76,7 @@ public class DefaultsController {
 		DefaultsDTO defaults = ruleDatabaseService.getDefault(classname);
 		if (defaults == null) {
 			if(force)
-				defaults = buildAndCreatDefaults(classname);
+				defaults = helper.buildAndCreatDefaults(classname);
 			else
 				return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 		}
@@ -118,30 +114,21 @@ public class DefaultsController {
 		return responseEntity;
 	}
 
-	//Patch a default
-
-
-	//Put a default
-
-	private DefaultsDTO buildAndCreatDefaults(String classname) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-		DefaultsDTO defaultsDTO = new DefaultsDTO();
-		Class<?> aClass = Class.forName(RulesLoader.rulesPackage + "." + classname);
-		Object c = aClass.newInstance();
-		Field[] classFields = aClass.getFields();
-		Map<String,Map<String,Object>> fields = new HashMap<>();
-		for (Field f : classFields) {
-			if (f.isAnnotationPresent(LoadMe.class)) {
-				LoadMe annotation = f.getAnnotation(LoadMe.class);
-				Map<String,Object> field = new HashMap<>();
-				field.put("value",f.get(c));
-				if(annotation.required())
-					field.put("required",true);
-				else
-					field.put("required",false);
-				fields.put(f.getName(),field);
-			}
-		}
-		defaultsDTO.setFields(fields);
-		return defaultsDTO;
+	@ApiOperation(value = "GET a rule suggestion", notes = "GET default values before creating a rule")
+	@GetMapping(value = "area/{aid}/{classname}", produces = MediaType.APPLICATION_JSON_VALUE)
+	@ResponseBody
+	public ResponseEntity<RuleDTO> suggestFields(
+			@ApiParam("ID of the area")
+			@PathVariable Long aid,
+			@ApiParam(value = "Rule classname")
+			@PathVariable String classname,
+			@ApiParam(value = "Language (e.g.,it,en,el...)")
+			@RequestParam(defaultValue = "en", required = false) String lang,
+			@RequestParam(defaultValue = "false") @ApiParam(value = "Outputs also the hardcoded values if no default is set") Boolean hardcoded) throws Exception {
+		RuleDTO suggestion = helper.getSuggestion(aid, classname, lang, hardcoded);
+		if(suggestion==null)
+			return ResponseEntity.notFound().build();
+		return ResponseEntity.ok(suggestion);
 	}
+
 }
