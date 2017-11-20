@@ -11,6 +11,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @Api(tags = "Schema",
 		description = "API for retrieving information about rule classes",
@@ -33,6 +35,19 @@ public class SchemaController {
 	}
 
 	@ApiOperation(
+			value = "GET all the rule classes",
+			notes = "TODO")
+	@GetMapping(value = "classes", produces = MediaType.APPLICATION_JSON_VALUE)
+	@ResponseBody
+	public ResponseEntity<List<String>> getRuleClasses() {
+		return ResponseEntity.ok(dbService.getRuleClasses());
+	}
+
+
+
+
+
+	@ApiOperation(
 			value = "CREATE rule class in schema",
 			notes = "Create the appropriate class in the database schema corresponding to the java class whose name has been passed as path variable<br>" +
 					"Example: { 'power_threshold': {'regex': null,'default': null,'mandatory': true}, ... }")
@@ -46,6 +61,10 @@ public class SchemaController {
 		return ResponseEntity.status(HttpStatus.CREATED)
 							 .body(dbService.getClassSchema(classname));
 	}
+
+
+
+
 
 	@ExceptionHandler(GaiaRuleException.class)
 	public ResponseEntity<ErrorResponse> exceptionHandler(Exception e) {
