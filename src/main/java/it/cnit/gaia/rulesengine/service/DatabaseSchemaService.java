@@ -10,8 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Field;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class DatabaseSchemaService {
@@ -58,6 +61,16 @@ public class DatabaseSchemaService {
 		OSchemaProxy schema = ogf.getDatabase().getMetadata().getSchema();
 		schema.getClass(classname).properties().forEach(e -> defaults.put(e.getName(),e.getDefaultValue()));
 		return defaults;
+	}
+
+	public List<String> getRuleClasses(){
+		OSchemaProxy schema = ogf.getDatabase().getMetadata().getSchema();
+		Collection<OClass> classes = schema.getClasses();
+		List<String> gaiaRules = classes.stream()
+									   .filter(c -> c.isSubClassOf("GaiaRule"))
+									   .map(OClass::getName)
+									   .collect(Collectors.toList());
+		return gaiaRules;
 	}
 
 	//Riguarda
