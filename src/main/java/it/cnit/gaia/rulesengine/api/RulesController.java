@@ -138,20 +138,6 @@ public class RulesController {
 		return ResponseEntity.ok(ruleDTO);
 	}
 
-
-	@ApiOperation(value = "ADD a rule to area", notes = "Add a custom rule according to the object passed in the body")
-	@PostMapping(value = "area/{aid}/rules", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-	@ResponseBody
-	public ResponseEntity<RuleDTO> addRuleToArea(
-			@ApiParam("ID of the area")
-			@PathVariable Long aid,
-			@ApiParam(value = "JSON Object describing the rule")
-			@RequestBody RuleDTO ruleDTO) throws Exception {
-		ruleDTO = ruleDatabaseService.addCustomRuleToArea(aid, ruleDTO);
-		ruleDatabaseService.reloadAllSchools(false);
-		return ResponseEntity.status(HttpStatus.CREATED).body(ruleDTO);
-	}
-
 	@ApiOperation(value = "ADD a rule to area", notes = "Add a custom rule according to the object passed in the body")
 	@PostMapping(value = "area/{aid}/rules", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody

@@ -168,6 +168,11 @@ public class RuleDatabaseService {
 		//Load rule
 		Map<String, Object> fieldMap = ruleDTO.getFields();
 		OrientVertex ruleVertex = tx.addVertex("class:" + ruleDTO.getClazz());
+		//Remove null fields
+		for(Map.Entry<String,Object> e : fieldMap.entrySet()){
+			if(e.getValue()==null)
+				fieldMap.remove(e.getKey());
+		}
 		ruleVertex.setProperties(fieldMap);
 		ruleVertex.setProperty("custom", true);
 		ruleVertex.setProperty("enabled", true);
@@ -377,7 +382,7 @@ public class RuleDatabaseService {
 		throw new GaiaRuleException("Not found",HttpStatus.NOT_FOUND);
 	}
 
-	public ODocument editDefault(String classname, DefaultsDTO defaults) throws GaiaRuleException {
+	public DefaultsDTO editDefault(String classname, DefaultsDTO defaults) throws GaiaRuleException {
 		ODatabaseDocumentTx database = ogf.getDatabase();
 		OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>("SELECT * FROM GaiaDefaults where classname = ?");
 		OConcurrentResultSet resultSet = query.execute(classname);
@@ -386,14 +391,15 @@ public class RuleDatabaseService {
 			o.field("fields", defaults.getFields());
 			o.field("suggestion", defaults.getSuggestion());
 			o.save();
-			return o;
+			return defaults;
 		}
-		throw new GaiaRuleException("Not found",HttpStatus.NOT_FOUND);
+		else
+			return addDefault(classname,defaults);
 	}
 
 	//TODO Patch
 
-	public ODocument addDefault(String classname, DefaultsDTO defaults) throws GaiaRuleException {
+	public DefaultsDTO addDefault(String classname, DefaultsDTO defaults) throws GaiaRuleException {
 		if(getDefault(classname)!=null)
 			throw new GaiaRuleException("Conflict, default alredy present, use PUT to edit!", HttpStatus.CONFLICT);
 		ODatabaseDocumentTx database = ogf.getDatabase();
@@ -403,7 +409,7 @@ public class RuleDatabaseService {
 		d.field("fields", defaults.getFields());
 		d.field("suggestion", defaults.getSuggestion());
 		d.save();
-		return d;
+		return defaults;
 	}
 
 

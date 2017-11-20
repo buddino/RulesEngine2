@@ -4,7 +4,6 @@ import it.cnit.gaia.intervalparser.LocalInterval;
 import it.cnit.gaia.rulesengine.model.GaiaRule;
 import it.cnit.gaia.rulesengine.model.annotation.LoadMe;
 import it.cnit.gaia.rulesengine.model.exceptions.RuleInitializationException;
-import org.quartz.CronExpression;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -14,9 +13,7 @@ import java.util.OptionalLong;
 public class HolidayShutdown extends GaiaRule {
 	@LoadMe
 	public Long timeBeforeInHours;
-
 	private List<LocalInterval> intervals = new ArrayList<>();
-	private List<CronExpression> cronexps = new ArrayList<>();
 
 	@Override
 	public boolean condition() {
@@ -34,7 +31,6 @@ public class HolidayShutdown extends GaiaRule {
 	public boolean init() throws RuleInitializationException {
 		//FIXME Will return alist of interval instead of cronexp
 		intervals = metadataService.getClosed(155076L);
-		//cronexps = metadataService.getClosed(155076L);
 		validateFields();
 		return true;
 	}
@@ -54,7 +50,4 @@ public class HolidayShutdown extends GaiaRule {
 			return Long.MAX_VALUE;
 	}
 
-	public List<CronExpression> getCronexps() {
-		return cronexps;
-	}
 }

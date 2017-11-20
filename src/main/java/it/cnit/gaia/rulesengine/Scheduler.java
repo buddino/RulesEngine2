@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -24,6 +25,7 @@ import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 @Service
+@Profile("default")
 public class Scheduler {
 	private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
@@ -38,8 +40,6 @@ public class Scheduler {
 	@Autowired
 	ContextProvider contextProvider;
 
-	Boolean isRunning = Boolean.FALSE;
-
 	Collection<School> schools;
 
 	@Value("${scheduler.interval}")
@@ -53,7 +53,7 @@ public class Scheduler {
 		measurements.getMeasurementService().checkAuth();
 	}
 
-	//@PostConstruct
+	@PostConstruct
 	public void init() throws ApiException, IOException {
 
 		//Set the thread pool size to one. In this way only one scheduled thread will be executed avoiding concurrency
@@ -81,7 +81,7 @@ public class Scheduler {
 
 	}
 
-	//@Scheduled(fixedRateString = "${scheduler.interval}")
+	@Scheduled(fixedRateString = "${scheduler.interval}")
 	public void scheduledMethod() throws IOException, InterruptedException {
 		//Riguarda
 		measurements.getMeasurementService().checkAuth();
@@ -97,7 +97,7 @@ public class Scheduler {
 		schools.forEach(s -> s.fire());
 	}
 
-	//@Scheduled(fixedDelay = 900 * 1000)
+	@Scheduled(fixedDelay = 900 * 1000)
 	public void reloadSchools() {
 		rulesLoader.reloadAllSchools();
 	}

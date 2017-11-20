@@ -160,7 +160,7 @@ public class RuleCreationHelper {
 							suggestedFields.put(f.getName(), f.get(c));
 						}
 						else {
-							suggestedFields.put(f.getName(), null);
+							//suggestedFields.put(f.getName(), null);
 						}
 					}
 				}
@@ -171,7 +171,7 @@ public class RuleCreationHelper {
 		return suggested;
 	}
 
-	public DefaultsDTO buildAndCreatDefaults(String classname) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+	public DefaultsDTO buildAndCreateDefaults(String classname) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
 		DefaultsDTO defaultsDTO = new DefaultsDTO();
 		Class<?> aClass = Class.forName(RulesLoader.rulesPackage + "." + classname);
 		Object c = aClass.newInstance();

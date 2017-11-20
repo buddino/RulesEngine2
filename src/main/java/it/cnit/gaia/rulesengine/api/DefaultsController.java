@@ -1,6 +1,5 @@
 package it.cnit.gaia.rulesengine.api;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import io.swagger.annotations.*;
 import it.cnit.gaia.rulesengine.api.dto.DefaultsDTO;
 import it.cnit.gaia.rulesengine.api.dto.ErrorResponse;
@@ -38,11 +37,11 @@ public class DefaultsController {
 	@ApiOperation(value = "ADD defaults", notes = "Add the default values for the specified rule class")
 	@PostMapping(value = "rules/{classname}/default", produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
-	public ResponseEntity<ODocument> addDefaultForClass(
+	public ResponseEntity<DefaultsDTO> addDefaultForClass(
 			@ApiParam(value = "The name of the rule class", example = "PowerFactor", required = true)
 			@PathVariable String classname, @RequestBody DefaultsDTO defaultsDTO) throws GaiaRuleException {
 		//TODO Move out
-		ODocument result = ruleDatabaseService.addDefault(classname, defaultsDTO);
+		DefaultsDTO result = ruleDatabaseService.addDefault(classname, defaultsDTO);
 		return ResponseEntity.status(HttpStatus.CREATED).body(result);
 	}
 
@@ -60,10 +59,10 @@ public class DefaultsController {
 	@ApiOperation(value = "EDIT defaults", notes = "Edit the default values for the specified rule class")
 	@PutMapping(value = "rules/{classname}/default")
 	@ResponseBody
-	public ResponseEntity<ODocument> editDefaultForClass(
+	public ResponseEntity<DefaultsDTO> editDefaultForClass(
 			@ApiParam(value = "The name of the rule class", example = "PowerFactor", required = true)
 			@PathVariable String classname, @RequestBody DefaultsDTO defaultsDTO) throws GaiaRuleException {
-		ODocument result = ruleDatabaseService.editDefault(classname, defaultsDTO);
+		DefaultsDTO result = ruleDatabaseService.editDefault(classname, defaultsDTO);
 		return ResponseEntity.status(HttpStatus.OK).body(result);
 	}
 
@@ -72,14 +71,21 @@ public class DefaultsController {
 	@ResponseBody
 	public ResponseEntity<DefaultsDTO> getDefaultForClass(
 			@ApiParam(value = "The name of the rule class", example = "PowerFactor", required = true)
-			@PathVariable String classname, @RequestParam(required = false,defaultValue = "false") Boolean force) throws GaiaRuleException, ClassNotFoundException, IllegalAccessException, InstantiationException {
+			@PathVariable String classname, @RequestParam(required = false, defaultValue = "false") Boolean force) throws GaiaRuleException, ClassNotFoundException, IllegalAccessException, InstantiationException {
+
 		DefaultsDTO defaults = ruleDatabaseService.getDefault(classname);
+		DefaultsDTO hardcoded = helper.buildAndCreateDefaults(classname);
+
 		if (defaults == null) {
-			if(force)
-				defaults = helper.buildAndCreatDefaults(classname);
+			if (force)
+				return ResponseEntity.status(HttpStatus.OK).body(hardcoded);
 			else
 				return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 		}
+		for (String key : hardcoded.getFields().keySet()) {
+			defaults.getFields().putIfAbsent(key, hardcoded.getFields().get(key));
+		}
+
 		return ResponseEntity.status(HttpStatus.OK).body(defaults);
 	}
 
@@ -126,7 +132,7 @@ public class DefaultsController {
 			@RequestParam(defaultValue = "en", required = false) String lang,
 			@RequestParam(defaultValue = "false") @ApiParam(value = "Outputs also the hardcoded values if no default is set") Boolean hardcoded) throws Exception {
 		RuleDTO suggestion = helper.getSuggestion(aid, classname, lang, hardcoded);
-		if(suggestion==null)
+		if (suggestion == null)
 			return ResponseEntity.notFound().build();
 		return ResponseEntity.ok(suggestion);
 	}
