@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Auto rule</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.1/js/tether.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.js"
+            integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE="
+            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js"
+            integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh"
+            crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js"
+            integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ"
+            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/2.3.0/mustache.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css"
+          integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="bootstrap3-typeahead.js"></script>
+    <script src="main.js"></script>
+<body>
+
+<style>
+    #fieldscontainer {
+        margin-top: 1em;
+    }
+
+    input {
+        margin: 0.5em;
+        padding: 0.1em;
+    }
+
+    body {
+        padding: 1em;
+    }
+</style>
+
+<script id="fieldtemplate" type="text/template">
+    <div class="row form-control-sm" data-field="{{key}}">
+        <label class="col-3 col-form-label">{{key}}{{#required}}*{{/required}}</label>
+        <input class="col-2 col-form-control" data-value type="text" value="{{value}}">
+        <input class="col-4 col-form-control" data-description type="text" placeholder="Description"
+               value="{{description}}">
+        <label class="col-form-label">Required</label>
+        <input class="col-form-control" data-required type="checkbox" {{#required}}CHECKED{{/required}}>
+    </div>
+</script>
+
+<script id="suggestiontemplate" type="text/template">
+    <div class="row form-control-sm" id="suggestion_{{key}}" data-field="{{key}}">
+        <label class="col-3 col-form-label">Suggestion [{{key}}]</label>
+        <input class="col-8 col-form-control" data-lang={{key}} type="text" value="{{value}}">
+    </div>
+</script>
+
+<script id="suggestiontemplate2" type="text/template">
+    <div class="row form-control-sm">
+        <label class="col-3 col-form-label">Suggestion [{{key}}]</label>
+        <input class="col-8 col-form-control" data-lang={{key}} type="text" value="{{value}}">
+    </div>
+</script>
+
+<div class="container">
+    <form id="queryform" class="form-inline" autocomplete="off">
+        <label for="classname" class="col-2 col-form-label">Classname</label>
+        <div class="col-10">
+            <input class="form-control ttip" type="text" placeholder="e.g. ComfortIndex" id="classname"
+                   data-toggle="tooltip" data-placement="top" title="The name of the class to query">
+            <button class="btn btn-primary" type="submit">Query</button>
+        </div>
+    </form>
+
+    <form id="bodyform" autocomplete="off">
+        <div id="fieldscontainer" class="form-group"></div>
+        <div id="suggestioncontainer" class="form-group"></div>
+        <button class="btn btn-primary" type="submit">Save</button>
+    </form>
+</div>
+</body>
+</html>
