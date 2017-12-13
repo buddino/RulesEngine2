@@ -11,7 +11,7 @@ public class RuleInitializationException extends Exception {
 	}
 
 	public RuleInitializationException(String message, String rule) {
-		super(message);
+		super("["+rule+"]\t"+message);
 		this.rule = rule;
 	}
 
