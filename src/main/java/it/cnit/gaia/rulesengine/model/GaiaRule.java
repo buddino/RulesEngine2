@@ -187,7 +187,7 @@ public abstract class GaiaRule implements Fireable {
 					try {
 						if (f.get(this) == null || f.get(this).equals("")) {
 							throw new RuleInitializationException(String
-									.format("Required field missing or empty (%s)", f.getName()));
+									.format("Required field missing or empty (%s)", f.getName()), this.rid);
 						}
 						if (f.isAnnotationPresent(URI.class)) {
 							//FIXME Checking by querying here, results in a double query and in a slow validation time
@@ -198,7 +198,7 @@ public abstract class GaiaRule implements Fireable {
 						e.printStackTrace();
 					} catch (ApiException e) {
 						throw new RuleInitializationException(String
-								.format("Required uri not found in resource map (%s)", f.getName()));
+								.format("Required uri not found in resource map (%s)", f.getName()), this.rid);
 					}
 				}
 			}
