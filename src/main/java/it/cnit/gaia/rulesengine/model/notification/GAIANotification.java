@@ -1,5 +1,8 @@
 package it.cnit.gaia.rulesengine.model.notification;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import it.cnit.gaia.rulesengine.model.Area;
 import it.cnit.gaia.rulesengine.model.School;
 
@@ -9,7 +12,13 @@ import java.util.Map;
 
 public class GAIANotification implements Serializable {
 	private Long timestamp = new Date().getTime();
+
+	@JsonIdentityInfo(generator=ObjectIdGenerators.PropertyGenerator.class, property="aid")
+	@JsonIdentityReference(alwaysAsId=true)
 	private School school;
+
+	@JsonIdentityInfo(generator=ObjectIdGenerators.PropertyGenerator.class, property="aid")
+	@JsonIdentityReference(alwaysAsId=true)
 	private Area area;
 
 	private String ruleClass = "";

@@ -1,7 +1,6 @@
 package it.cnit.gaia.rulesengine.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
 import java.util.*;
@@ -12,7 +11,11 @@ public class Area implements Fireable {
 	public String name;
 	public String uri;
 	public String type;
+	@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "aid")
+	@JsonIdentityReference(alwaysAsId=true)
 	public School school;
+	@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "aid")
+	@JsonIdentityReference(alwaysAsId=true)
 	public Area parent;
 
 	@JsonProperty("json")
