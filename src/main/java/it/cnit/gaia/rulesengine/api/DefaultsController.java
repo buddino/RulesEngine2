@@ -13,11 +13,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import javax.ws.rs.Consumes;
 import java.util.Map;
 
 @RestController
+@ApiIgnore
 @Consumes({MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_JSON_UTF8_VALUE})
 @Api(tags = "Defaults API",
 		description = "API for managing default values for the rule classes",

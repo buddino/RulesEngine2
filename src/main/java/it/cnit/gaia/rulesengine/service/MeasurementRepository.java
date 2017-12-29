@@ -50,6 +50,8 @@ public class MeasurementRepository {
 			if (e.getCode() == 401) {
 				LOGGER.error("Unauthorized.");
 			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
 		LOGGER.info("Updated resources");
 		return true;

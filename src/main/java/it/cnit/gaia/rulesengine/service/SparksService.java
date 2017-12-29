@@ -76,7 +76,7 @@ public class SparksService implements SparksAAAService{
 				}
 			}
 			if(result == null || result.getResults() == null){
-				LOGGER.error("No results found while querying latest measurements. No measurement has been updated. :(");
+				LOGGER.error("No results found while querying latest measurements :(");
 				return null;
 			}
 			Set<String> keySet = result.getResults().keySet();
@@ -138,7 +138,8 @@ public class SparksService implements SparksAAAService{
 		return readings;
 	}
 
-	public Map<String, SingleResourceMeasurementAPIModel> queryLatestIteration(int size) throws ApiException {
+	public Map<String, SingleResourceMeasurementAPIModel> queryLatestIteration(int size) throws ApiException, InterruptedException {
+		int MAX_RETRIES = 5;
 		Collection<Long> ids = meterMap.values();
 		Map<String, SingleResourceMeasurementAPIModel> result = new HashMap<>();
 		Iterator<Long> iterator = ids.iterator();
@@ -153,7 +154,14 @@ public class SparksService implements SparksAAAService{
 			counter = 0;
 			LOGGER.debug("Query:");
 			LOGGER.debug(tempIds.toString());
-			Map<String, SingleResourceMeasurementAPIModel> tempResult = queryLatest(tempIds);
+			int retries = 0;
+			Map<String, SingleResourceMeasurementAPIModel> tempResult = null;
+			while(tempResult==null && retries < MAX_RETRIES){
+				LOGGER.debug("Retries left: " + (MAX_RETRIES-retries));
+				tempResult = queryLatest(tempIds);
+				Thread.sleep(retries*1000);
+				retries++;
+			}
 			tempIds.clear();
 			if(tempResult==null){
 				return null;

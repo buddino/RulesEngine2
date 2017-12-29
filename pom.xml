@@ -6,7 +6,7 @@
 
     <groupId>it.cnit.gaia</groupId>
     <artifactId>RulesEngine</artifactId>
-    <version>2.5-AUTH</version>
+    <version>2.6-DEFAULTS</version>
     <packaging>jar</packaging>
 
     <parent>

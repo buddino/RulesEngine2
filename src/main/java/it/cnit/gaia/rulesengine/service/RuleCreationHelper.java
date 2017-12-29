@@ -156,6 +156,7 @@ public class RuleCreationHelper {
 						Object c = null;
 						//null or the hardcoded value
 						if (hardcoded) {
+							//TODO Move c outside and instanciate once
 							c = aClass.newInstance();
 							suggestedFields.put(f.getName(), f.get(c));
 						}

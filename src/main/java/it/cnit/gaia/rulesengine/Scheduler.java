@@ -20,8 +20,10 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -84,6 +86,7 @@ public class Scheduler {
 	@Scheduled(fixedRateString = "${scheduler.interval}")
 	public void scheduledMethod() throws IOException, InterruptedException {
 		//Riguarda
+		long t1 = System.currentTimeMillis();
 		measurements.getMeasurementService().checkAuth();
 		schools = rulesLoader.loadSchools().values();
 		LOGGER.info("Executing iteration");
@@ -95,6 +98,9 @@ public class Scheduler {
 				return;
 		}
 		schools.forEach(s -> s.fire());
+		long t2 = System.currentTimeMillis();
+		writeToFile(t2-t1);
+
 	}
 
 	@Scheduled(fixedDelay = 900 * 1000)
@@ -106,6 +112,16 @@ public class Scheduler {
 	public void reloadSchedules() throws IOException {
 		measurements.getMeasurementService().checkAuth();
 		metadataService.updateAll();
+	}
+
+	private void writeToFile(long elapsed){
+		try {
+			FileWriter fw = new FileWriter("iteration_time.txt", true);
+			fw.write(new Date().toString()+";"+elapsed+'\n');
+			fw.close();
+		} catch (IOException e) {
+			LOGGER.error("Error while writing timings",e);
+		}
 	}
 
 
